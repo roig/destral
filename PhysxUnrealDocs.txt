@@ -1,0 +1,9 @@
+PullBackHit PrimitiveComponent:2066 Func: MoveComponentImpl
+
+Aqui es on mou el primitive component.
+
+FPhysicsInterface::GeomSweepMulti Aquesta es la funcio que fa el sweep
+
+SceneQuery.cpp:335 TSceneCastCommon
+
+void LowLevelSweep  Aqui es on es crida a la physix sweep!!

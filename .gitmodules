@@ -1,0 +1,13 @@
+[submodule "thirdparty/entt"]
+	path = thirdparty/entt
+	url = git@github.com:skypjack/entt.git
+[submodule "thirdparty/cute_headers"]
+	path = thirdparty/cute_headers
+	url = git@github.com:RandyGaul/cute_headers.git
+[submodule "thirdparty/magnum-singles"]
+	path = thirdparty/magnum-singles
+	url = git@github.com:mosra/magnum-singles.git
+[submodule "thirdparty/sol2"]
+	path = thirdparty/sol2
+	url = git@github.com:ThePhD/sol2.git
+
