@@ -1,5 +1,10 @@
 # Destral
 
+Programming Info:
+
+To set the default working directories for subprojects:
+https://stackoverflow.com/questions/41864259/how-to-set-working-directory-for-visual-studio-2017-rc-cmake-project
+
 
 
 

@@ -11,6 +11,7 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
+
     },
     {
       "name": "x64-Release",
@@ -22,6 +23,7 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
+
     }
   ]
 }

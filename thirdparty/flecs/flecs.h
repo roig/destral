@@ -10,7 +10,9 @@
 // #define FLECS_NO_CPP
 
 /* FLECS_CUSTOM_BUILD should be defined when manually selecting features */
-// #define FLECS_CUSTOM_BUILD
+//#define FLECS_CUSTOM_BUILD
+//#define FLECS_SYSTEM
+//#define FLECS_PIPELINE
 
 #ifndef FLECS_CUSTOM_BUILD
 /* Modules */

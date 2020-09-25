@@ -4,7 +4,7 @@ find_package(SDL2)
 set(Destral_PUBLIC_HEADERS
 
 "destral.h"
-
+"render.h"
 
 ) 
 
@@ -17,9 +17,9 @@ set(Destral_PRIVATE_HEADERS
 
 set(Destral_SOURCES 
 "header_only_impl.c" 
-"destral.c" 
+"destral.c"
 
-#"renderer.cpp"
+"render.c"
 #"transform.cpp"
 
 )
@@ -63,7 +63,7 @@ if (MSVC)
 	/WX
 	#/wd4251 #dll interface shit
 	/wd4100 #unused variables
-	/wd4101 #unused local variables
+	#/wd4101 #unused local variables
 	#/wd6011
 	/wd4204 #non-constant aggregate initializer
 	/MP)

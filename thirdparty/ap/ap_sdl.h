@@ -16,10 +16,19 @@
 
 	USAGE:
 	========
+	------- APP  -------
+	Easy mode:
+
+	ap_sdl_app_run(...)
+
+	This creates initializes a window and a renderer and loops the application.
+	You can set up callbacks to get called in each step of the application
+
+
 	------- VIDEO -------
 	
 	In order to open an opengl window use the function:
-	- ap_sdl_CreateWindow
+	- ap_sdl_create_window
 
 
 	------- INPUT -------
@@ -37,30 +46,36 @@
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
 #include <SDL_events.h>
+#include <SDL_render.h>
 
-/*
-	WINDOW CREATION
+
+/****************
+	WINDOW
+*****************/
+
+/** Creates a default SDL2 accelerated renderer window. 
+	Non owning pointers of out_window and out_renderer, user must explicitly destroy them 
 */
-struct ap_sdl_window_desc {
-	uint32_t _start_canary;
-	const char* window_title;
-	uint32_t wsize_x; /* window width */
-	uint32_t wsize_y; /* window height */
-	uint32_t opengl_major;
-	uint32_t opengl_minor;
-	uint32_t is_gl_context_debug;
-	uint32_t _end_canary;
-};
+int ap_sdl_create_window(const char* window_title, int width, int height, SDL_Window** out_window, SDL_Renderer** out_renderer);
+
+/** Creates a default opengl 3.3 window. 
+	Non owning pointers of out_window and out_gl_ctx, user must explicitly destroy them
+*/
+int ap_sdl_create_window_gl(const char* window_name, int width, int height, SDL_Window** out_window, SDL_GLContext* out_gl_ctx);
+
+/****************
+	RENDERING
+*****************/
+
+/** 
+	Loads a SDL_Texture from a file. (this is only valid when using the SDL2 accelerated renderer.
+	It only supports .png files.
+	return SDL_Texture* of the created texture. You must call SDL_DestroyTexture in order to destroy that texture.
+*/
+SDL_Texture* ap_sdl_texture_load(const char* file_name, SDL_Renderer* renderer);
 
 
-/** This creates an opengl window*/
-int ap_sdl_create_window(struct ap_sdl_window_desc* params, SDL_Window** out_window, SDL_GLContext* out_gl_ctx);
 
-/** Creates a default opengl 3.3 window. */
-int ap_sdl_create_window_default(const char* window_name, int width, int height, SDL_Window** out_window, SDL_GLContext* out_gl_ctx);
-
-/** cleanup of the window and the opengl context */
-void ap_sdl_destroy_window(SDL_Window* window, SDL_GLContext* gl_ctx);
 
 struct ap_sdl_ms_butt_state {
 	int8_t pressed;
@@ -100,6 +115,9 @@ struct ap_sdl_KeyboardState {
 	struct ap_sdl_KeyboardButtonState keys[SDL_NUM_SCANCODES];
 };
 
+/****************
+	INPUT
+*****************/
 
 /*
 	ap_sdl_input
@@ -159,6 +177,10 @@ struct ap_sdl_app_desc {
 	void (*frame_cb)(void* user_data);
 	void (*cleanup_cb)(void* user_data);
 	void (*event_cb)(SDL_Event*, void* user_data);
+	int renderer_mode; // mode 0 -> SDL2 renderer mode = 1 GL
+	const char* window_title;
+	int wwidth; // window width
+	int wheight; // window height
 	uint32_t _end_canary;
 };
 
@@ -166,7 +188,7 @@ struct ap_sdl_app_desc {
 	Runs an application loop that handles input and events and calls callback functions for the user
 	The callbacks will be called with the user data passed by pointer in this function.
 */
-int ap_sdl_app_run(struct ap_sdl_app_desc* desc, struct ap_sdl_window_desc* window_desc, void* user_data);
+int ap_sdl_app_run(struct ap_sdl_app_desc* desc, void* user_data);
 
 /** Returns the current delta time in seconds for this frame (must be called on frame callback)*/
 float ap_sdl_app_dt();
@@ -177,77 +199,94 @@ float ap_sdl_app_fps();
 /** Returns the window pointer of the application */
 SDL_Window* ap_sdl_app_window();
 
+/** Returns the SDL2 renderer pointer of the application */
+SDL_Renderer* ap_sdl_app_renderer();
+
 /** Returns the input pointer structure of the application (window)*/
 struct ap_sdl_input* ap_sdl_app_input();
 
 /*--- IMPLEMENTATION ---------------------------------------------------------*/
+//#define AP_SDL_IMPL
 #ifdef AP_SDL_IMPL
 #include <assert.h>
 #include <stdlib.h>
 #include <SDL.h>
 #include <SDL_log.h>
+#include <SDL_keyboard.h>
 
 
-int ap_sdl_create_window(struct ap_sdl_window_desc* params, SDL_Window** out_window, SDL_GLContext* out_gl_ctx) {
-	assert(params);
-	assert((params->_start_canary == 0) && (params->_end_canary == 0));
+/** Creates a default SDL2 renderer window **/
+int ap_sdl_create_window(const char* window_title, int window_width, int window_height, SDL_Window** out_window, SDL_Renderer** out_renderer) {
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
+		return EXIT_FAILURE;
+	}
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
-        return 0;
-    }
+	//Create window
+	*out_window = SDL_CreateWindow(window_title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_width, window_height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+	if (!out_window) {
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window: %s", SDL_GetError());
+		return EXIT_FAILURE;
+	}
 
+	*out_renderer = SDL_CreateRenderer(*out_window, -1, SDL_RENDERER_ACCELERATED);
+	if (!out_renderer) {
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create  renderer: %s", SDL_GetError());
+		return EXIT_FAILURE;
+	}
 
-    // Debug context flag
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, params->is_gl_context_debug ? SDL_GL_CONTEXT_DEBUG_FLAG: 0);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, params->opengl_major);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, params->opengl_minor);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
-    //Create window
-    *out_window = SDL_CreateWindow(params->window_title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, params->wsize_x, params->wsize_y, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
-    if (!out_window) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window: %s", SDL_GetError());
-        return 0;
-    }
-
-    *out_gl_ctx = SDL_GL_CreateContext(*out_window);
-    if (!out_gl_ctx) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create gl context: %s", SDL_GetError());
-        return 0;
-    }
-
-    return 1;
+	return EXIT_SUCCESS;
 }
 
-int ap_sdl_create_window_default(const char* window_name, int width, int height, SDL_Window** out_window, SDL_GLContext* out_gl_ctx) {
-	struct ap_sdl_window_desc desc = { 0 };
-	desc.window_title = window_name;
-	desc.wsize_x = width;
-	desc.wsize_y = height;
-	desc.opengl_major = 3;
-	desc.opengl_minor = 3;
-	desc.is_gl_context_debug = 1;
-	return ap_sdl_create_window(&desc, out_window, out_gl_ctx);
-}
+/** Creates a default opengl 3.3 window. */
+int ap_sdl_create_window_gl(const char* window_title, int window_width, int window_height, SDL_Window** out_window, SDL_GLContext* out_gl_ctx) {
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
+		return EXIT_FAILURE;
+	}
 
 
-void ap_sdl_destroy_window(SDL_Window* window, SDL_GLContext* gl_ctx) {
-	SDL_GL_DeleteContext(*gl_ctx);
-	SDL_DestroyWindow(window);
+	// Debug context flag
+	//SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, params->is_gl_context_debug ? SDL_GL_CONTEXT_DEBUG_FLAG : 0);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
+	//Create window
+	*out_window = SDL_CreateWindow(window_title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_width, window_height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+	if (!out_window) {
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window: %s", SDL_GetError());
+		return EXIT_FAILURE;
+	}
+
+	*out_gl_ctx = SDL_GL_CreateContext(*out_window);
+	if (!out_gl_ctx) {
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create gl context: %s", SDL_GetError());
+		return EXIT_FAILURE;
+	}
+
+	return EXIT_SUCCESS;
 }
 
 /** Application globals */
 SDL_Window* g_window;
+SDL_Renderer* g_renderer;
 SDL_GLContext g_glctx;
+
 struct ap_sdl_input g_app_input = { 0 };
-float g_tm_dtacc_s = 0;
-float g_tm_fps = 0;
+float g_tm_dtacc_s;
+float g_tm_fps;
+
 
 SDL_Window* ap_sdl_app_window() {
 	return g_window;
 }
+
+SDL_Renderer* ap_sdl_app_renderer() {
+	return g_renderer;
+}
+
 
 struct ap_sdl_input* ap_sdl_app_input() {
 	return &g_app_input;
@@ -261,14 +300,22 @@ float ap_sdl_app_fps() {
 	return g_tm_fps;
 }
 
+#define AP_GL33COMPATLOADER_IMPL
+#include "ap_gl33compat.h"
 
-int ap_sdl_app_run(struct ap_sdl_app_desc* desc, struct ap_sdl_window_desc* window_desc, void* user_data) {
+int ap_sdl_app_run(struct ap_sdl_app_desc* desc, void* user_data) {
 	assert(desc);
 	assert((desc->_start_canary == 0) && (desc->_end_canary == 0));
-	assert(window_desc);
 
-	if (!ap_sdl_create_window(window_desc, &g_window, &g_glctx)) {
-		return EXIT_FAILURE;
+	if (desc->renderer_mode == 0) {
+		if (ap_sdl_create_window(desc->window_title, desc->wwidth, desc->wheight, &g_window, &g_renderer) == EXIT_FAILURE) {
+			return EXIT_FAILURE;
+		}
+	} else {
+		if (ap_sdl_create_window_gl(desc->window_title, desc->wwidth, desc->wheight, &g_window, &g_glctx) == EXIT_FAILURE) {
+			return EXIT_FAILURE;
+		}
+		gladLoadGL();
 	}
 
 	if (desc->init_cb) desc->init_cb(user_data);
@@ -305,9 +352,8 @@ int ap_sdl_app_run(struct ap_sdl_app_desc* desc, struct ap_sdl_window_desc* wind
 		ap_sdl_input_begin_frame(&g_app_input);
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {
-			// handle input events
+			// Handle input events
 			ap_sdl_input_handle_event(&g_app_input, &e);
-			
 
 			// Close window event
 			if (e.type == SDL_WINDOWEVENT && 
@@ -325,20 +371,34 @@ int ap_sdl_app_run(struct ap_sdl_app_desc* desc, struct ap_sdl_window_desc* wind
 		// 2 Handle the frame update
 		if (desc->frame_cb) desc->frame_cb(user_data);
 
-		SDL_GL_SwapWindow(g_window);
+		// Blit the screen
+		if (desc->renderer_mode == 0) {
+			SDL_RenderPresent(g_renderer);
+		} else {
+			SDL_GL_SwapWindow(g_window);
+		}
+
 		// reset elapsed accumulator
 		g_tm_dtacc_s = 0;
 	}
 
+	// user cleanup callback
 	if (desc->cleanup_cb) desc->cleanup_cb(user_data);
-	ap_sdl_destroy_window(g_window, &g_glctx);
+
+	// sdl cleanup
+	if (desc->renderer_mode == 0) {
+		SDL_DestroyRenderer(g_renderer);
+	} else {
+		SDL_GL_DeleteContext(g_glctx);
+	}
+	SDL_DestroyWindow(g_window);
 	SDL_Quit();
 	return EXIT_SUCCESS;
 }
 
 
 
-#include <SDL_keyboard.h>
+
 
 int ap_sdl_key_triggered(struct ap_sdl_input* state, SDL_Keycode iKeyCode) {
 	struct ap_sdl_KeyboardButtonState* key = &state->kb.keys[(SDL_GetScancodeFromKey(iKeyCode))];
@@ -385,16 +445,6 @@ void ap_sdl_ms_motion(struct ap_sdl_input* state, Sint32* relx, Sint32* rely) {
 	*relx = state->ms.xrel;
 	*rely = state->ms.yrel;
 }
-
-//Magnum::Int fixedModifiers(Uint16 mod) {
-//	Uint16 modifiers = mod;
-//	if (modifiers & (Uint16)KeyboardModifier::Shift) modifiers |= (Uint16)KeyboardModifier::Shift;
-//	if (modifiers & (Uint16)KeyboardModifier::Ctrl) modifiers |= (Uint16)KeyboardModifier::Ctrl;
-//	if (modifiers & (Uint16)KeyboardModifier::Alt) modifiers |= (Uint16)KeyboardModifier::Alt;
-//	if (modifiers & (Uint16)KeyboardModifier::Super) modifiers |= (Uint16)KeyboardModifier::Alt;
-//	return (Magnum::Int)modifiers;
-//}
-
 
 void ap_sdl_input_begin_frame(struct ap_sdl_input* state) {
 	// Reset mouse relative motion each frame
@@ -461,114 +511,62 @@ void ap_sdl_input_handle_event(struct ap_sdl_input* state, SDL_Event* e) {
 	}
 }
 
+
+//// CUTE TEXTURE LOADING CODE
+
+#pragma warning( push )
+#pragma warning(disable : 4996) // disable fopen warning in cute_png..
+#define CUTE_PNG_IMPLEMENTATION
+#include "cute_png.h"
+#pragma warning( pop )
+
+SDL_Texture* ap_sdl_texture_load(const char* file_name, SDL_Renderer* renderer) {
+	cp_image_t img = cp_load_png(file_name);
+	if (!img.pix) {
+		return NULL;
+	}
+	//cp_flip_image_horizontal(&img);
+
+	Uint32 rmask, gmask, bmask, amask;
+	/* SDL interprets each pixel as a 32-bit number, so our masks must depend
+	   on the endianness (byte order) of the machine */
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+	rmask = 0xff000000;
+	gmask = 0x00ff0000;
+	bmask = 0x0000ff00;
+	amask = 0x000000ff;
+#else
+	rmask = 0x000000ff;
+	gmask = 0x0000ff00;
+	bmask = 0x00ff0000;
+	amask = 0xff000000;
+#endif
+
+	SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(img.pix, img.w, img.h, 32,img.w * 4, rmask, gmask, bmask, amask);
+	if (surface == NULL) {
+		/*fprintf(stderr, "CreateRGBSurface failed: %s\n", SDL_GetError());
+		exit(1);*/
+		return NULL;
+	}
+
+
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+	if (texture == NULL) {
+		/*fprintf(stderr, "CreateTextureFromSurface failed: %s\n", SDL_GetError());
+		exit(1);*/
+		SDL_FreeSurface(surface);
+		return NULL;
+	}
+
+	SDL_FreeSurface(surface);
+	return texture;
+}
+
+
+
+
 #endif //AP_SDL_IMPL
 
 
 
 
-
-//enum ap_sdl_keycode {
-//	AP_SDL_Unknown = SDLK_UNKNOWN,     /**< Unknown key */
-//	AP_SDL_LeftShift = SDLK_LSHIFT,
-//	AP_SDL_RightShift = SDLK_RSHIFT,
-//	AP_SDL_LeftCtrl = SDLK_LCTRL,
-//	AP_SDL_RightCtrl = SDLK_RCTRL,
-//	AP_SDL_LeftAlt = SDLK_LALT,
-//	AP_SDL_RightAlt = SDLK_RALT,
-//	AP_SDL_LeftSuper = SDLK_LGUI,		/* Left Super Key Windows */
-//	AP_SDL_RightSuper = SDLK_RGUI,
-//	AP_SDL_AltGr = SDLK_MODE,
-//	AP_SDL_Enter = SDLK_RETURN,        /**< Enter */
-//	AP_SDL_Esc = SDLK_ESCAPE,          /**< Escape */
-//	AP_SDL_Up = SDLK_UP,               /**< Up arrow */
-//	AP_SDL_Down = SDLK_DOWN,           /**< Down arrow */
-//	AP_SDL_Left = SDLK_LEFT,           /**< Left arrow */
-//	AP_SDL_Right = SDLK_RIGHT,         /**< Right arrow */
-//	AP_SDL_Home = SDLK_HOME,           /**< Home */
-//	AP_SDL_End = SDLK_END,             /**< End */
-//	AP_SDL_PageUp = SDLK_PAGEUP,       /**< Page up */
-//	AP_SDL_PageDown = SDLK_PAGEDOWN,   /**< Page down */
-//	AP_SDL_Backspace = SDLK_BACKSPACE, /**< Backspace */
-//	AP_SDL_Insert = SDLK_INSERT,       /**< Insert */
-//	AP_SDL_Delete = SDLK_DELETE,       /**< Delete */
-//	AP_SDL_F1 = SDLK_F1,               /**< F1 */
-//	AP_SDL_F2 = SDLK_F2,               /**< F2 */
-//	AP_SDL_F3 = SDLK_F3,               /**< F3 */
-//	AP_SDL_F4 = SDLK_F4,               /**< F4 */
-//	AP_SDL_F5 = SDLK_F5,               /**< F5 */
-//	AP_SDL_F6 = SDLK_F6,               /**< F6 */
-//	AP_SDL_F7 = SDLK_F7,               /**< F7 */
-//	AP_SDL_F8 = SDLK_F8,               /**< F8 */
-//	AP_SDL_F9 = SDLK_F9,               /**< F9 */
-//	AP_SDL_F10 = SDLK_F10,             /**< F10 */
-//	AP_SDL_F11 = SDLK_F11,             /**< F11 */
-//	AP_SDL_F12 = SDLK_F12,             /**< F12 */
-//	AP_SDL_Space = SDLK_SPACE,         /**< Space */
-//	AP_SDL_Tab = SDLK_TAB,             /**< Tab */
-//	AP_SDL_Quote = SDLK_QUOTE,
-//	AP_SDL_Comma = SDLK_COMMA,         /**< Comma */
-//	AP_SDL_Period = SDLK_PERIOD,       /**< Period */
-//	AP_SDL_Minus = SDLK_MINUS,         /**< Minus */
-//	AP_SDL_Plus = SDLK_PLUS,           /**< Plus */
-//	AP_SDL_Slash = SDLK_SLASH,         /**< Slash */
-//	AP_SDL_Percent = SDLK_PERCENT,     /**< Percent */
-//	AP_SDL_Semicolon = SDLK_SEMICOLON, /**< Semicolon ; */
-//	AP_SDL_Equal = SDLK_EQUALS,        /**< Equal */
-//	AP_SDL_LeftBracket = SDLK_LEFTBRACKET,
-//	AP_SDL_RightBracket = SDLK_RIGHTBRACKET,
-//	AP_SDL_Backslash = SDLK_BACKSLASH,
-//	AP_SDL_Backquote = SDLK_BACKQUOTE,
-//	AP_SDL_Zero = SDLK_0,              /**< Zero */
-//	AP_SDL_One = SDLK_1,               /**< One */
-//	AP_SDL_Two = SDLK_2,               /**< Two */
-//	AP_SDL_Three = SDLK_3,             /**< Three */
-//	AP_SDL_Four = SDLK_4,              /**< Four */
-//	AP_SDL_Five = SDLK_5,              /**< Five */
-//	AP_SDL_Six = SDLK_6,               /**< Six */
-//	AP_SDL_Seven = SDLK_7,             /**< Seven */
-//	AP_SDL_Eight = SDLK_8,             /**< Eight */
-//	AP_SDL_Nine = SDLK_9,              /**< Nine */
-//	AP_SDL_A = SDLK_a,                 /**< Letter A */
-//	AP_SDL_B = SDLK_b,                 /**< Letter B */
-//	AP_SDL_C = SDLK_c,                 /**< Letter C */
-//	AP_SDL_D = SDLK_d,                 /**< Letter D */
-//	AP_SDL_E = SDLK_e,                 /**< Letter E */
-//	AP_SDL_F = SDLK_f,                 /**< Letter F */
-//	AP_SDL_G = SDLK_g,                 /**< Letter G */
-//	AP_SDL_H = SDLK_h,                 /**< Letter H */
-//	AP_SDL_I = SDLK_i,                 /**< Letter I */
-//	AP_SDL_J = SDLK_j,                 /**< Letter J */
-//	AP_SDL_K = SDLK_k,                 /**< Letter K */
-//	AP_SDL_L = SDLK_l,                 /**< Letter L */
-//	AP_SDL_M = SDLK_m,                 /**< Letter M */
-//	AP_SDL_N = SDLK_n,                 /**< Letter N */
-//	AP_SDL_O = SDLK_o,                 /**< Letter O */
-//	AP_SDL_P = SDLK_p,                 /**< Letter P */
-//	AP_SDL_Q = SDLK_q,                 /**< Letter Q */
-//	AP_SDL_R = SDLK_r,                 /**< Letter R */
-//	AP_SDL_S = SDLK_s,                 /**< Letter S */
-//	AP_SDL_T = SDLK_t,                 /**< Letter T */
-//	AP_SDL_U = SDLK_u,                 /**< Letter U */
-//	AP_SDL_V = SDLK_v,                 /**< Letter V */
-//	AP_SDL_W = SDLK_w,                 /**< Letter W */
-//	AP_SDL_X = SDLK_x,                 /**< Letter X */
-//	AP_SDL_Y = SDLK_y,                 /**< Letter Y */
-//	AP_SDL_Z = SDLK_z,                 /**< Letter Z */
-//	AP_SDL_NumZero = SDLK_KP_0,            /**< Numpad zero */
-//	AP_SDL_NumOne = SDLK_KP_1,             /**< Numpad one */
-//	AP_SDL_NumTwo = SDLK_KP_2,             /**< Numpad two */
-//	AP_SDL_NumThree = SDLK_KP_3,           /**< Numpad three */
-//	AP_SDL_NumFour = SDLK_KP_4,            /**< Numpad four */
-//	AP_SDL_NumFive = SDLK_KP_5,            /**< Numpad five */
-//	AP_SDL_NumSix = SDLK_KP_6,             /**< Numpad six */
-//	AP_SDL_NumSeven = SDLK_KP_7,           /**< Numpad seven */
-//	AP_SDL_NumEight = SDLK_KP_8,           /**< Numpad eight */
-//	AP_SDL_NumNine = SDLK_KP_9,            /**< Numpad nine */
-//	AP_SDL_NumDecimal = SDLK_KP_DECIMAL,   /**< Numpad decimal */
-//	AP_SDL_NumDivide = SDLK_KP_DIVIDE,     /**< Numpad divide */
-//	AP_SDL_NumMultiply = SDLK_KP_MULTIPLY, /**< Numpad multiply */
-//	AP_SDL_NumSubtract = SDLK_KP_MINUS,    /**< Numpad subtract */
-//	AP_SDL_NumAdd = SDLK_KP_PLUS,          /**< Numpad add */
-//	AP_SDL_NumEnter = SDLK_KP_ENTER,       /**< Numpad enter */
-//	AP_SDL_NumEqual = SDLK_KP_EQUALS       /**< Numpad equal */
-//};

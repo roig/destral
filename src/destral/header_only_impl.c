@@ -11,8 +11,23 @@
 #include "sokol_gfx.h"
 
 
+
+
 #define AP_SDL_IMPL
 #include "ap_sdl.h"
 
 #define AP_DEBUG_IMPL
 #include "ap_debug.h"
+
+
+//#define AP_OPENGL_IMPL
+//#include "ap_opengl.h"
+
+
+
+#pragma warning( push )
+#pragma warning( disable : 4221 )
+#pragma warning( disable : 4706 )
+#pragma warning( disable : 4702 )
+#include "flecs.c"
+#pragma warning( pop )

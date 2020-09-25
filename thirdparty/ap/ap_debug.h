@@ -48,7 +48,7 @@
 
 
 #include <assert.h>
-
+#include <stdlib.h>
 
 #ifndef AP_ASSERT
 #ifdef NDEBUG
