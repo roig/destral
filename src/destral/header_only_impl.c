@@ -10,9 +10,6 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 
-
-
-
 #define AP_SDL_IMPL
 #include "ap_sdl.h"
 
@@ -20,9 +17,11 @@
 #include "ap_debug.h"
 
 
-//#define AP_OPENGL_IMPL
-//#include "ap_opengl.h"
-
+#pragma warning( push )
+#pragma warning( disable : 4456 )
+#define STB_DS_IMPLEMENTATION
+#include "stb_ds.h"
+#pragma warning( pop )
 
 
 #pragma warning( push )

@@ -5,6 +5,9 @@ set(Destral_PUBLIC_HEADERS
 
 "destral.h"
 "render.h"
+"transform.h"
+"types_math.h"
+"ecs.h"
 
 ) 
 
@@ -18,9 +21,9 @@ set(Destral_PRIVATE_HEADERS
 set(Destral_SOURCES 
 "header_only_impl.c" 
 "destral.c"
-
+"transform.c"
 "render.c"
-#"transform.cpp"
+"ecs.c"
 
 )
 

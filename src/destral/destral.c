@@ -1,4 +1,5 @@
 #include "destral/destral.h"
+#include "destral/ecs.h"
 #include "destral/render.h"
 #include "flecs.h"
 
@@ -32,6 +33,8 @@ ecs_world_t* world;
 
 void _ds_app_init(void* d) {
     ap_dbg_init("DestralApp");
+    world = ecs_init();
+    ds_ecs_register_cp(world);
     ds_rd_init();
 
     /* Create the world, pass arguments for overriding the number of threads,fps
