@@ -9,6 +9,7 @@ set(Destral_PUBLIC_HEADERS
 "render.h"
 "transform.h"
 "types.h"
+"collision.h"
 ) 
 
 
@@ -24,6 +25,7 @@ set(Destral_SOURCES
 "transform.cpp"
 "render.cpp"
 "types.cpp"
+"collision.cpp"
 )
 
 #add_executable(Destral 

@@ -37,9 +37,33 @@ entt::entity create_sprite(entt::registry& r, sg_image texture, const glm::vec2&
 	entt::entity e = r.create();
 	r.emplace<cp::transform>(e);
 	tr::set_position(r, e, pos);
+	tr::set_rotation(r, e, rot);
+	tr::set_scale(r, e, scale);
 	auto& c = r.emplace<cp::sprite_rd>(e);
 	c.texture = texture;
-	//c.color = glm::vec4{ 1,0,0,1 };
+	return e;
+}
+
+entt::entity create_collider_rect(entt::registry& r, const glm::vec2 half_size, const glm::vec2& pos, float rot, const glm::vec2& scale) {
+	entt::entity e = r.create();
+	r.emplace<cp::transform>(e);
+	tr::set_position(r, e, pos);
+	tr::set_rotation(r, e, rot);
+	tr::set_scale(r, e, scale);
+	auto& c = r.emplace<cp::collider>(e);
+	c.half_size = half_size;
+	c.is_rectangle = true;
+	return e;
+}
+entt::entity create_collider_circle(entt::registry& r, float radius, const glm::vec2& pos, float rot, const glm::vec2& scale) {
+	entt::entity e = r.create();
+	r.emplace<cp::transform>(e);
+	tr::set_position(r, e, pos);
+	tr::set_rotation(r, e, rot);
+	tr::set_scale(r, e, scale);
+	auto& c = r.emplace<cp::collider>(e);
+	c.circle_radius = radius;
+	c.is_rectangle = false;
 	return e;
 }
 
