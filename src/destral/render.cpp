@@ -2,7 +2,13 @@
 
 #include <ap_debug.h>
 #include <ap_sdl.h>
-#include <cute_png.h>
+#pragma warning( push )
+#pragma warning(disable : 4505) // 
+#pragma warning(disable : 4996) // disable fopen warning in cute_png..
+#pragma warning(disable : 4189) // 
+#include "cute_png.h"
+#pragma warning( pop )
+
 
 #include "transform.h"
 

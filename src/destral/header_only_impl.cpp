@@ -18,7 +18,9 @@
 
 
 #pragma warning( push )
+#pragma warning(disable : 4505) // 
 #pragma warning(disable : 4996) // disable fopen warning in cute_png..
+#pragma warning(disable : 4189) // 
 #define CUTE_PNG_IMPLEMENTATION
 #include "cute_png.h"
 #pragma warning( pop )

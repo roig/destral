@@ -275,10 +275,10 @@ typedef struct cp_state_t
 	uint32_t nlen;
 } cp_state_t;
 
-static int cp_would_overflow(cp_state_t* s, int num_bits)
-{
-	return (s->bits_left + s->count) - num_bits < 0;
-}
+//static int cp_would_overflow(cp_state_t* s, int num_bits)
+//{
+//	return (s->bits_left + s->count) - num_bits < 0;
+//}
 
 static char* cp_ptr(cp_state_t* s)
 {
@@ -326,7 +326,7 @@ static uint32_t cp_read_bits(cp_state_t* s, int num_bits_to_read)
 	CUTE_PNG_ASSERT(num_bits_to_read >= 0);
 	CUTE_PNG_ASSERT(s->bits_left > 0);
 	CUTE_PNG_ASSERT(s->count <= 64);
-	CUTE_PNG_ASSERT(!cp_would_overflow(s, num_bits_to_read));
+	//CUTE_PNG_ASSERT(!cp_would_overflow(s, num_bits_to_read));
 	cp_peak_bits(s, num_bits_to_read);
 	uint32_t bits = cp_consume_bits(s, num_bits_to_read);
 	return bits;
@@ -450,8 +450,8 @@ static int cp_decode(cp_state_t* s, uint32_t* tree, int hi)
 	}
 
 	uint32_t key = tree[lo - 1];
-	uint32_t len = (32 - (key & 0xF));
-	CUTE_PNG_ASSERT((search >> len) == (key >> len));
+	//uint32_t len = (32 - (key & 0xF));
+	CUTE_PNG_ASSERT((search >> (32 - (key & 0xF))) == (key >> (32 - (key & 0xF))));
 
 	int code = cp_consume_bits(s, key & 0xF);
 	(void)code;

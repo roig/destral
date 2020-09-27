@@ -65,6 +65,6 @@ set  (LUA_RUNTIME_SOURCES
 "src/lzio.c"
 "src/lzio.h")
   
-add_library( LuaLib54 ${LUA_RUNTIME_SOURCES} )
+add_library(  LuaLib54  SHARED ${LUA_RUNTIME_SOURCES} )
 
 target_include_directories ( LuaLib54 PUBLIC "${PROJECT_SOURCE_DIR}/src")
