@@ -30,8 +30,9 @@ sg_shader g_shd_tex = { 0 };
 
 // global vertices buffer
 #define BUFFER_SIZE 16384
-std::array<float, BUFFER_SIZE * 8> vert_buf;
-std::array<std::uint32_t, BUFFER_SIZE * 6> index_buf;
+ 
+std::array<float, BUFFER_SIZE> vert_buf;
+std::array<std::uint32_t, BUFFER_SIZE> index_buf;
 
 //static float    tex_buf[BUFFER_SIZE * 8];
 //static float    vert_buf[BUFFER_SIZE * 8];
@@ -39,17 +40,25 @@ std::array<std::uint32_t, BUFFER_SIZE * 6> index_buf;
 //static uint32_t index_buf[BUFFER_SIZE * 6];
 
 sg_buffer g_vbo = { 0 };
+sg_buffer g_ibo = { 0 };
 
 void rd::init() {
     sg_desc d = { 0 };
     sg_setup(&d);
 
     // First create a dynamic streaming buffer
-    /*sg_buffer_desc buff_d = { 0 };
+    sg_buffer_desc buff_d = { 0 };
     buff_d.type = SG_BUFFERTYPE_VERTEXBUFFER;
     buff_d.usage = SG_USAGE_STREAM;
+    buff_d.size = vert_buf.size() * sizeof(float);
     g_vbo = sg_make_buffer(buff_d);
-    */
+    
+    sg_buffer_desc buff_ibo_d = { 0 };
+    buff_ibo_d.type = SG_BUFFERTYPE_INDEXBUFFER;
+    buff_ibo_d.usage = SG_USAGE_STREAM;
+    buff_ibo_d.size = index_buf.size() * sizeof(std::uint32_t);
+    g_ibo = sg_make_buffer(buff_ibo_d);
+
 
     sg_shader_desc sh1 = { 0 };
     sh1.fs.images[0] = { .name = "tex", .type = SG_IMAGETYPE_2D },
