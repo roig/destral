@@ -3,6 +3,8 @@ find_package(SDL2)
 # Those headers are the public ones that should be installed
 set(Destral_PUBLIC_HEADERS
 
+
+
 "destral.h"
 "render.h"
 "transform.h"

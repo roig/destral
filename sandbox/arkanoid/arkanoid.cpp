@@ -4,35 +4,83 @@
 #include <destral/destral.h>
 #include <destral/types.h>
 
+using namespace ds;
 
-entt::entity player;
-void ak_tick(ds_world*r) {
-	auto& tr = r->get<ds::cp::transform>(player);
-	if (ap_sdl_key_pressed(ap_sdl_app_input(), SDLK_RIGHT)) {
-		ds::tr::set_position(*r, player, { tr.position.x + 10.0f, tr.position.y });
-	} else if (ap_sdl_key_pressed(ap_sdl_app_input(), SDLK_LEFT)){
-		ds::tr::set_position(*r, player, { tr.position.x - 10.0f, tr.position.y });
-	} else if (ap_sdl_key_pressed(ap_sdl_app_input(), SDLK_UP)) {
-		ds::tr::set_position(*r, player, { tr.position.x, tr.position.y +10.f});
-	} else if (ap_sdl_key_pressed(ap_sdl_app_input(), SDLK_DOWN)) {
-		ds::tr::set_position(*r, player, { tr.position.x, tr.position.y - 10.f });
+struct player {
+	float move_vel = 200.0f;
+
+
+};
+
+struct ball {
+	float move_vel = 300.0f;
+
+
+};
+
+
+
+
+
+void update_player(entt::registry& r) {
+	auto player_view = r.view<player, cp::transform>();
+	for (auto e: player_view) { 
+		auto& tr = player_view.get<cp::transform>(e);
+		auto& pl = player_view.get<player>(e);
+		float dt = ap_sdl_app_dt();
+		glm::vec2 delta = { 0,0 };
+
+		if (ap_sdl_key_pressed(ap_sdl_app_input(), SDLK_RIGHT)) {
+			delta.x++;
+		} 
+		if (ap_sdl_key_pressed(ap_sdl_app_input(), SDLK_LEFT)) {
+			delta.x--;
+		} 
+		if (ap_sdl_key_pressed(ap_sdl_app_input(), SDLK_UP)) {
+			delta.y++;
+		} 
+		if (ap_sdl_key_pressed(ap_sdl_app_input(), SDLK_DOWN)) {
+			delta.y--;
+		}
+		delta = delta * pl.move_vel * dt;
+
+		ds::tr::set_position(r, e, tr.position + delta);
 	}
 }
 
-sg_image link;
-void ak_init(ds_world*r) {
-	entt::entity e = ds::create_camera(*r, {});
-	(void)e;
-
-	ds::create_rectangle(*r, {}, glm::vec2{ 1270.f,200.f }, false, {0,0,1,1});
-	ds::create_line(*r, {{0,0},{-100,100}, {-200,-200} });
-
-	link = ds::rd::create_image("resources/link.png");
-	player = ds::create_sprite(*r, link, { 300, 300 });
+void update_ball(entt::registry& r) {
 
 }
 
-void ak_shutdown(ds_world* r) {
+
+void ak_tick(entt::registry* r) {
+
+	update_player(*r);
+	update_ball(*r);
+}
+
+sg_image link;
+void ak_init(entt::registry* r) {
+	// create a default camera
+	ds::create_camera(*r, {});
+
+	// create the player entity with an attached rectangle
+	auto pl_e = r->create();
+	r->emplace<player>(pl_e);
+	r->emplace<cp::transform>(pl_e);
+	auto pl_spr = ds::create_rectangle(*r, {}, glm::vec2{ 300.f,50.f }, true, {0,1,0,1});
+	tr::set_parent(*r, pl_spr, pl_e);
+
+	
+
+	//ds::create_line(*r, {{0,0},{-100,100}, {-200,-200} });
+
+	//link = ds::rd::create_image("resources/link.png");
+	//player = ds::create_sprite(*r, link, { 300, 300 });
+
+}
+
+void ak_shutdown(entt::registry* r) {
 	
 
 	

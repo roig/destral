@@ -47,7 +47,7 @@ void rd::init() {
     sg_setup(&d);
 
     // First create a dynamic streaming buffer
-    sg_buffer_desc buff_d = { 0 };
+  /*  sg_buffer_desc buff_d = { 0 };
     buff_d.type = SG_BUFFERTYPE_VERTEXBUFFER;
     buff_d.usage = SG_USAGE_STREAM;
     buff_d.size = vert_buf.size() * sizeof(float);
@@ -57,7 +57,7 @@ void rd::init() {
     buff_ibo_d.type = SG_BUFFERTYPE_INDEXBUFFER;
     buff_ibo_d.usage = SG_USAGE_STREAM;
     buff_ibo_d.size = index_buf.size() * sizeof(std::uint32_t);
-    g_ibo = sg_make_buffer(buff_ibo_d);
+    g_ibo = sg_make_buffer(buff_ibo_d);*/
 
 
     sg_shader_desc sh1 = { 0 };
