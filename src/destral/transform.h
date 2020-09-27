@@ -1,27 +1,43 @@
 #pragma once
-
-#include "types_math.h"
-#include "ecs.h"
+#include <glm/mat3x3.hpp>
+#include <entt/entity/fwd.hpp>
+#include <entt/entity/entity.hpp>
+#include <vector>
 
 /**
- *
- *
+ * transform components and functions
  */
 
-typedef struct ap_cp_transform {
-	vec2 position;
-	float rotation;
-	vec2 scale;
-	mat3 ltw;
-	mat3 ltp;
-	ecs_entity_t parent;
-	ecs_entity_t* children_arr; /** children stb array */
-}ap_cp_transform;
+namespace ds::cp {
+	struct transform {
+		glm::vec2 position = glm::vec2(0);
+		glm::vec2 scale = glm::vec2(1);
+		float rot_radians = 0.0f;
+		glm::mat3 ltp = glm::mat3(1);
+		glm::mat3 ltw = glm::mat3(1);
+		entt::entity parent = entt::null;
+		std::vector<entt::entity> children;
+	};
+}
 
-void ap_tr_set_position(ecs_world_t* w, vec2 position);
-void ap_tr_set_rotation(ecs_world_t* w, float rotation);
-void ap_tr_set_scale(ecs_world_t* w, vec2 scale);
-void ap_tr_set_parent(ecs_world_t* w, ecs_entity_t to, ecs_entity_t parent);
+namespace ds::tr {
+	/** sets a new position to the Transform. remember that this will not use colliders.*/
+	void set_position(entt::registry& r, entt::entity e, glm::vec2 position);
+
+	/** sets a new rotation to the Transform */
+	void set_rotation(entt::registry& r, entt::entity e, float rot_radians);
+
+	/** sets a new scale to the Transform */
+	void set_scale(entt::registry& r, entt::entity e, glm::vec2 scale);
+
+	/** sets a new parent to the entity. if parent is entt::null means to remove the parent. */
+	void set_parent(entt::registry& r, entt::entity to, entt::entity parent = entt::null);
+
+	/** adds the callbacks for the construction and destruction of the transform component  */
+	void set_callbacks(entt::registry& r);
+
+}
+
 
 
 

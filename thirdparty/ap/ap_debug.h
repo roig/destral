@@ -90,7 +90,9 @@
     #endif AP_DEBUG_STREAMS
 #endif
 
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 enum ap_dbg_loglvl {
     AP_DBG_TRACE = 0,
@@ -118,6 +120,14 @@ void ap_dbg_log(enum ap_dbg_loglvl lvl, const char* file, int line, const char* 
 */
 void ap_dbg_shutdown();
 
+
+
+
+
+
+#ifdef __cplusplus
+}
+#endif
 #ifdef AP_DEBUG_IMPL
 #include <stdio.h>
 #include <time.h>
@@ -125,12 +135,12 @@ void ap_dbg_shutdown();
 #include <stdlib.h>
 
 
-FILE* g_logfile = NULL;
+FILE* g_logfile = 0;
 
 void ap_dbg_init(const char* file_log_name) {
     if (file_log_name) {
         // build the date/hour part of the filename
-        time_t timer = time(NULL);
+        time_t timer = time(0);
         struct tm tm_info;
         localtime_s(&tm_info, &timer);
         char time_str[128] = { 0 };
@@ -145,7 +155,7 @@ void ap_dbg_init(const char* file_log_name) {
         errno_t err = fopen_s(&g_logfile, full_name, "w+");
         if (err) {
             printf("Can't open log file: %s \n  Logging continues without file log", full_name);
-            g_logfile = NULL;
+            g_logfile = 0;
         }
         free(full_name);
     }

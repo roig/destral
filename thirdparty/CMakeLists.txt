@@ -1,4 +1,4 @@
-# add_subdirectory(lua53)
+add_subdirectory(lua54)
 
 # ######### TMXLITE
 # add_subdirectory(tmxlite/tmxlite)

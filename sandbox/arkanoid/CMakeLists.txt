@@ -1,7 +1,5 @@
 
-add_executable(Arkanoid
-"arkanoid.c"
-)
+add_executable(Arkanoid "arkanoid.cpp")
 
 
 
@@ -14,7 +12,7 @@ target_compile_options(Arkanoid PUBLIC
 #/wd6011
 /MP)
 
-#target_compile_features(Arkanoid PUBLIC cxx_std_20)
+target_compile_features(Arkanoid PUBLIC cxx_std_20)
 target_link_libraries(Arkanoid PUBLIC Destral)
 
 

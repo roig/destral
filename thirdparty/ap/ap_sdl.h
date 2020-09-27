@@ -49,6 +49,11 @@
 #include <SDL_render.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /****************
 	WINDOW
 *****************/
@@ -205,11 +210,17 @@ SDL_Renderer* ap_sdl_app_renderer();
 /** Returns the input pointer structure of the application (window)*/
 struct ap_sdl_input* ap_sdl_app_input();
 
+
+
+#ifdef __cplusplus
+}
+#endif
 /*--- IMPLEMENTATION ---------------------------------------------------------*/
 //#define AP_SDL_IMPL
 #ifdef AP_SDL_IMPL
 #include <assert.h>
 #include <stdlib.h>
+
 #include <SDL.h>
 #include <SDL_log.h>
 #include <SDL_keyboard.h>

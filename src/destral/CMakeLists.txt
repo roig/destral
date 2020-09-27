@@ -6,9 +6,7 @@ set(Destral_PUBLIC_HEADERS
 "destral.h"
 "render.h"
 "transform.h"
-"types_math.h"
-"ecs.h"
-
+"types.h"
 ) 
 
 
@@ -19,14 +17,18 @@ set(Destral_PRIVATE_HEADERS
 
 
 set(Destral_SOURCES 
-"header_only_impl.c" 
-"destral.c"
-"transform.c"
-"render.c"
-"ecs.c"
-
+"header_only_impl.cpp" 
+"destral.cpp"
+"transform.cpp"
+"render.cpp"
+"types.cpp"
 )
 
+#add_executable(Destral 
+#${Destral_SOURCES}
+#${Destral_PUBLIC_HEADERS}
+#${Destral_PRIVATE_HEADERS}
+#)
 
 add_library(Destral
 
@@ -40,7 +42,7 @@ ${Destral_PRIVATE_HEADERS}
 target_link_libraries(Destral PUBLIC
 	SDL2::SDL2
 	Opengl32
-	#LuaLib
+	LuaLib54
 	# nlohmann_json::nlohmann_json
 	#ImguiLibrary
 	# tmxlite
@@ -50,14 +52,15 @@ target_link_libraries(Destral PUBLIC
 ######### Cute Headers
 target_include_directories(Destral PUBLIC
 	..
-	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/cute_headers
-	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/sokol
 	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/ap
-	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/flecs
-	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/cglm
+	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/entt-3.5.2/src
+	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/glm
+	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/sol2-3.2.1/single/include
 )
 
-#target_compile_features(Destral PUBLIC cxx_std_20)
+
+# c++ standard
+target_compile_features(Destral PUBLIC cxx_std_20)
 
 if (MSVC)
     # warning level 4 and all warnings as errors
@@ -74,11 +77,6 @@ else()
     # lots of warnings and all warnings as errors
     target_compile_options(Destral PUBLIC -Wall -Wextra -pedantic -Werror)
 endif()
-
-
-# warnings suppression Visual studio and multithreading compiling /MP
-target_compile_options(Destral PUBLIC 
-)
 
 
 # debug postfix

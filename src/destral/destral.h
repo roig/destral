@@ -1,7 +1,7 @@
 #pragma once
-#include "cglm/affine2d.h"
-
+#include <entt/entity/fwd.hpp>
 #include <SDL_events.h>
+
 struct ds_app_event {
     SDL_Event* event;
     int accepted;
@@ -10,7 +10,7 @@ struct ds_app_event {
 /*
     
 */
-typedef void ds_world; // TODO Change this
+using ds_world = entt::registry;
 struct ds_app_desc {
     const char* window_name;
     int window_width;
