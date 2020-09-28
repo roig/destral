@@ -1,4 +1,13 @@
 #pragma once
+#define AP_UUID_IMPL
+#include <ap_uuid.h>
+int main() {
+
+	
+
+}
+
+/*
 #include <ap_debug.h>
 #include <ap_sdl.h>
 #include <destral/destral.h>
@@ -52,3 +61,5 @@ int main() {
 
 	return ds_app_run(&app_desc);
 }
+
+*/

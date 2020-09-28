@@ -2,6 +2,9 @@
 	This cpp is where we will compile all of our header only libraries.
 */
 
+
+
+
 #define AP_GLLOADER_IMPL
 #include "ap_gl33.h"
 
@@ -24,5 +27,6 @@
 #pragma warning( pop )
 
 
-
+#define AP_UUID_IMPL
+#include "ap_uuid.h"
 
