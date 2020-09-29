@@ -38,8 +38,6 @@ void _ds_app_shutdown(void* d) {
     ds_app_desc* app = (ds_app_desc*) d;
     if (app->cleanup_cb) app->cleanup_cb(&g_world);
 
-
-    
     ds::rd::shutdown();
     AP_INFO("Destral engine shutdown");
     ap_dbg_shutdown();

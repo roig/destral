@@ -2,7 +2,13 @@
 
 #include <ap_debug.h>
 #include <ap_sdl.h>
-#include <cute_png.h>
+#pragma warning( push )
+#pragma warning(disable : 4505) // 
+#pragma warning(disable : 4996) // disable fopen warning in cute_png..
+#pragma warning(disable : 4189) // 
+#include "cute_png.h"
+#pragma warning( pop )
+
 
 #include "transform.h"
 
@@ -47,17 +53,17 @@ void rd::init() {
     sg_setup(&d);
 
     // First create a dynamic streaming buffer
-    //sg_buffer_desc buff_d = { 0 };
-    //buff_d.type = SG_BUFFERTYPE_VERTEXBUFFER;
-    //buff_d.usage = SG_USAGE_STREAM;
-    //buff_d.size = vert_buf.size() * sizeof(float);
-    //g_vbo = sg_make_buffer(buff_d);
-    //
-    //sg_buffer_desc buff_ibo_d = { 0 };
-    //buff_ibo_d.type = SG_BUFFERTYPE_INDEXBUFFER;
-    //buff_ibo_d.usage = SG_USAGE_STREAM;
-    //buff_ibo_d.size = index_buf.size() * sizeof(std::uint32_t);
-    //g_ibo = sg_make_buffer(buff_ibo_d);
+  /*  sg_buffer_desc buff_d = { 0 };
+    buff_d.type = SG_BUFFERTYPE_VERTEXBUFFER;
+    buff_d.usage = SG_USAGE_STREAM;
+    buff_d.size = vert_buf.size() * sizeof(float);
+    g_vbo = sg_make_buffer(buff_d);
+    
+    sg_buffer_desc buff_ibo_d = { 0 };
+    buff_ibo_d.type = SG_BUFFERTYPE_INDEXBUFFER;
+    buff_ibo_d.usage = SG_USAGE_STREAM;
+    buff_ibo_d.size = index_buf.size() * sizeof(std::uint32_t);
+    g_ibo = sg_make_buffer(buff_ibo_d);*/
 
 
     sg_shader_desc sh1 = { 0 };
