@@ -63,7 +63,7 @@ namespace std {
 
 namespace ap {
 
-uuid uuid4_gen() {
+uuid uuid_v4() {
     static std::random_device rd;
     static std::uniform_int_distribution<std::uint_fast64_t> dist(0, (std::uint_fast64_t)(~0));
     uuid my;
@@ -89,13 +89,13 @@ bool uuid::operator<(const ap::uuid& other) const {
     return false;
 }
 
-inline uuid uuid_from_nums(std::uint_fast64_t ab, std::uint_fast64_t cd) {
+uuid uuid_from_nums(std::uint_fast64_t ab, std::uint_fast64_t cd) {
     uuid u;
     u.ab = ab; u.cd = cd;
     return u;
 }
 
-inline uuid uuid_from(const std::string& uustr) {
+uuid uuid_from(const std::string& uustr) {
     char sep;
     std::uint_fast64_t a, b, c, d, e;
     uuid u = { 0, 0 };
@@ -115,7 +115,7 @@ inline uuid uuid_from(const std::string& uustr) {
 }
 
 
-inline std::string uuid_to_string(uuid u) {
+std::string uuid_to_string(uuid u) {
     std::stringstream ss;
     ss << std::hex << std::nouppercase << std::setfill('0');
 

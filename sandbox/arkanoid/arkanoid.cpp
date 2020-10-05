@@ -6,6 +6,7 @@
 #include <destral/destral.h>
 #include <destral/types.h>
 
+
 using namespace ds;
 
 struct player {
@@ -19,9 +20,6 @@ struct ball {
 
 
 };
-
-
-
 
 
 void update_player(entt::registry& r) {
@@ -59,10 +57,12 @@ void ak_tick(entt::registry* r) {
 
 	update_player(*r);
 	update_ball(*r);
+	
 }
 
 sg_image link;
 void ak_init(entt::registry* r) {
+	
 	// create a default camera
 	ds::create_camera(*r, {});
 

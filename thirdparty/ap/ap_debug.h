@@ -66,13 +66,13 @@
 #endif
 #endif
 
-
 #ifdef NDEBUG
-    #define AP_LOG(loglvl_, format_, ...) do {} while(0)
-    #define AP_TRACE(format_ , ...) do {} while(0)
-    #define AP_INFO(format_ , ...) do {} while(0)
-    #define AP_WARNING(format_ , ...) do {} while(0)
-    #define AP_FATAL(format_, ...) do { AP_LOG(AP_DBG_ERROR, format_, ##__VA_ARGS__); abort(); } while(0);
+    // TODO make this macros work in C
+    #define AP_LOG(loglvl_, format_, ...) do { AP_UNUSED(__VA_ARGS__); } while(0)
+    #define AP_TRACE(format_ , ...) do { AP_UNUSED(__VA_ARGS__); } while(0)
+    #define AP_INFO(format_ , ...) do { AP_UNUSED(__VA_ARGS__); } while(0)
+    #define AP_WARNING(format_ , ...) do { AP_UNUSED(__VA_ARGS__); } while(0)
+    #define AP_FATAL(format_, ...) do { ap_dbg_log(AP_DBG_ERROR, __FILE__ , __LINE__, format_ , ##__VA_ARGS__ ); abort(); } while(0);
 #else
     #ifdef AP_DEBUG_STREAMS
         #include <sstream>
@@ -91,8 +91,15 @@
 #endif
 
 #ifdef __cplusplus
+
+template <typename ...Args>
+void AP_UNUSED(Args&& ...args) {
+    (void)(sizeof...(args));
+}
+
 extern "C" {
 #endif
+
 
 enum ap_dbg_loglvl {
     AP_DBG_TRACE = 0,

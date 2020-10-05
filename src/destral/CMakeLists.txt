@@ -7,6 +7,7 @@ set(Destral_PUBLIC_HEADERS
 "render.h"
 "transform.h"
 "types.h"
+"assets.h"
 
 ) 
 
@@ -23,6 +24,7 @@ set(Destral_SOURCES
 "transform.cpp"
 "render.cpp"
 "types.cpp"
+"assets.cpp"
 
 )
 
@@ -45,6 +47,7 @@ target_link_libraries(Destral PUBLIC
 	SDL2::SDL2
 	Opengl32
 	LuaLib54
+	flecs
 	# nlohmann_json::nlohmann_json
 	#ImguiLibrary
 	# tmxlite
@@ -57,6 +60,7 @@ target_include_directories(Destral PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/ap
 	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/entt-3.5.2/src
 	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/glm
+	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/rapidjson/include
 	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/sol2-3.2.1/single/include
 )
 
@@ -74,6 +78,8 @@ if (MSVC)
 	#/wd4101 #unused local variables
 	#/wd6011
 	/wd4204 #non-constant aggregate initializer
+	/wd5054
+	
 	/MP)
 else()
     # lots of warnings and all warnings as errors
