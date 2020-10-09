@@ -161,7 +161,7 @@ void ap_dbg_init(const char* file_log_name) {
         strcat_s(full_name, full_name_bufsize, time_str);
         errno_t err = fopen_s(&g_logfile, full_name, "w+");
         if (err) {
-            printf("Can't open log file: %s \n  Logging continues without file log", full_name);
+            printf("Can't open log file: %s \n  Logging continues without file log.\n\n", full_name);
             g_logfile = 0;
         }
         free(full_name);

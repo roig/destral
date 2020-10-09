@@ -3,6 +3,7 @@
 #include <functional>
 #include <any>
 #include <string>
+#include "nlohmann/json_fwd.hpp"
 
 /**
 Com funcionara l'asset Manager?
@@ -23,7 +24,9 @@ i una descripcio de cada tipus d'asset que podrem carregar/descarregar.
 namespace ds {
 	struct asset_type {
 		std::int32_t type_id;
-		std::function<std::any(const std::string& file_name)> load_from_file;
+		//std::function<std::any(const std::string& file_name)> load_from_file;
+		std::function<void (nlohmann::json& j)> serialize;
+		std::function<std::any (const nlohmann::json& j)> deserialize;
 	};
 
 	inline bool operator== (asset_type const& lhs, asset_type const& rhs) {

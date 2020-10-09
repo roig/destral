@@ -8,7 +8,8 @@ set(Destral_PUBLIC_HEADERS
 "transform.h"
 "types.h"
 "assets.h"
-
+"nlohmann/json.hpp"
+"nlohmann/json_fwd.hpp"
 ) 
 
 
@@ -46,8 +47,8 @@ ${Destral_PRIVATE_HEADERS}
 target_link_libraries(Destral PUBLIC
 	SDL2::SDL2
 	Opengl32
-	LuaLib54
-	flecs
+	#LuaLib54
+	#flecs
 	# nlohmann_json::nlohmann_json
 	#ImguiLibrary
 	# tmxlite
