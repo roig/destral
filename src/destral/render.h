@@ -2,12 +2,40 @@
 
 #include <glm/mat3x3.hpp>
 #include <entt/entity/fwd.hpp>
+#include "assets.h"
 #include <vector>
 #include <sokol_gfx.h>
 
 namespace ds {
 	struct sprite {
-		sg_image img;
+		asset_id texture = entt::null;
+
+		/**Location of the Sprite in the original Texture, specified in pixels. 
+		 *  {topleft_origin.x, topleft_origin.y, size.x, size.y}
+		 *
+		 * 	{0,0}	----	{x+,0}
+		 *	|				|
+		 *	{0,y+}	----	{x+,y+}
+		 */
+		glm::vec4 texture_rect = { 0,0,0,0 };
+
+		/* pivot point. {0.5, 0.5} centers the sprite.
+		{0,1} ---- {1,1}
+		|			|
+		{0,0} ---- {1,0}
+		*/
+		glm::vec2 pivot = { 0.5f, 0.5f };
+
+		// pixels per unit
+		float ppu = 1.0f;
+
+		static const asset_type_id asset_type_id = 2;
+	};
+
+	struct texture {
+		sg_image image = { 0 };
+		glm::vec2 size = { 0,0 };
+		static const asset_type_id asset_type_id = 1;
 	};
 }
 

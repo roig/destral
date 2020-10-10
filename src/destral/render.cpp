@@ -19,6 +19,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <array>
 
+#include <filesystem>
+
+
 //#include <glm/gtx/matrix_transform_2d.hpp>
 
 
@@ -48,9 +51,52 @@ std::array<std::uint32_t, BUFFER_SIZE> index_buf;
 sg_buffer g_vbo = { 0 };
 sg_buffer g_ibo = { 0 };
 
+void register_render_asset_types() {
+    asset_factory_type sprite_factory = {0};
+    sprite_factory.type_id = sprite::asset_type_id;
+    sprite_factory.type_name = "Sprite";
+    sprite_factory.create_default = []() { return std::unique_ptr<void, std::function<void(void*)>>(new ds::sprite{}, [](void* ptr) {delete static_cast<texture*>(ptr); }); };
+    sprite_factory.create_from_file = nullptr;
+    sprite_factory.can_import_from_file = nullptr;
+    register_asset_factory_type(sprite_factory);
+
+    asset_factory_type texture_factory = { 0 };
+    texture_factory.type_id = texture::asset_type_id;
+    texture_factory.type_name = "Texture";
+    texture_factory.create_default = nullptr;
+    texture_factory.create_from_file =
+        [](const std::string& file) { 
+        std::unique_ptr< void, std::function<void(void*)>> asset_ptr{ nullptr,
+            [](void* ptr) {
+                texture* t = static_cast<texture*>(ptr);
+                sg_destroy_image(t->image);
+                delete t;
+            }
+        };
+
+        sg_image img = rd::create_image(file.c_str());
+        if (img.id == SG_INVALID_ID) {
+            return asset_ptr;
+        } else {
+            asset_ptr.reset(new texture{ img });
+        }
+        return asset_ptr;
+    };
+    texture_factory.can_import_from_file = [](const std::string& file) {
+        if (std::filesystem::path(file).has_extension()) {
+            return std::filesystem::path(file).extension().string() == ".png";
+        }
+        return false;
+    };
+    register_asset_factory_type(texture_factory);
+
+}
+
 void rd::init() {
     sg_desc d = { 0 };
     sg_setup(&d);
+
+    register_render_asset_types();
 
     // First create a dynamic streaming buffer
   /*  sg_buffer_desc buff_d = { 0 };
@@ -389,7 +435,8 @@ sg_image rd::create_image(const char* file_name) {
     assert(file_name);
     cp_image_t img = cp_load_png(file_name);
     if (!img.pix) {
-        AP_FATAL("Error loading texture file : %s : %s", file_name, cp_error_reason);
+        AP_WARNING("Error loading texture file : %s : %s", file_name, cp_error_reason);
+        return { SG_INVALID_ID };
     }
 
     cp_flip_image_horizontal(&img);
@@ -407,8 +454,6 @@ sg_image rd::create_image(const char* file_name) {
     sg_image tex = sg_make_image(d);
     cp_free_png(&img);
     return tex;
-
-   
 }
 
 /*Magnum::Matrix3 projectionMatrixToSDLSpace(SDL_Window* window, const Vector2& cameraSize) {

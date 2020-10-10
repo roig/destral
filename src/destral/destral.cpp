@@ -10,11 +10,11 @@ entt::registry g_world;
 
 void _ds_app_init(void* d) {
     ap_dbg_init("logs/DestralApp");
-    ds::asset_test();
     ds::tr::set_callbacks(g_world);
-
     ds::rd::init();
 
+
+    ds::asset_test();
 
     ds_app_desc* app = (ds_app_desc*)d;
     if (app->init_cb)
