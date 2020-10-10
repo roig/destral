@@ -23,16 +23,16 @@ i una descripcio de cada tipus d'asset que podrem carregar/descarregar.
 
 
 */
-namespace ds {
+namespace ds::as {
 
-	using asset_id = entt::entity;
-	constexpr asset_id asset_id_null = entt::null;
-	using asset_type_id = std::uint32_t;
-	constexpr asset_type_id asset_type_id_null = 0;
+	using id = entt::entity;
+	constexpr id id_null = entt::null;
+	using type_id = std::uint32_t;
+	constexpr type_id type_id_null = 0;
 
-	struct asset_factory_type {
+	struct factory_type {
 		// factory_type asset unique identifier
-		asset_type_id type_id = asset_type_id_null;
+		type_id type_id = type_id_null;
 
 		// Just a helper name for that type (not used to identify anything)
 		std::string type_name = "unknown";
@@ -51,37 +51,47 @@ namespace ds {
 		//std::function<std::any (const nlohmann::json& j)> deserialize = nullptr;
 	};
 
-	inline bool operator== (asset_factory_type const& lhs, asset_factory_type const& rhs) {
+	inline bool operator== (factory_type const& lhs, factory_type const& rhs) {
 		return (lhs.type_id == lhs.type_id);
 	}
 
-	void register_asset_factory_type(const asset_factory_type& asset_t);
+	void register_factory_type(const factory_type& asset_t);
 
 	/**
-	* This function will create an asset from file and return the asset_id of the newly created asset_id.
+	* This doesn't do anything right now (TODO)
+	*/
+	void init();
+
+	/**
+	* This will free all the asset objects.
+	*/
+	void shutdown();
+
+	/**
+	* This function will create an asset from file and return the id of the newly created id.
 	* Internally this function will search for an appropiate type factory to load that file.
-	* returns asset_type_id_null if the asset can't be created
+	* returns type_id_null if the asset can't be created
 	*/
-	asset_id create_asset_from_file(const std::string& file);
+	id create_from_file(const std::string& file);
 
 	/**
-	* This function will create an asset using the default construction and will return the newly created asset_id
-	* returns asset_type_id_null if the asset can't be created
+	* This function will create an asset using the default construction and will return the newly created id
+	* returns type_id_null if the asset can't be created
 	*/
-	asset_id create_asset_from_type_id(asset_type_id type_id);
+	id create_from_type_id(type_id type_id);
 
 	/**
 	* This will return the asset id object requested checked with the type_id.
-	* Returns nullptr if the asset_id is not valid.
+	* Returns nullptr if the id is not valid.
 	* Will crash the application if the id is valid but not equal to the type_id supplied.
 	*/
-	void* get_asset_raw(asset_id id, asset_type_id type_id);
+	void* get_ptr(id id, type_id type_id);
 
 
-	// Helper function to get an asset by id and type_id casted to the correct type
+	// get an asset object pointer by id and casted to the correct type checking it's type_id using the templated type
 	template<typename T>
-	T* get_asset(asset_id id, asset_type_id type_id) {
-		void* instance = get_asset_raw(id, type_id);
+	T* get(id id) {
+		void* instance = get_ptr(id, T::type_id);
 		if (instance) {
 			return static_cast<T*>(instance);
 		} else {
@@ -89,7 +99,12 @@ namespace ds {
 		}
 	}
 
-	void asset_test();
+	
+	// Create an asset by type id using templated type_id
+	template<typename T>
+	id create() {
+		return create_from_type_id(T::type_id);
+	}
 
 
 

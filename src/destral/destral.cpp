@@ -14,7 +14,7 @@ void _ds_app_init(void* d) {
     ds::rd::init();
 
 
-    ds::asset_test();
+    ds::as::init();
 
     ds_app_desc* app = (ds_app_desc*)d;
     if (app->init_cb)
@@ -38,6 +38,9 @@ void _ds_app_tick(void* d) {
 void _ds_app_shutdown(void* d) {
     ds_app_desc* app = (ds_app_desc*) d;
     if (app->cleanup_cb) app->cleanup_cb(&g_world);
+
+
+    ds::as::shutdown(); // this should be the first one
 
     ds::rd::shutdown();
     AP_INFO("Destral engine shutdown");

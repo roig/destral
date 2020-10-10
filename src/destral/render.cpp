@@ -52,16 +52,17 @@ sg_buffer g_vbo = { 0 };
 sg_buffer g_ibo = { 0 };
 
 void register_render_asset_types() {
-    asset_factory_type sprite_factory = {0};
-    sprite_factory.type_id = sprite::asset_type_id;
+    using namespace as;
+    factory_type sprite_factory = {0};
+    sprite_factory.type_id = sprite::type_id;
     sprite_factory.type_name = "Sprite";
     sprite_factory.create_default = []() { return std::unique_ptr<void, std::function<void(void*)>>(new ds::sprite{}, [](void* ptr) {delete static_cast<texture*>(ptr); }); };
     sprite_factory.create_from_file = nullptr;
     sprite_factory.can_import_from_file = nullptr;
-    register_asset_factory_type(sprite_factory);
+    register_factory_type(sprite_factory);
 
-    asset_factory_type texture_factory = { 0 };
-    texture_factory.type_id = texture::asset_type_id;
+    factory_type texture_factory = { 0 };
+    texture_factory.type_id = texture::type_id;
     texture_factory.type_name = "Texture";
     texture_factory.create_default = nullptr;
     texture_factory.create_from_file =
@@ -88,7 +89,7 @@ void register_render_asset_types() {
         }
         return false;
     };
-    register_asset_factory_type(texture_factory);
+    register_factory_type(texture_factory);
 
 }
 

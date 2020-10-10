@@ -8,7 +8,7 @@
 
 namespace ds {
 	struct sprite {
-		asset_id texture = entt::null;
+		as::id texture = entt::null;
 
 		/**Location of the Sprite in the original Texture, specified in pixels. 
 		 *  {topleft_origin.x, topleft_origin.y, size.x, size.y}
@@ -29,13 +29,13 @@ namespace ds {
 		// pixels per unit
 		float ppu = 1.0f;
 
-		static const asset_type_id asset_type_id = 2;
+		static const as::type_id type_id = 2;
 	};
 
 	struct texture {
 		sg_image image = { 0 };
 		glm::vec2 size = { 0,0 };
-		static const asset_type_id asset_type_id = 1;
+		static const as::type_id type_id = 1;
 	};
 }
 

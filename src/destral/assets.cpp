@@ -68,11 +68,11 @@
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
-namespace ds {
+namespace ds::as {
 
 struct asset {
-    asset_id id = asset_id_null; // asset key
-    asset_type_id type_id = asset_type_id_null; // asset type key
+    id id = id_null; // asset key
+    type_id type_id = type_id_null; // asset type key
 
     // This is the cache for the created object instance for this asset
     std::unique_ptr<void, std::function<void(void*) >> instance;
@@ -89,17 +89,17 @@ inline bool operator== (asset const& lhs, asset const& rhs) {
 }
 namespace std {
     template<>
-    struct hash< ds::asset_factory_type > {
+    struct hash< ds::as::factory_type > {
     public:
-        size_t operator()(const ds::asset_factory_type& asset_d) const {
+        size_t operator()(const ds::as::factory_type& asset_d) const {
             return asset_d.type_id;
         }
     };
   
     template<>
-    struct hash< ds::asset > {
+    struct hash< ds::as::asset > {
     public:
-        size_t operator()(const ds::asset& asset_d) const {
+        size_t operator()(const ds::as::asset& asset_d) const {
             return entt::to_integral(asset_d.id);
         }
     };
@@ -111,7 +111,7 @@ namespace std {
 
 
 
-namespace ds {
+namespace ds::as {
 
 
 
@@ -120,16 +120,16 @@ namespace ds {
 entt::registry g_asset_registry;
 
 // Mantains the registered asset factory type
-std::unordered_map<asset_type_id, asset_factory_type> g_asset_types;
+std::unordered_map<type_id, factory_type> g_asset_types;
 
-void register_asset_factory_type(const asset_factory_type& asset_t) {
+void register_factory_type(const factory_type& asset_t) {
    AP_ASSERTM(asset_t.type_id != 0, "Invalid asset factory type id 0.");
    auto result = g_asset_types.try_emplace(asset_t.type_id, asset_t);
    AP_ASSERTM(result.second, "Asset factory type_id exists");
    AP_TRACE("Registered asset factory type: %d : %s ", asset_t.type_id, asset_t.type_name.c_str());
 }
 
-asset_factory_type* get_asset_factory(asset_type_id type_id) {
+factory_type* get_asset_factory(type_id type_id) {
     auto res = g_asset_types.find(type_id);
     if (res == g_asset_types.end()) {
         return nullptr;
@@ -138,24 +138,30 @@ asset_factory_type* get_asset_factory(asset_type_id type_id) {
     }
 }
 
-asset_id create_asset_from_file(const std::string& file) {
+id create_from_file(const std::string& file) {
     fs::path file_path(file);
-    asset_id new_asset_id = asset_id_null;
+    id new_asset_id = id_null;
     // Check if this is a valid file with an extension
     if (fs::is_regular_file(file_path) && file_path.has_extension() && fs::exists(file_path)) {
         // Find an asset factory that can import this asset from file
-        asset_factory_type* factory_ptr = nullptr;
+        factory_type* factory_ptr = nullptr;
         for (auto& factory : g_asset_types) {
             if (factory.second.can_import_from_file) {
-                factory.second.can_import_from_file(file);
-                factory_ptr = &factory.second;
-                break;
+                if (factory.second.can_import_from_file(file)) {
+                    factory_ptr = &factory.second;
+                    break;
+                }
             }
         }
 
         if (factory_ptr && factory_ptr->create_from_file) {
-            new_asset_id = g_asset_registry.create();
-            g_asset_registry.emplace<asset>(new_asset_id, new_asset_id, factory_ptr->type_id, std::move(factory_ptr->create_from_file(file)), file);
+            auto asset_uptr = factory_ptr->create_from_file(file);
+            if (asset_uptr) {
+                new_asset_id = g_asset_registry.create();
+                g_asset_registry.emplace<asset>(new_asset_id, new_asset_id, factory_ptr->type_id, std::move(asset_uptr), file);
+            } else {
+                AP_WARNING("Error creating asset from file: %s. ", file.c_str());
+            }
         } else {
             // Factory type to import create this asset doesn't exists
             AP_WARNING("Error creating asset from file: %s. "
@@ -169,9 +175,9 @@ asset_id create_asset_from_file(const std::string& file) {
     return new_asset_id;
 }
 
-asset_id create_asset_from_type_id(asset_type_id type_id) {
-    asset_factory_type* fact = get_asset_factory(type_id);
-    asset_id new_asset_id = asset_id_null;
+id create_from_type_id(type_id type_id) {
+    factory_type* fact = get_asset_factory(type_id);
+    id new_asset_id = id_null;
     if (fact && fact->create_default) {
         new_asset_id = g_asset_registry.create();
         g_asset_registry.emplace<asset>(new_asset_id, new_asset_id, fact->type_id, std::move(fact->create_default()), "");
@@ -181,7 +187,7 @@ asset_id create_asset_from_type_id(asset_type_id type_id) {
     return new_asset_id;
 }
 
-void* get_asset_raw(asset_id id, asset_type_id type_id) {
+void* get_ptr(id id, type_id type_id) {
     void* instance = nullptr;
     if (g_asset_registry.valid(id)) {
         auto a = g_asset_registry.try_get<asset>(id);
@@ -190,7 +196,7 @@ void* get_asset_raw(asset_id id, asset_type_id type_id) {
                 if (a->instance) {
                     instance = a->instance.get();
                 } else {
-                    asset_factory_type *factory = get_asset_factory(a->type_id);
+                    factory_type *factory = get_asset_factory(a->type_id);
                     if (factory && factory->create_from_file) {
                         a->instance = std::move(factory->create_from_file(a->file_path));
                         instance = a->instance.get();
@@ -206,7 +212,7 @@ void* get_asset_raw(asset_id id, asset_type_id type_id) {
 
 
 
-void asset_test() {
+void init() {
  //   read_assets(fs::current_path() / "assets");
 
 
@@ -217,6 +223,11 @@ void asset_test() {
     //};
    // auto asset_id = create_asset(1);
    // save_asset(asset_id);    
+}
+
+void shutdown() {
+    g_asset_registry.clear();
+    g_asset_types.clear();
 }
 
 //void create_asset_by_id(std::uint32_t asset_id, std::uint32_t asset_type_id) {

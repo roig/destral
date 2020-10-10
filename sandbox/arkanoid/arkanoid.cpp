@@ -5,9 +5,12 @@
 #include <ap_sdl.h>
 #include <destral/destral.h>
 #include <destral/types.h>
-
+#include <destral/render.h>
 
 using namespace ds;
+
+
+
 
 struct player {
 	float move_vel = 200.0f;
@@ -60,7 +63,8 @@ void ak_tick(entt::registry* r) {
 	
 }
 
-sg_image link;
+as::id tex_link;
+as::id spr_link;
 void ak_init(entt::registry* r) {
 	
 	// create a default camera
@@ -74,8 +78,12 @@ void ak_init(entt::registry* r) {
 	tr::set_parent(*r, pl_spr, pl_e);
 
 	
+	tex_link = as::create_from_file("resources/link.png");
+	spr_link = as::create<sprite>();
+	as::get<sprite>(spr_link)->texture = tex_link;
 
-	//ds::create_line(*r, {{0,0},{-100,100}, {-200,-200} });
+	//as::get<sprite>(spr_link)->texture_rect = sg_query_image_info()
+	
 
 	//link = ds::rd::create_image("resources/link.png");
 	//player = ds::create_sprite(*r, link, { 300, 300 });
