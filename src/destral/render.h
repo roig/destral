@@ -8,7 +8,7 @@
 
 namespace ds {
 	struct sprite {
-		as::id texture = entt::null;
+		as::id texture_id = entt::null;
 
 		/**Location of the Sprite in the original Texture, specified in pixels. 
 		 *  {topleft_origin.x, topleft_origin.y, size.x, size.y}
@@ -17,7 +17,7 @@ namespace ds {
 		 *	|				|
 		 *	{0,y+}	----	{x+,y+}
 		 */
-		glm::vec4 texture_rect = { 0,0,0,0 };
+		glm::vec4 src_rect = { 0,0,0,0 };
 
 		/* pivot point. {0.5, 0.5} centers the sprite.
 		{0,1} ---- {1,1}
@@ -29,8 +29,16 @@ namespace ds {
 		// pixels per unit
 		float ppu = 1.0f;
 
+		/**				|
+		 *	sets a new texture for the sprite and sets the src_rect to the full size of the texture.
+		 *	if the texture is not valid, nothing happens.
+		 */
+		void init_from_texture(as::id tex_id);
+
 		static const as::type_id type_id = 2;
 	};
+
+
 
 	struct texture {
 		sg_image image = { 0 };
@@ -83,7 +91,7 @@ namespace ds::cp {
 
 	struct sprite_rd {
 		// texture to draw
-		sg_image texture = sg_image{ 0 };
+		as::id sprite_id = as::id_null;
 
 		// sprite tint (white for texture color)
 		glm::vec4 color = { 1,1,1,1 };

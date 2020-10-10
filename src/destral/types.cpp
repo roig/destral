@@ -33,14 +33,14 @@ entt::entity create_rectangle(entt::registry& r, const glm::vec2& pos, const glm
 	return e;
 }
 
-entt::entity create_sprite(entt::registry& r, sg_image texture, const glm::vec2& pos, float rot, const glm::vec2& scale) {
+entt::entity create_sprite(entt::registry& r, as::id sprite_asset, const glm::vec2& pos, float rot, const glm::vec2& scale) {
 	entt::entity e = r.create();
 	r.emplace<cp::transform>(e);
 	tr::set_position(r, e, pos);
 	tr::set_rotation(r, e, rot);
 	tr::set_scale(r, e, scale);
 	auto& c = r.emplace<cp::sprite_rd>(e);
-	c.texture = texture;
+	c.sprite_id = sprite_asset;
 	return e;
 }
 

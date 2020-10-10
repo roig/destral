@@ -27,6 +27,20 @@
 
 using namespace ds;
 
+void sprite::init_from_texture(as::id tex_id) {
+    texture_id = tex_id;
+    auto t = as::get<ds::texture>(tex_id);
+    if (!t) {
+        return;
+    }
+    auto img_info = sg_query_image_info(t->image);
+    src_rect = { 0,0, img_info.width, img_info.height};
+}
+
+
+
+
+
 sg_pipeline g_base_lines_pip = { 0 };
 sg_pipeline g_base_triangle_strip_pip = { 0 };
 sg_pipeline g_base_textured_pip = { 0 };
@@ -218,18 +232,24 @@ void draw_mesh(const mesh_data& md) {
     sg_draw(0, md.num_elements, 1);
 }
 
-void draw_sprite(entt::registry& r, const glm::mat3& mvp_mat, sg_image tex, const glm::vec4& color) {
-    if (!tex.id) {
+void draw_sprite(entt::registry& r, const glm::mat3& mvp_mat, as::id sprite_asset_id, const glm::vec4& color) {
+
+    
+    sprite* spr = as::get<sprite>(sprite_asset_id);
+    if (!spr) {
         return;
     }
-
-
+    texture* tex = as::get<texture>(spr->texture_id);
+    if (!tex) {
+        return;
+    }
+    
     // Vertices
     //*1|       |3
     //* |       |
     //* |_______|
     //*0        2
-    auto tex_info = sg_query_image_info(tex);
+    auto tex_info = sg_query_image_info(tex->image);
     
 
     float pos[]{
@@ -262,7 +282,7 @@ void draw_sprite(entt::registry& r, const glm::mat3& mvp_mat, sg_image tex, cons
     m.pip = g_base_textured_pip;
     m.num_elements = 4;
     m.bindings.vertex_buffers[0] = vbuf;
-    m.bindings.fs_images[0] = tex;
+    m.bindings.fs_images[0] = tex->image;
 
     draw_mesh(m);
     sg_destroy_buffer(vbuf);
@@ -380,7 +400,7 @@ void draw_entities(entt::registry& r, const glm::mat3& vp_mat) {
         for (auto entity : sprs) {
             auto& ltr = sprs.get<cp::transform>(entity);
             auto& spr = sprs.get<cp::sprite_rd>(entity);
-            draw_sprite(r, vp_mat * ltr.ltw, spr.texture, spr.color);
+            draw_sprite(r, vp_mat * ltr.ltw, spr.sprite_id, spr.color);
         }
     }
 }

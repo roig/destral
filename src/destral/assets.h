@@ -46,9 +46,9 @@ namespace ds::as {
 		// function to create an std::any default
 		std::function<std::unique_ptr<void, std::function<void(void*)> > ()> create_default = nullptr;
 
-		//std::function<void (nlohmann::json& j)> serialize = nullptr;
+		std::function<void (nlohmann::json& j)> serialize = nullptr;
 
-		//std::function<std::any (const nlohmann::json& j)> deserialize = nullptr;
+		std::function< std::unique_ptr<void, std::function<void(void*)> > (const nlohmann::json& j)> deserialize = nullptr;
 	};
 
 	inline bool operator== (factory_type const& lhs, factory_type const& rhs) {
@@ -98,14 +98,10 @@ namespace ds::as {
 			return nullptr;
 		}
 	}
-
 	
 	// Create an asset by type id using templated type_id
 	template<typename T>
 	id create() {
 		return create_from_type_id(T::type_id);
 	}
-
-
-
 }

@@ -75,12 +75,16 @@ void ak_init(entt::registry* r) {
 	r->emplace<player>(pl_e);
 	r->emplace<cp::transform>(pl_e);
 	auto pl_spr = ds::create_rectangle(*r, {}, glm::vec2{ 300.f,50.f }, true, {0,1,0,1});
+	
 	tr::set_parent(*r, pl_spr, pl_e);
 
 	
 	tex_link = as::create_from_file("resources/link.png");
 	spr_link = as::create<sprite>();
-	as::get<sprite>(spr_link)->texture = tex_link;
+	as::get<sprite>(spr_link)->init_from_texture(tex_link);
+	as::get<sprite>(spr_link)->src_rect = { 0, 0, 16, 32 };
+	ds::create_sprite(*r, spr_link);
+
 
 	//as::get<sprite>(spr_link)->texture_rect = sg_query_image_info()
 	

@@ -76,7 +76,7 @@ struct asset {
 
     // This is the cache for the created object instance for this asset
     std::unique_ptr<void, std::function<void(void*) >> instance;
-
+    
     // This contains the file where we imported this asset. 
     // (can be empty if it's an asset created by default) without from file)
     std::string file_path; 
