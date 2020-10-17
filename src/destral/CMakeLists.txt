@@ -10,6 +10,7 @@ set(Destral_PUBLIC_HEADERS
 "collision.h"
 "assets.h"
 "rect.h"
+"ecs.h"
 "nlohmann/json.hpp"
 "nlohmann/json_fwd.hpp"
 ) 
@@ -30,6 +31,7 @@ set(Destral_SOURCES
 "assets.cpp"
 "rect.cpp"
 "collision.cpp"
+"ecs.cpp"
 )
 
 #add_executable(Destral 

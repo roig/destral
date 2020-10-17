@@ -3,17 +3,17 @@
 #include "destral.h"
 #include "transform.h"
 #include "render.h"
-#include <entt/entity/registry.hpp>
 #include "assets.h"
+#include <entt/entity/registry.hpp>
+#include "ecs.h"
 
 entt::registry g_world;
 
 void _ds_app_init(void* d) {
     ap_dbg_init("logs/DestralApp");
+    ds::ecs::init(g_world);
     ds::tr::set_callbacks(g_world);
     ds::rd::init();
-
-
     ds::as::init();
 
     ds_app_desc* app = (ds_app_desc*)d;
@@ -41,8 +41,8 @@ void _ds_app_shutdown(void* d) {
 
 
     ds::as::shutdown(); // this should be the first one
-
     ds::rd::shutdown();
+    ds::ecs::shutdown();
     AP_INFO("Destral engine shutdown");
     ap_dbg_shutdown();
 }

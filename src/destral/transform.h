@@ -3,6 +3,7 @@
 #include <entt/entity/fwd.hpp>
 #include <entt/entity/entity.hpp>
 #include <vector>
+#include <functional>
 
 /**
  * transform components and functions
@@ -36,6 +37,9 @@ namespace ds::tr {
 	/** adds the callbacks for the construction and destruction of the transform component  */
 	void set_callbacks(entt::registry& r);
 
+	/** adds the callbacks for the construction and destruction of the transform component  */
+	void for_each_child(entt::registry& r, entt::entity e, void (*fun) (entt::registry& r, entt::entity e));
+	//void for_each_child(entt::registry& r, entt::entity e, void std::function<void (entt::registry& r, entt::entity e)>> );
 }
 
 

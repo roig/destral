@@ -358,7 +358,7 @@ int ap_sdl_app_run(struct ap_sdl_app_desc* desc, void* user_data) {
 			// We are going too fast!! skip this frame
 			continue;
 		}
-
+		g_tm_fps = 1.0f / g_tm_dtacc_s;
 		// 1 start frame (handle events)
 		ap_sdl_input_begin_frame(&g_app_input);
 		SDL_Event e;

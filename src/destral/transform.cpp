@@ -125,4 +125,7 @@ void tr::set_parent(entt::registry& r, entt::entity to, entt::entity new_parent)
 	}
 }
 
+//void tr::for_each_child_recursive(entt::registry& r, entt::entity e, void (*fun) (entt::registry& r, entt::entity e)) {
+//	//for ()
+//}
 }
