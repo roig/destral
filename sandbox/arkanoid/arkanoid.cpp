@@ -78,20 +78,15 @@ void ak_init(entt::registry* r) {
 	
 	tr::set_parent(*r, pl_spr, pl_e);
 
+
+	// 385x129 rectangle;
 	
-	tex_link = as::create_from_file("resources/link.png");
+	tex_link = as::create_from_file("resources/BreakoutTiles.png");
 	spr_link = as::create<sprite>();
 	as::get<sprite>(spr_link)->init_from_texture(tex_link);
-	as::get<sprite>(spr_link)->src_rect = { 0, 0, 16, 32 };
+	as::get<sprite>(spr_link)->src_rect = rect::from_size({0, 129}, {385, 129});
+	as::get<sprite>(spr_link)->ppu = 0.5;
 	ds::create_sprite(*r, spr_link);
-
-
-	//as::get<sprite>(spr_link)->texture_rect = sg_query_image_info()
-	
-
-	//link = ds::rd::create_image("resources/link.png");
-	//player = ds::create_sprite(*r, link, { 300, 300 });
-
 }
 
 void ak_shutdown(entt::registry* r) {

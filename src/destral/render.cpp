@@ -34,7 +34,7 @@ void sprite::init_from_texture(as::id tex_id) {
         return;
     }
     auto img_info = sg_query_image_info(t->image);
-    src_rect = { 0,0, img_info.width, img_info.height};
+    src_rect = rect::from_size({ 0,0 }, { img_info.width, img_info.height });
 }
 
 
@@ -233,8 +233,6 @@ void draw_mesh(const mesh_data& md) {
 }
 
 void draw_sprite(entt::registry& r, const glm::mat3& mvp_mat, as::id sprite_asset_id, const glm::vec4& color) {
-
-    
     sprite* spr = as::get<sprite>(sprite_asset_id);
     if (!spr) {
         return;
@@ -243,20 +241,24 @@ void draw_sprite(entt::registry& r, const glm::mat3& mvp_mat, as::id sprite_asse
     if (!tex) {
         return;
     }
-    
+
     // Vertices
     //*1|       |3
     //* |       |
     //* |_______|
     //*0        2
     auto tex_info = sg_query_image_info(tex->image);
-    
 
+    // retrieve the size in world units for that sprite
+    const auto rect_size = spr->src_rect.size() / spr->ppu;
+
+    // calculate the positions for that sprite
+    const auto half_rect_size = rect_size / 2.0f;
     float pos[]{
-        -tex_info.width / 2.0f, -tex_info.height / 2.0f,
-        -tex_info.width / 2.0f,  tex_info.height / 2.0f,
-        tex_info.width / 2.0f, -tex_info.height / 2.0f,
-        tex_info.width / 2.0f, tex_info.height / 2.0f
+        -half_rect_size.x , -half_rect_size.y,
+        -half_rect_size.x , half_rect_size.y,
+        half_rect_size.x , -half_rect_size.y,
+        half_rect_size.x , half_rect_size.y
     };
 
     // Transform positions
@@ -266,11 +268,17 @@ void draw_sprite(entt::registry& r, const glm::mat3& mvp_mat, as::id sprite_asse
         pos[(i * 2) + 1] = tx_pos.y;
     }
 
+    auto uvs_rect = map_range_clamped(rect::from_size({0,0}, {tex_info.width, tex_info.height}), rect::from_size({ 0,0 }, { 1,1 }), spr->src_rect);
+    // Vertices
+    //*1|       |3
+    //* |       |
+    //* |_______|
+    //*0        2
     float vertices[] = {
-        pos[0], pos[1], color.r, color.g, color.b, color.a, 0,0,
-        pos[2], pos[3], color.r, color.g, color.b, color.a, 0,1,
-        pos[4], pos[5], color.r, color.g, color.b, color.a, 1,0,
-        pos[6], pos[7], color.r, color.g, color.b, color.a, 1,1
+        pos[0], pos[1], color.r, color.g, color.b, color.a, uvs_rect.bottom_left().x,uvs_rect.bottom_left().y,
+        pos[2], pos[3], color.r, color.g, color.b, color.a, uvs_rect.top_left().x,uvs_rect.top_left().y,
+        pos[4], pos[5], color.r, color.g, color.b, color.a, uvs_rect.bottom_right().x,uvs_rect.bottom_right().y,
+        pos[6], pos[7], color.r, color.g, color.b, color.a, uvs_rect.top_right().x,uvs_rect.top_right().y,
     };
 
     sg_buffer_desc buff_desc = { 0 };

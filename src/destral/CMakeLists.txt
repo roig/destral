@@ -8,6 +8,7 @@ set(Destral_PUBLIC_HEADERS
 "transform.h"
 "types.h"
 "assets.h"
+"rect.h"
 "nlohmann/json.hpp"
 "nlohmann/json_fwd.hpp"
 ) 
@@ -26,7 +27,7 @@ set(Destral_SOURCES
 "render.cpp"
 "types.cpp"
 "assets.cpp"
-
+"rect.cpp"
 )
 
 #add_executable(Destral 

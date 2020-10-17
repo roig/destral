@@ -5,32 +5,29 @@
 #include "assets.h"
 #include <vector>
 #include <sokol_gfx.h>
+#include "rect.h"
 
 namespace ds {
 	struct sprite {
+		/** @brief texture asset id for this sprite */
 		as::id texture_id = entt::null;
 
-		/**Location of the Sprite in the original Texture, specified in pixels. 
-		 *  {topleft_origin.x, topleft_origin.y, size.x, size.y}
-		 *
-		 * 	{0,0}	----	{x+,0}
-		 *	|				|
-		 *	{0,y+}	----	{x+,y+}
-		 */
-		glm::vec4 src_rect = { 0,0,0,0 };
+		/** @brief Location of the Sprite in the original Texture, specified in pixels. */
+		rect src_rect = { {0,0},{0,0} };
+		
 
-		/* pivot point. {0.5, 0.5} centers the sprite.
+		/** @brief pivot point. {0.5, 0.5} centers the sprite.
 		{0,1} ---- {1,1}
 		|			|
 		{0,0} ---- {1,0}
 		*/
-		glm::vec2 pivot = { 0.5f, 0.5f };
+		//glm::vec2 pivot = { 0.5f, 0.5f };
 
-		// pixels per unit
+		/** @brief pixels per unit. To calculate how many units: units = size_in_pixels / ppu */
 		float ppu = 1.0f;
 
-		/**				|
-		 *	sets a new texture for the sprite and sets the src_rect to the full size of the texture.
+		
+		/** @brief Sets a new texture for the sprite and sets the src_rect to the full size of the texture.
 		 *	if the texture is not valid, nothing happens.
 		 */
 		void init_from_texture(as::id tex_id);
