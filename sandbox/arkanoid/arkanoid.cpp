@@ -28,7 +28,7 @@ struct ball {
 void update_player(entt::registry& r) {
 	auto player_view = r.view<player, cp::transform>();
 	for (auto e: player_view) { 
-		auto& tr = player_view.get<cp::transform>(e);
+		//auto& tr = player_view.get<cp::transform>(e);
 		auto& pl = player_view.get<player>(e);
 		float dt = ap_sdl_app_dt();
 		glm::vec2 delta = { 0,0 };
@@ -47,7 +47,7 @@ void update_player(entt::registry& r) {
 		}
 		delta = delta * pl.move_vel * dt;
 
-		ds::tr::set_position(r, e, tr.position + delta);
+		ds::co::move(r, e, delta, true);
 	}
 }
 
@@ -63,30 +63,37 @@ void ak_tick(entt::registry* r) {
 	
 }
 
-as::id tex_link;
-as::id spr_link;
+as::id tex_player_id = as::id_null;
+as::id spr_player_id = as::id_null;
+as::id spr_block_id = as::id_null;
 void ak_init(entt::registry* r) {
 	
 	// create a default camera
 	ds::create_camera(*r, {});
 
-	// create the player entity with an attached rectangle
-	auto pl_e = r->create();
+	// create the player entity that is in the root a collider
+	auto sprite_size = glm::vec2{ 349, 69 };
+	auto pl_e = ds::create_collider_rect(*r, sprite_size / 2.0f);
 	r->emplace<player>(pl_e);
-	r->emplace<cp::transform>(pl_e);
-	auto pl_spr = ds::create_rectangle(*r, {}, glm::vec2{ 300.f,50.f }, true, {0,1,0,1});
-	
-	tr::set_parent(*r, pl_spr, pl_e);
+
+	// setup sprite player child
+	tex_player_id = as::create_from_file("resources/BreakoutTiles.png");
+	spr_player_id = as::create<sprite>();
+	auto spr = as::get<sprite>(spr_player_id);
+	spr->init_from_texture(tex_player_id);
+	spr->src_rect = rect::from_size({ 0, 910 }, sprite_size); // select the sprite of the player
+	// set it as a child
+	tr::set_parent(*r, ds::create_sprite(*r, spr_player_id), pl_e);
 
 
-	// 385x129 rectangle;
-	
-	tex_link = as::create_from_file("resources/BreakoutTiles.png");
-	spr_link = as::create<sprite>();
-	as::get<sprite>(spr_link)->init_from_texture(tex_link);
-	as::get<sprite>(spr_link)->src_rect = rect::from_size({0, 0}, {385, 129});
-	as::get<sprite>(spr_link)->ppu = 2.f;
-	ds::create_sprite(*r, spr_link);
+	// CREATE BLOCKS
+	auto block_size = glm::vec2{ 385, 129 };
+	auto block_e = ds::create_collider_rect(*r, block_size / 2.0f, { 0, 300 });
+	spr_block_id = as::create<sprite>();
+	auto block_spr = as::get<sprite>(spr_block_id);
+	block_spr->init_from_texture(tex_player_id);
+	block_spr->src_rect = rect::from_size({ 0, 0 }, block_size); // select the sprite of block
+	tr::set_parent(*r, ds::create_sprite(*r, spr_block_id), block_e);
 }
 
 void ak_shutdown(entt::registry* r) {

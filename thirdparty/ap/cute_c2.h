@@ -1826,28 +1826,28 @@ static C2_INLINE c2v c2CapsuleSupport(c2Capsule A, c2v dir)
 	if (da > db) return c2Add(A.a, c2Mulvs(dir, A.r));
 	else return c2Add(A.b, c2Mulvs(dir, A.r));
 }
-
-static void c2AntinormalFace(c2Capsule cap, const c2Poly* p, c2x x, int* face_out, c2v* n_out)
-{
-	float sep = -FLT_MAX;
-	int index = ~0;
-	c2v n = c2V(0, 0);
-	for (int i = 0; i < p->count; ++i)
-	{
-		c2h h = c2Mulxh(x, c2PlaneAt(p, i));
-		c2v n0 = c2Neg(h.n);
-		c2v s = c2CapsuleSupport(cap, n0);
-		float d = c2Dist(h, s);
-		if (d > sep)
-		{
-			sep = d;
-			index = i;
-			n = n0;
-		}
-	}
-	*face_out = index;
-	*n_out = n;
-}
+//
+//static void c2AntinormalFace(c2Capsule cap, const c2Poly* p, c2x x, int* face_out, c2v* n_out)
+//{
+//	float sep = -FLT_MAX;
+//	int index = ~0;
+//	c2v n = c2V(0, 0);
+//	for (int i = 0; i < p->count; ++i)
+//	{
+//		c2h h = c2Mulxh(x, c2PlaneAt(p, i));
+//		c2v n0 = c2Neg(h.n);
+//		c2v s = c2CapsuleSupport(cap, n0);
+//		float d = c2Dist(h, s);
+//		if (d > sep)
+//		{
+//			sep = d;
+//			index = i;
+//			n = n0;
+//		}
+//	}
+//	*face_out = index;
+//	*n_out = n;
+//}
 
 static void c2Incident(c2v* incident, const c2Poly* ip, c2x ix, c2v rn_in_incident_space)
 {
@@ -1903,12 +1903,12 @@ void c2CapsuletoPolyManifold(c2Capsule A, const c2Poly* B, const c2x* bx_ptr, c2
 			c2h h = c2PlaneAt(B, i);
 			float da = c2Dot(A_in_B.a, c2Neg(h.n));
 			float db = c2Dot(A_in_B.b, c2Neg(h.n));
-			float d;
-			if (da > db) d = c2Dist(h, A_in_B.a);
-			else d = c2Dist(h, A_in_B.b);
-			if (d > sep)
+			float dist;
+			if (da > db) dist = c2Dist(h, A_in_B.a);
+			else dist = c2Dist(h, A_in_B.b);
+			if (dist > sep)
 			{
-				sep = d;
+				sep = dist;
 				index = i;
 			}
 		}
