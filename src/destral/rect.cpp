@@ -29,19 +29,19 @@ rect map_range_clamped(const rect& from, const rect& to, const rect alpha) {
 }
 
 glm::vec2 rect::bottom_left() {
-    return min;
-}
-
-glm::vec2 rect::top_right() {
-    return max;
-}
-
-glm::vec2 rect::top_left() {
     return { min.x, max.y };
 }
 
-glm::vec2 rect::bottom_right() {
+glm::vec2 rect::top_right() {
     return { max.x, min.y };
+}
+
+glm::vec2 rect::top_left() {
+    return min;
+}
+
+glm::vec2 rect::bottom_right() {
+    return max;
 }
 
 float rect::left() {
@@ -51,10 +51,10 @@ float rect::right() {
     return max.x;
 }
 float rect::top() {
-    return max.y;
+    return min.y;
 }
 float rect::bottom() {
-    return min.y;
+    return max.y;
 }
 
 

@@ -84,8 +84,8 @@ void ak_init(entt::registry* r) {
 	tex_link = as::create_from_file("resources/BreakoutTiles.png");
 	spr_link = as::create<sprite>();
 	as::get<sprite>(spr_link)->init_from_texture(tex_link);
-	as::get<sprite>(spr_link)->src_rect = rect::from_size({0, 129}, {385, 129});
-	as::get<sprite>(spr_link)->ppu = 0.5;
+	as::get<sprite>(spr_link)->src_rect = rect::from_size({0, 0}, {385, 129});
+	as::get<sprite>(spr_link)->ppu = 2.f;
 	ds::create_sprite(*r, spr_link);
 }
 

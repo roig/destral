@@ -5,13 +5,16 @@ namespace ds {
 
 /**
  *	Axis aligned rectangle, minimal coordinate is inclusive, maximal coordinate is exclusive.
- *	{min.x,max.y} -------- max
- *		|			        |
- *		min ----------{max.x,min.y}
+ *	    min ------------------{max.x,min.y} 
+ *	    |			               |
+ *	{min.x,max.y} --------------  max
+ *
+ *      X goes to the right.
+ *      Y goes down. 
  */
 struct rect {
-    glm::vec2 min = { 0,0 }; // bottom left part
-	glm::vec2 max = { 0,0 }; // top-right
+    glm::vec2 min = { 0,0 }; // top left
+	glm::vec2 max = { 0,0 }; // bottom-right
 
     /**
     * @brief Create a rect from minimal coordinates and size
@@ -31,13 +34,13 @@ struct rect {
     static rect from_center(const glm::vec2& center, const glm::vec2& halfSize);
 
 
-    /** @brief bottom left corner equal to min*/
+    /** @brief bottom left corner */
     glm::vec2 bottom_left();
-    /** @brief top right corner equal to max*/
+    /** @brief top right corner */
     glm::vec2 top_right();
-    /** @brief top left corner*/
+    /** @brief top left corner equal to min*/
     glm::vec2 top_left();
-    /** @brief bottom right corner*/
+    /** @brief bottom right corner equal to max*/
     glm::vec2 bottom_right();
 
     /** @brief Left edge */
