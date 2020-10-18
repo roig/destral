@@ -4,30 +4,22 @@
 
 
 namespace ds::ecs {
-
-	// callbacks
-	namespace cb {
-
-	//void on_entity_group_destruct(entt::registry& r, entt::entity e) {
-	//	// dettach all children from this entity
-	//	auto& tr = r.get<cp::entity_group>(e);
-	//	for (auto child : tr.entities) {
-	//		tr::set_parent(r, child, entt::null);
-	//	}
-	//	// dettach from the parent of this entity
-	//	tr::set_parent(r, e, entt::null);
-	//}
-
-	}
 	void destroy(entt::registry& r, entt::entity e) {
 		AP_ASSERT(e != entt::null);
-
 		auto eg = r.try_get<cp::entity_group>(e);
 		if (eg) {
-			
+			for (auto grouped_entity : eg->group) {
+				r.destroy(grouped_entity);
+			}
 		}
-
 		r.destroy(e);
+	}
+
+	void add_to_group(entt::registry& r, entt::entity group_entity, entt::entity entity_to_add) {
+		AP_ASSERT(group_entity != entt::null);
+		AP_ASSERT(entity_to_add != entt::null);
+		auto& eg = r.get_or_emplace<cp::entity_group>(group_entity);
+		eg.group.push_back(entity_to_add);
 	}
 
 	void init(entt::registry& r) {

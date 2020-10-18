@@ -34,12 +34,14 @@ namespace ds::tr {
 	/** sets a new parent to the entity. if parent is entt::null means to remove the parent. */
 	void set_parent(entt::registry& r, entt::entity to, entt::entity parent = entt::null);
 
-	/** adds the callbacks for the construction and destruction of the transform component  */
-	void set_callbacks(entt::registry& r);
+	/** returns all the children entities from the entity e in the hierarchy */
+	std::vector<entt::entity> get_children_hierarchy(entt::registry& r, entt::entity e);
+
+	/** returns all the parents from entity e in the hierarchy */
+	std::vector<entt::entity> get_parents_hierarchy(entt::registry& r, entt::entity e);
 
 	/** adds the callbacks for the construction and destruction of the transform component  */
-	void for_each_child(entt::registry& r, entt::entity e, void (*fun) (entt::registry& r, entt::entity e));
-	//void for_each_child(entt::registry& r, entt::entity e, void std::function<void (entt::registry& r, entt::entity e)>> );
+	void set_callbacks(entt::registry& r);
 }
 
 
