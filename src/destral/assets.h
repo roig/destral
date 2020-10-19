@@ -1,13 +1,18 @@
 #pragma once
-//#include <ap_uuid.h>
 #include <functional>
-#include <any>
 #include <string>
 #include "nlohmann/json_fwd.hpp"
 #include <entt/entity/fwd.hpp>
 #include <entt/entity/entity.hpp>
 
+
+
+// WARNING This module is under development/testing
+// WARNING This module is under development/testing
+// WARNING This module is under development/testing
+
 /**
+
 Com funcionara l'asset Manager?
 
 Basicament, llegirà tots els fitxer d'un directori i cercarà fitxers .dasset

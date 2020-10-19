@@ -94,7 +94,11 @@ namespace ds::cp {
 		glm::vec4 color = { 1,1,1,1 };
 	};
 
-
+	struct circle_rd {
+		float radius = 25.f;
+		bool filled = true;
+		glm::vec4 color = { 1,1,1,1 };
+	};
 
 }
 

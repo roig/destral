@@ -13,6 +13,7 @@ set(Destral_PUBLIC_HEADERS
 "ecs.h"
 "nlohmann/json.hpp"
 "nlohmann/json_fwd.hpp"
+"math_funs.h"
 ) 
 
 
@@ -32,6 +33,7 @@ set(Destral_SOURCES
 "rect.cpp"
 "collision.cpp"
 "ecs.cpp"
+"math_funs.cpp"
 )
 
 #add_executable(Destral 

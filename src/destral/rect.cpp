@@ -1,32 +1,9 @@
 #include "rect.h"
 
-#pragma warning( push )
-#pragma warning(disable : 4201) // 
-#include "glm/gtx/compatibility.hpp"
-#pragma warning( pop )
-
 
 namespace ds {
 
-template<class T> 
-inline T lerp_inverted(const T& a, const T& b, const T& lerp) {
-    return (lerp - a) / (b - a);
-}
 
-float map_range_clamped(const glm::vec2& from, const glm::vec2& to, float alpha) {
-    return glm::lerp(to.x, to.y, glm::clamp(lerp_inverted(from.x, from.y, alpha), 0.0f, 1.0f));
-}
-
-glm::vec2 map_range_clamped(const glm::vec2& from_min, const glm::vec2& from_max, const glm::vec2& to_min, const glm::vec2& to_max, const glm::vec2& alpha) {
-    return glm::lerp(to_min, to_max, glm::clamp(lerp_inverted(from_min, from_max, alpha),  0.0f, 1.0f));
-}
- 
-rect map_range_clamped(const rect& from, const rect& to, const rect alpha) {
-    rect remapped;
-    remapped.min = map_range_clamped(from.min, from.max, to.min, to.max, alpha.min);
-    remapped.max = map_range_clamped(from.min, from.max, to.min, to.max, alpha.max);
-    return remapped;
-}
 
 glm::vec2 rect::bottom_left() {
     return { min.x, max.y };

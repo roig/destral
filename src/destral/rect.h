@@ -105,10 +105,4 @@ struct rect {
 
 };
 
-
-float map_range_clamped(const glm::vec2& from, const glm::vec2& to, float alpha);
-
-glm::vec2 map_range_clamped(const glm::vec2& from_min, const glm::vec2& from_max, const glm::vec2& to_min, const glm::vec2& to_max, const glm::vec2& alpha);
-    
-rect map_range_clamped(const rect& from, const rect& to, const rect alpha);
 }

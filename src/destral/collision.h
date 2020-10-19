@@ -5,7 +5,7 @@
 
 /**
  * The collision system knows how to move entities that have a collider component.
- * You must have to use those system functions in order to move entities that have a collider.
+ * You must use those system functions in order to move entities that have a collider.
 
  * WARNING: The collision functions that sweeps will not work when rotating an entity.
  * You can move an entity that is rotated but you can't sweep a rotation. This is a known limitation of cute_c2 library
@@ -69,7 +69,7 @@ namespace ds::co {
 
 namespace ds::cp {
     /**
-     * 
+     * Collider component
      */
     struct collider {
         // Decides if this collider is a rectangle or a circle
@@ -102,7 +102,7 @@ namespace ds::co {
      *
      *
      * @param registry
-     * @param e
+     * @param entity
      * @param delta
      * @param sweep
      * @return hit_result of the last hit if any and if sweep is true.

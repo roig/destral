@@ -10,15 +10,12 @@
 #pragma warning( pop )
 
 
+#include "math_funs.h"
 #include "transform.h"
-
 #include <ap_gl33compat.h>
-
-
 #include <entt/entity/registry.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <array>
-
 #include <filesystem>
 
 
@@ -328,6 +325,50 @@ void draw_line(entt::registry& r, const glm::mat3& mvp_mat, const std::vector<gl
     sg_destroy_buffer(vbuf);
 }
 
+void draw_circle(entt::registry& r, const glm::mat3& mvp_mat, float radius, const glm::vec4& color, bool is_filled) {
+    constexpr int fragments = 16;
+    constexpr float increment = glm::two_pi<float>() / fragments;
+
+    //if (!is_filled) 
+    {
+        std::vector<glm::vec2> pos;
+        for (float currAngle = 0.0f; currAngle <= glm::two_pi<float>(); currAngle += increment) {
+            pos.push_back({ radius * cos(currAngle), radius * sin(currAngle) });
+        }
+        pos.push_back(pos[0]);
+        draw_line(r, mvp_mat, pos, color);
+        return;
+    }
+    //
+    //std::vector<float> vertices;
+
+    //for (float currAngle = 0.0f; currAngle <= glm::two_pi<float>(); currAngle += increment) {
+    //    glm::vec3 tx_point = mvp_mat * glm::vec3(radius * cos(currAngle), radius * sin(currAngle), 1);
+    //    vertices.push_back(tx_point.x);
+    //    vertices.push_back(tx_point.y);
+    //    vertices.push_back(color.x);
+    //    vertices.push_back(color.y);
+    //    vertices.push_back(color.z);
+    //    vertices.push_back(color.w);
+    //    vertices.push_back(0); //uvs unused
+    //    vertices.push_back(0); //uvs unused
+    //}
+
+    //sg_buffer_desc buff_desc = { 0 };
+    //buff_desc.size = sizeof(float) * (int)vertices.size();
+    //buff_desc.content = vertices.data();
+    //sg_buffer vbuf = sg_make_buffer(&buff_desc);
+
+
+    //mesh_data m;
+    //m.pip = g_base_lines_pip;
+    //m.num_elements = (int)points.size();
+    //m.bindings.vertex_buffers[0] = vbuf;
+    //draw_mesh(m);
+    //sg_destroy_buffer(vbuf);
+}
+
+
 void draw_rect(entt::registry& r, const glm::mat3& mvp_mat, const glm::vec2& size, const glm::vec4& color, bool filled) {
     if (!filled) {
         // Vertices
@@ -413,6 +454,15 @@ void draw_entities(entt::registry& r, const glm::mat3& vp_mat) {
             auto& ltr = sprs.get<cp::transform>(entity);
             auto& spr = sprs.get<cp::sprite_rd>(entity);
             draw_sprite(r, vp_mat * ltr.ltw, spr.sprite_id, spr.color);
+        }
+    }
+
+    {
+        auto circles = r.view<cp::transform, cp::circle_rd>();
+        for (auto entity : circles) {
+            auto& ltr = circles.get<cp::transform>(entity);
+            auto& circle = circles.get<cp::circle_rd>(entity);
+            draw_circle(r, vp_mat * ltr.ltw, circle.radius, circle.color, circle.filled);
         }
     }
 }
