@@ -57,7 +57,7 @@ inline c2v toc2v(const glm::vec2& v) { return { v.x, v.y }; };
 inline glm::vec2 to_vec2(const c2v& v) { return { v.x, v.y }; }
 
 // Coordinate conversions (TODO this could be improved without using map_range_functions)
-const glm::vec2 g_destral_world_size_range = { 0,1000000 };
+const glm::vec2 g_destral_world_size_range = { 0,100000 };
 const glm::vec2 g_c2_world_size_range = { 0,10 };
 template <typename T>
 inline T to_c2_units(T value) {
@@ -402,7 +402,7 @@ bool depenetrate(entt::registry& r, entt::entity entity_a, const ds::cp::collide
         manifolds = test_collider(r, col_a, curr_tr_a, { {entity_a} });
         for (auto& m : manifolds) {
             curr_tr_a.position += to_vec2(m.n) * g_depenetration_correct_factor;
-            AP_TRACE("Need depenetration: %d. added correction", entt::to_integral(entity_a));
+            //AP_TRACE("Need depenetration: %d. added correction", entt::to_integral(entity_a));
         }
         ++curr_depenetration_it;
     } while (curr_depenetration_it < g_depenetration_max_iter && !manifolds.empty());
@@ -466,11 +466,11 @@ hit_result move(entt::registry& r, entt::entity e, const glm::vec2& delta, bool 
     // My safemove function that safely moves a collider A consists of:
     //////////////////////////
 
-    AP_TRACE("Move step 1: depenetrate");
+    //AP_TRACE("Move step 1: depenetrate");
     // 1 Depenetrate first using c2Collide with collider A inflated.
     depenetrate(r, e, *colA, *trA);
 
-    AP_TRACE("Move step 2: sweep");
+    //AP_TRACE("Move step 2: sweep");
     // 2 we are in a safe position, Sweep to destination (using c2toi) (without inflation)
     auto hits = sweep_multi_collider(r, *colA, trA->position, trA->position + delta, trA->rot_radians, { {e} });
     if (hits.empty()) {
@@ -486,7 +486,7 @@ hit_result move(entt::registry& r, entt::entity e, const glm::vec2& delta, bool 
         }
     }
 
-    AP_TRACE("Move step 3: depenetrate");
+    //AP_TRACE("Move step 3: depenetrate");
     // 3 Now depenetrate againt with collider A inflated.
     depenetrate(r, e, *colA, *trA);
 

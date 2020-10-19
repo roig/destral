@@ -23,7 +23,7 @@ namespace ds::ecs {
 	}
 
 	void init(entt::registry& r) {
-		
+	
 	}
 
 	void shutdown() {

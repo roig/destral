@@ -95,6 +95,7 @@ namespace ds::cp {
 namespace ds::co {
     /**
      * @brief Moves an entity.
+     * In order to move an entity, it must have a transform component and an optional collider component.
      * If the entity doesn't have a Collider component we teleport the entity directly modifying the Transform component. No collision checks made
      * If the sweep flag is false, we teleport the entity to the end location, position + movement. No collision checks made.
      * If the sweep flag is true, we move sweeping till we find a blocking hit. Collision and overlap checks done.
@@ -125,7 +126,6 @@ namespace ds::co {
     * @param ignoredEntities
     * @return std::vector<HitResult>
    */
-   // std::vector<HitResult> sweep_multi_collider(entt::registry& registry, const Component::Collider& collider, const Vec2& start, const Vec2& end, float degrees, const std::vector<entt::entity>& ignoredEntities);
-
+    //std::vector<hit_result> sweep_multi(entt::registry& registry, const cp::collider& collider, const glm::vec2& start, const glm::vec2& end, float rotation_rad, const std::vector<entt::entity>& ignoredEntities = {});
 
 }
