@@ -19,10 +19,10 @@ struct platform_app_desc {
     int window_height = 720;
 
     // application callbacks
-    std::function<void(entt::registry&) > init_cb;
-    std::function<void(entt::registry&) > tick_cb;
-    std::function<void(entt::registry&) > cleanup_cb;
-    std::function<void(entt::registry&, platform_event& ) > on_event_cb;
+    std::function<void(entt::registry&) > init_cb = nullptr;
+    std::function<void(entt::registry&) > tick_cb = nullptr;
+    std::function<void(entt::registry&) > cleanup_cb = nullptr;
+    std::function<void(entt::registry&, platform_event& ) > on_event_cb = nullptr;
 };
 
 int app_run(platform_app_desc& desc);

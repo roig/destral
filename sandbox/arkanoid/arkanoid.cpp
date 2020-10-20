@@ -4,7 +4,7 @@
 #include <ap_debug.h>
 #include <ap_sdl.h>
 #include <destral/destral.h>
-#include <destral/types.h>
+#include <destral/archtypes.h>
 #include <destral/render.h>
 #include <destral/ecs.h>
 #include <destral/math_funs.h>
