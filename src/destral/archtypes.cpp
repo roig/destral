@@ -1,4 +1,4 @@
-#include "types.h"
+#include "archtypes.h"
 
 
 namespace ds {
@@ -28,6 +28,17 @@ entt::entity create_rectangle(entt::registry& r, const glm::vec2& pos, const glm
 	tr::set_position(r, e, pos);
 	auto& c = r.emplace<cp::rect_rd>(e);
 	c.size = size;
+	c.color = color;
+	c.filled = filled;
+	return e;
+}
+
+entt::entity create_circle(entt::registry& r, const glm::vec2& pos, float radius, bool filled, glm::vec4 color) {
+	entt::entity e = r.create();
+	r.emplace<cp::transform>(e);
+	tr::set_position(r, e, pos);
+	auto& c = r.emplace<cp::circle_rd>(e);
+	c.radius = radius;
 	c.color = color;
 	c.filled = filled;
 	return e;

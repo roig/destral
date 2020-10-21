@@ -5,7 +5,7 @@
 
 /**
  * The collision system knows how to move entities that have a collider component.
- * You must have to use those system functions in order to move entities that have a collider.
+ * You must use those system functions in order to move entities that have a collider.
 
  * WARNING: The collision functions that sweeps will not work when rotating an entity.
  * You can move an entity that is rotated but you can't sweep a rotation. This is a known limitation of cute_c2 library
@@ -69,7 +69,7 @@ namespace ds::co {
 
 namespace ds::cp {
     /**
-     * 
+     * Collider component
      */
     struct collider {
         // Decides if this collider is a rectangle or a circle
@@ -95,6 +95,7 @@ namespace ds::cp {
 namespace ds::co {
     /**
      * @brief Moves an entity.
+     * In order to move an entity, it must have a transform component and an optional collider component.
      * If the entity doesn't have a Collider component we teleport the entity directly modifying the Transform component. No collision checks made
      * If the sweep flag is false, we teleport the entity to the end location, position + movement. No collision checks made.
      * If the sweep flag is true, we move sweeping till we find a blocking hit. Collision and overlap checks done.
@@ -102,7 +103,7 @@ namespace ds::co {
      *
      *
      * @param registry
-     * @param e
+     * @param entity
      * @param delta
      * @param sweep
      * @return hit_result of the last hit if any and if sweep is true.
@@ -125,7 +126,6 @@ namespace ds::co {
     * @param ignoredEntities
     * @return std::vector<HitResult>
    */
-   // std::vector<HitResult> sweep_multi_collider(entt::registry& registry, const Component::Collider& collider, const Vec2& start, const Vec2& end, float degrees, const std::vector<entt::entity>& ignoredEntities);
-
+    //std::vector<hit_result> sweep_multi(entt::registry& registry, const cp::collider& collider, const glm::vec2& start, const glm::vec2& end, float rotation_rad, const std::vector<entt::entity>& ignoredEntities = {});
 
 }

@@ -3,6 +3,7 @@
 #include <entt/entity/fwd.hpp>
 #include <entt/entity/entity.hpp>
 #include <vector>
+#include <functional>
 
 /**
  * transform components and functions
@@ -33,9 +34,14 @@ namespace ds::tr {
 	/** sets a new parent to the entity. if parent is entt::null means to remove the parent. */
 	void set_parent(entt::registry& r, entt::entity to, entt::entity parent = entt::null);
 
+	/** returns all the children entities from the entity e in the hierarchy */
+	std::vector<entt::entity> get_children_hierarchy(entt::registry& r, entt::entity e);
+
+	/** returns all the parents from entity e in the hierarchy */
+	std::vector<entt::entity> get_parents_hierarchy(entt::registry& r, entt::entity e);
+
 	/** adds the callbacks for the construction and destruction of the transform component  */
 	void set_callbacks(entt::registry& r);
-
 }
 
 

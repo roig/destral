@@ -125,4 +125,29 @@ void tr::set_parent(entt::registry& r, entt::entity to, entt::entity new_parent)
 	}
 }
 
+
+std::vector<entt::entity> tr::get_children_hierarchy(entt::registry& r, entt::entity e) {
+	auto tr = r.try_get<cp::transform>(e);
+	AP_ASSERT(tr);
+	std::vector<entt::entity> children_hierarchy = tr->children;
+	for (auto child : tr->children) {
+		const auto child_children = get_children_hierarchy(r, child);
+		children_hierarchy.insert(std::end(children_hierarchy), std::begin(child_children), std::end(child_children));
+	}
+
+	return children_hierarchy;
+}
+
+std::vector<entt::entity> tr::get_parents_hierarchy(entt::registry& r, entt::entity e) {
+	auto tr = r.try_get<cp::transform>(e);
+	AP_ASSERT(tr);
+	std::vector<entt::entity> parents;
+	while (tr && tr->parent != entt::null) {
+		parents.push_back(tr->parent);
+		tr = r.try_get<cp::transform>(tr->parent);
+		AP_ASSERT(tr);
+	}
+	return parents;
+}
+
 }

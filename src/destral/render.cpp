@@ -10,15 +10,12 @@
 #pragma warning( pop )
 
 
+#include "math_funs.h"
 #include "transform.h"
-
 #include <ap_gl33compat.h>
-
-
 #include <entt/entity/registry.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <array>
-
 #include <filesystem>
 
 
@@ -34,7 +31,7 @@ void sprite::init_from_texture(as::id tex_id) {
         return;
     }
     auto img_info = sg_query_image_info(t->image);
-    src_rect = { 0,0, img_info.width, img_info.height};
+    src_rect = rect::from_size({ 0,0 }, { img_info.width, img_info.height });
 }
 
 
@@ -233,8 +230,6 @@ void draw_mesh(const mesh_data& md) {
 }
 
 void draw_sprite(entt::registry& r, const glm::mat3& mvp_mat, as::id sprite_asset_id, const glm::vec4& color) {
-
-    
     sprite* spr = as::get<sprite>(sprite_asset_id);
     if (!spr) {
         return;
@@ -243,20 +238,24 @@ void draw_sprite(entt::registry& r, const glm::mat3& mvp_mat, as::id sprite_asse
     if (!tex) {
         return;
     }
-    
+
     // Vertices
     //*1|       |3
     //* |       |
     //* |_______|
     //*0        2
     auto tex_info = sg_query_image_info(tex->image);
-    
 
+    // retrieve the size in world units for that sprite
+    const auto rect_size = spr->src_rect.size() / spr->ppu;
+
+    // calculate the positions for that sprite
+    const auto half_rect_size = rect_size / 2.0f;
     float pos[]{
-        -tex_info.width / 2.0f, -tex_info.height / 2.0f,
-        -tex_info.width / 2.0f,  tex_info.height / 2.0f,
-        tex_info.width / 2.0f, -tex_info.height / 2.0f,
-        tex_info.width / 2.0f, tex_info.height / 2.0f
+        -half_rect_size.x , -half_rect_size.y,
+        -half_rect_size.x , half_rect_size.y,
+        half_rect_size.x , -half_rect_size.y,
+        half_rect_size.x , half_rect_size.y
     };
 
     // Transform positions
@@ -266,11 +265,21 @@ void draw_sprite(entt::registry& r, const glm::mat3& mvp_mat, as::id sprite_asse
         pos[(i * 2) + 1] = tx_pos.y;
     }
 
+
+    // Vertices
+    //*1|       |3
+    //* |       |
+    //* |_______|
+    //*0        2
+    // coordinate change to UVs coordinate system
+    auto uvs_rect = map_range_clamped(rect::from_size({ 0,0 }, { tex_info.width, tex_info.height }), rect::from_size({ 0,0 }, { 1,-1 }), spr->src_rect);
+
+    
     float vertices[] = {
-        pos[0], pos[1], color.r, color.g, color.b, color.a, 0,0,
-        pos[2], pos[3], color.r, color.g, color.b, color.a, 0,1,
-        pos[4], pos[5], color.r, color.g, color.b, color.a, 1,0,
-        pos[6], pos[7], color.r, color.g, color.b, color.a, 1,1
+        pos[0], pos[1], color.r, color.g, color.b, color.a, uvs_rect.bottom_left().x, uvs_rect.bottom_left().y,
+        pos[2], pos[3], color.r, color.g, color.b, color.a, uvs_rect.top_left().x, uvs_rect.top_left().y,
+        pos[4], pos[5], color.r, color.g, color.b, color.a, uvs_rect.bottom_right().x, uvs_rect.bottom_right().y,
+        pos[6], pos[7], color.r, color.g, color.b, color.a, uvs_rect.top_right().x, uvs_rect.top_right().y,
     };
 
     sg_buffer_desc buff_desc = { 0 };
@@ -315,6 +324,50 @@ void draw_line(entt::registry& r, const glm::mat3& mvp_mat, const std::vector<gl
     draw_mesh(m);
     sg_destroy_buffer(vbuf);
 }
+
+void draw_circle(entt::registry& r, const glm::mat3& mvp_mat, float radius, const glm::vec4& color, bool is_filled) {
+    constexpr int fragments = 16;
+    constexpr float increment = glm::two_pi<float>() / fragments;
+
+    //if (!is_filled) 
+    {
+        std::vector<glm::vec2> pos;
+        for (float currAngle = 0.0f; currAngle <= glm::two_pi<float>(); currAngle += increment) {
+            pos.push_back({ radius * cos(currAngle), radius * sin(currAngle) });
+        }
+        pos.push_back(pos[0]);
+        draw_line(r, mvp_mat, pos, color);
+        return;
+    }
+    //
+    //std::vector<float> vertices;
+
+    //for (float currAngle = 0.0f; currAngle <= glm::two_pi<float>(); currAngle += increment) {
+    //    glm::vec3 tx_point = mvp_mat * glm::vec3(radius * cos(currAngle), radius * sin(currAngle), 1);
+    //    vertices.push_back(tx_point.x);
+    //    vertices.push_back(tx_point.y);
+    //    vertices.push_back(color.x);
+    //    vertices.push_back(color.y);
+    //    vertices.push_back(color.z);
+    //    vertices.push_back(color.w);
+    //    vertices.push_back(0); //uvs unused
+    //    vertices.push_back(0); //uvs unused
+    //}
+
+    //sg_buffer_desc buff_desc = { 0 };
+    //buff_desc.size = sizeof(float) * (int)vertices.size();
+    //buff_desc.content = vertices.data();
+    //sg_buffer vbuf = sg_make_buffer(&buff_desc);
+
+
+    //mesh_data m;
+    //m.pip = g_base_lines_pip;
+    //m.num_elements = (int)points.size();
+    //m.bindings.vertex_buffers[0] = vbuf;
+    //draw_mesh(m);
+    //sg_destroy_buffer(vbuf);
+}
+
 
 void draw_rect(entt::registry& r, const glm::mat3& mvp_mat, const glm::vec2& size, const glm::vec4& color, bool filled) {
     if (!filled) {
@@ -401,6 +454,15 @@ void draw_entities(entt::registry& r, const glm::mat3& vp_mat) {
             auto& ltr = sprs.get<cp::transform>(entity);
             auto& spr = sprs.get<cp::sprite_rd>(entity);
             draw_sprite(r, vp_mat * ltr.ltw, spr.sprite_id, spr.color);
+        }
+    }
+
+    {
+        auto circles = r.view<cp::transform, cp::circle_rd>();
+        for (auto entity : circles) {
+            auto& ltr = circles.get<cp::transform>(entity);
+            auto& circle = circles.get<cp::circle_rd>(entity);
+            draw_circle(r, vp_mat * ltr.ltw, circle.radius, circle.color, circle.filled);
         }
     }
 }

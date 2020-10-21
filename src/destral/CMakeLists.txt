@@ -6,10 +6,14 @@ set(Destral_PUBLIC_HEADERS
 "destral.h"
 "render.h"
 "transform.h"
-"types.h"
+"archtypes.h"
+"collision.h"
 "assets.h"
+"rect.h"
+"ecs.h"
 "nlohmann/json.hpp"
 "nlohmann/json_fwd.hpp"
+"math_funs.h"
 ) 
 
 
@@ -24,9 +28,12 @@ set(Destral_SOURCES
 "destral.cpp"
 "transform.cpp"
 "render.cpp"
-"types.cpp"
+"archtypes.cpp"
 "assets.cpp"
-
+"rect.cpp"
+"collision.cpp"
+"ecs.cpp"
+"math_funs.cpp"
 )
 
 #add_executable(Destral 

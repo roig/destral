@@ -1,1 +1,2 @@
 add_subdirectory(arkanoid)
+add_subdirectory(collision_testing)
