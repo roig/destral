@@ -35,6 +35,7 @@
 #define CUTE_C2_IMPLEMENTATION
 #include "cute_c2.h"
 
-
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "stb_truetype.h"
 
 

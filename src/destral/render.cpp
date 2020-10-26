@@ -17,7 +17,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <array>
 #include <filesystem>
-
+#include "stb_truetype.h"
 
 //#include <glm/gtx/matrix_transform_2d.hpp>
 
@@ -104,12 +104,112 @@ void register_render_asset_types() {
 
 }
 
+struct {
+    stbtt_fontinfo* info;
+    stbtt_packedchar* chars;
+    int texture_size;
+    float size;
+    float scale;
+    int ascent;
+    int baseline;
+    std::unique_ptr<stbtt_packedchar[]> charInfo;
+    GLuint texture_atlas = 0;
+} font_;
+
+
+unsigned char ___bufferd[24 << 20];
+#define screen_x 200
+#define screen_y 200
+unsigned char screen[screen_x][screen_y];
+#pragma warning(disable : 4996) // 
+int load_system_font() {
+    stbtt_fontinfo font;
+    int i, j, ascent, baseline, ch = 0;
+    float scale, xpos = 2; // leave a little padding in case the character extends left
+    char* text = "HOLA AMORSET!"; // intentionally misspelled to show 'lj' brokenness
+
+    fread(___bufferd, 1, 1000000, fopen("c:/windows/fonts/arialbd.ttf", "rb"));
+    stbtt_InitFont(&font, ___bufferd, 0);
+
+    scale = stbtt_ScaleForPixelHeight(&font, 15);
+    stbtt_GetFontVMetrics(&font, &ascent, 0, 0);
+    baseline = (int)(ascent * scale);
+
+    while (text[ch]) {
+        int advance, lsb, x0, y0, x1, y1;
+        float x_shift = xpos - (float)floor(xpos);
+        stbtt_GetCodepointHMetrics(&font, text[ch], &advance, &lsb);
+        stbtt_GetCodepointBitmapBoxSubpixel(&font, text[ch], scale, scale, x_shift, 0, &x0, &y0, &x1, &y1);
+        stbtt_MakeCodepointBitmapSubpixel(&font, &screen[baseline + y0][(int)xpos + x0], x1 - x0, y1 - y0, screen_y, scale, scale, x_shift, 0, text[ch]);
+        // note that this stomps the old data, so where character boxes overlap (e.g. 'lj') it's wrong
+        // because this API is really for baking character bitmaps into textures. if you want to render
+        // a sequence of characters, you really need to render each bitmap to a temp buffer, then
+        // "alpha blend" that into the working buffer
+        xpos += (advance * scale);
+        if (text[ch + 1])
+            xpos += scale * stbtt_GetCodepointKernAdvance(&font, text[ch], text[ch + 1]);
+        ++ch;
+    }
+
+    for (j = 0; j < screen_x; ++j) {
+        for (i = 0; i < screen_y; ++i)
+            putchar(" .:ioVM@"[screen[j][i] >> 5]);
+        putchar('\n');
+    }
+    return 0;
+}
+
+//void load_system_font() {
+//
+//    // Read the contents of the ttf
+//    FILE* fontFile = fopen("C:\Windows\Fonts\arial.ttf", "rb");
+//    fseek(fontFile, 0, SEEK_END);
+//    std::size_t size = ftell(fontFile); /* how long is the file ? */
+//    fseek(fontFile, 0, SEEK_SET); /* reset */
+//    std::vector<unsigned char> font_buffer;
+//    font_buffer.reserve(size);
+//    fread(font_buffer.data(), size, 1, fontFile);
+//    fclose(fontFile);
+//
+//    // Prepare font
+//    stbtt_fontinfo font_info;
+//    if (!stbtt_InitFont(&font_info, font_buffer.data(), 0)) {
+//        AP_FATAL("Error initializing font");
+//    }
+//
+//
+//
+//    
+//    auto fontData = readFile(assetPath("fonts/OpenSans-Regular.ttf").c_str());
+//    auto atlasData = std::make_unique<uint8_t[]>(font_.atlasWidth * font_.atlasHeight);
+//    font_.charInfo = std::make_unique<stbtt_packedchar[]>(font_.charCount);
+//
+//    stbtt_pack_context context;
+//    if (!stbtt_PackBegin(&context, atlasData.get(), font_.atlasWidth, font_.atlasHeight, 0, 1, nullptr)) {
+//        AP_FATAL("Failed to initialize font");
+//    }
+//
+//    stbtt_PackSetOversampling(&context, font_.oversampleX, font_.oversampleY);
+//    if (!stbtt_PackFontRange(&context, fontData.data(), 0, font_.size, font_.firstChar, font_.charCount, font_.charInfo.get())) {
+//        AP_FATAL("Failed to pack font");
+//    }
+//
+//    stbtt_PackEnd(&context);
+//
+//    glGenTextures(1, &font_.texture);
+//    glBindTexture(GL_TEXTURE_2D, font_.texture);
+//    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, font_.atlasWidth, font_.atlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE, atlasData.get());
+//    glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
+//    glGenerateMipmap(GL_TEXTURE_2D);
+//}
+
 void rd::init() {
     sg_desc d = { 0 };
     sg_setup(&d);
 
     register_render_asset_types();
-
+    load_system_font();
     // First create a dynamic streaming buffer
   /*  sg_buffer_desc buff_d = { 0 };
     buff_d.type = SG_BUFFERTYPE_VERTEXBUFFER;

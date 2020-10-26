@@ -100,6 +100,11 @@ namespace ds::cp {
 		glm::vec4 color = { 1,1,1,1 };
 	};
 
+	struct text_rd {
+		std::string text = "Hola mòn";
+		glm::vec4 color = { 1,1,1,1 };
+	};
+
 }
 
 namespace ds::rd {

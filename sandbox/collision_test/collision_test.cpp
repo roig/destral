@@ -4,7 +4,7 @@
 #include <ap_debug.h>
 #include <ap_sdl.h>
 #include <destral/destral.h>
-#include <destral/types.h>
+#include <destral/archtypes.h>
 #include <destral/render.h>
 #include <destral/ecs.h>
 #include <destral/math_funs.h>
@@ -26,12 +26,12 @@ struct ball {
 };
 
 struct block {
-	
+
 };
 
 void update_player(entt::registry& r) {
 	auto player_view = r.view<player, cp::transform>();
-	for (auto e: player_view) { 
+	for (auto e : player_view) {
 		//auto& tr = player_view.get<cp::transform>(e);
 		auto& pl = player_view.get<player>(e);
 		float dt = ap_sdl_app_dt();
@@ -39,13 +39,13 @@ void update_player(entt::registry& r) {
 
 		if (ap_sdl_key_pressed(ap_sdl_app_input(), SDLK_RIGHT)) {
 			delta.x++;
-		} 
+		}
 		if (ap_sdl_key_pressed(ap_sdl_app_input(), SDLK_LEFT)) {
 			delta.x--;
-		} 
+		}
 		/*if (ap_sdl_key_pressed(ap_sdl_app_input(), SDLK_UP)) {
 			delta.y++;
-		} 
+		}
 		if (ap_sdl_key_pressed(ap_sdl_app_input(), SDLK_DOWN)) {
 			delta.y--;
 		}*/
@@ -60,10 +60,10 @@ void update_ball(entt::registry& r) {
 	for (auto e : balls_view) {
 		//auto& tr = player_view.get<cp::transform>(e);
 		auto& b = balls_view.get<ball>(e);
-		float dt =ap_sdl_app_dt();
+		float dt = ap_sdl_app_dt();
 		glm::vec2 delta = b.dir * b.move_vel * dt;
 		auto hit = ds::co::move(r, e, delta, true);
-		
+
 		if (hit.blocking) {
 			// Reflection vector
 			b.dir = b.dir - 2.0f * glm::dot(b.dir, hit.normal) * hit.normal;
@@ -81,8 +81,8 @@ void ak_tick(entt::registry* r) {
 
 	update_player(*r);
 	update_ball(*r);
-	
-	
+
+
 }
 
 entt::entity create_wall(entt::registry& r, glm::vec2 position, glm::vec2 wall_size) {
@@ -116,9 +116,9 @@ void ak_init(entt::registry* r) {
 		auto ball_ppu = 2.5f;
 		auto ball_e = ds::create_collider_circle(*r, ball_radius / ball_ppu, { 0, 0 });
 		r->emplace<ball>(ball_e);
-		
+
 		auto ball_circle_e = ds::create_circle(*r, {}, ball_radius / ball_ppu, true);
-		
+
 		tr::set_parent(*r, ball_circle_e, ball_e);
 		ecs::add_to_group(*r, ball_e, ball_circle_e);
 	}
@@ -130,14 +130,14 @@ void ak_init(entt::registry* r) {
 
 
 void ak_shutdown(entt::registry* r) {
-	
 
-	
-	
+
+
+
 }
 
 int main() {
-	ds_app_desc app_desc = {0};
+	ds::app_desc = { 0 };
 
 	app_desc.frame_cb = ak_tick;
 	app_desc.init_cb = ak_init;
@@ -145,8 +145,7 @@ int main() {
 	app_desc.window_name = "Arkanoid Game";
 	app_desc.window_width = 1280;
 	app_desc.window_height = 720;
-	
+
 
 	return ds_app_run(&app_desc);
 }
-
