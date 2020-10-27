@@ -1,6 +1,6 @@
 #include "ecs.h"
 #include <entt/entity/registry.hpp>
-#include "ap_debug.h"
+#include "ap/ap_debug.h"
 
 
 namespace ds::ecs {

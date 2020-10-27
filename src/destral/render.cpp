@@ -1,23 +1,23 @@
 #include "render.h"
 
-#include <ap_debug.h>
-#include <ap_sdl.h>
+#include "ap/ap_debug.h"
+#include "ap/ap_sdl.h"
 #pragma warning( push )
 #pragma warning(disable : 4505) // 
 #pragma warning(disable : 4996) // disable fopen warning in cute_png..
 #pragma warning(disable : 4189) // 
-#include "cute_png.h"
+#include "ap/cute_png.h"
 #pragma warning( pop )
 
 
 #include "math_funs.h"
 #include "transform.h"
-#include <ap_gl33compat.h>
-#include <entt/entity/registry.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include "ap/ap_gl33compat.h"
+#include "entt/entity/registry.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 #include <array>
 #include <filesystem>
-#include "stb_truetype.h"
+#include "ap/stb_truetype.h"
 
 //#include <glm/gtx/matrix_transform_2d.hpp>
 
@@ -49,18 +49,18 @@ sg_shader g_shd_tex = { 0 };
 
 
 // global vertices buffer
-#define BUFFER_SIZE 16384
- 
-std::array<float, BUFFER_SIZE> vert_buf;
-std::array<std::uint32_t, BUFFER_SIZE> index_buf;
-
-//static float    tex_buf[BUFFER_SIZE * 8];
-//static float    vert_buf[BUFFER_SIZE * 8];
-//static uint8_t  color_buf[BUFFER_SIZE * 16];
-//static uint32_t index_buf[BUFFER_SIZE * 6];
-
-sg_buffer g_vbo = { 0 };
-sg_buffer g_ibo = { 0 };
+//#define BUFFER_SIZE 16384
+// 
+//std::array<float, BUFFER_SIZE> vert_buf;
+//std::array<std::uint32_t, BUFFER_SIZE> index_buf;
+//
+////static float    tex_buf[BUFFER_SIZE * 8];
+////static float    vert_buf[BUFFER_SIZE * 8];
+////static uint8_t  color_buf[BUFFER_SIZE * 16];
+////static uint32_t index_buf[BUFFER_SIZE * 6];
+//
+//sg_buffer g_vbo = { 0 };
+//sg_buffer g_ibo = { 0 };
 
 void register_render_asset_types() {
     using namespace as;
@@ -126,7 +126,7 @@ int load_system_font() {
     stbtt_fontinfo font;
     int i, j, ascent, baseline, ch = 0;
     float scale, xpos = 2; // leave a little padding in case the character extends left
-    char* text = "HOLA AMORSET!"; // intentionally misspelled to show 'lj' brokenness
+    char* text = "HELLO WORLD!"; // intentionally misspelled to show 'lj' brokenness
 
     fread(___bufferd, 1, 1000000, fopen("c:/windows/fonts/arialbd.ttf", "rb"));
     stbtt_InitFont(&font, ___bufferd, 0);

@@ -11,8 +11,6 @@ set(Destral_PUBLIC_HEADERS
 "assets.h"
 "rect.h"
 "ecs.h"
-"nlohmann/json.hpp"
-"nlohmann/json_fwd.hpp"
 "math_funs.h"
 ) 
 
@@ -54,22 +52,13 @@ ${Destral_PRIVATE_HEADERS}
 target_link_libraries(Destral PUBLIC
 	SDL2::SDL2
 	Opengl32
-	#LuaLib54
-	#flecs
-	# nlohmann_json::nlohmann_json
-	#ImguiLibrary
-	# tmxlite
+	LuaLib54
 )
 
 # Header only dependencies
 ######### Cute Headers
 target_include_directories(Destral PUBLIC
 	..
-	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/ap
-	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/entt-3.5.2/src
-	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/glm
-	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/rapidjson/include
-	${CMAKE_CURRENT_SOURCE_DIR}/../../thirdparty/sol2-3.2.1/single/include
 )
 
 

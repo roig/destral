@@ -1,8 +1,8 @@
 #include "collision.h"
-#include "cute_c2.h"
+#include "ap/cute_c2.h"
 #include "entt/entity/registry.hpp"
 #include "transform.h"
-#include "ap_debug.h"
+#include "ap/ap_debug.h"
 #include <algorithm>
 #include <optional>
 #include "math_funs.h"

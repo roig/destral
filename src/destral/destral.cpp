@@ -1,10 +1,10 @@
-#include "ap_sdl.h"
-#include "ap_debug.h"
+#include "ap/ap_sdl.h"
+#include "ap/ap_debug.h"
 #include "destral.h"
 #include "transform.h"
 #include "render.h"
 #include "assets.h"
-#include <entt/entity/registry.hpp>
+#include "entt/entity/registry.hpp"
 #include "ecs.h"
 
 entt::registry g_world;
