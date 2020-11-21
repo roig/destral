@@ -11,9 +11,10 @@ set(Destral_PUBLIC_HEADERS
 "assets.h"
 "rect.h"
 "ecs.h"
+"bp/bp.h"
+"bp/bp_bindings.h"
 "math_funs.h"
 ) 
-
 
 # Those headers will only be shown in the IDE (should not be installed)
 set(Destral_PRIVATE_HEADERS
@@ -31,6 +32,8 @@ set(Destral_SOURCES
 "rect.cpp"
 "collision.cpp"
 "ecs.cpp"
+"bp/bp.cpp"
+"bp/bp_bindings.cpp"
 "math_funs.cpp"
 )
 

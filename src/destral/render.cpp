@@ -104,60 +104,60 @@ void register_render_asset_types() {
 
 }
 
-struct {
-    stbtt_fontinfo* info;
-    stbtt_packedchar* chars;
-    int texture_size;
-    float size;
-    float scale;
-    int ascent;
-    int baseline;
-    std::unique_ptr<stbtt_packedchar[]> charInfo;
-    GLuint texture_atlas = 0;
-} font_;
-
-
-unsigned char ___bufferd[24 << 20];
-#define screen_x 200
-#define screen_y 200
-unsigned char screen[screen_x][screen_y];
-#pragma warning(disable : 4996) // 
-int load_system_font() {
-    stbtt_fontinfo font;
-    int i, j, ascent, baseline, ch = 0;
-    float scale, xpos = 2; // leave a little padding in case the character extends left
-    char* text = "HELLO WORLD!"; // intentionally misspelled to show 'lj' brokenness
-
-    fread(___bufferd, 1, 1000000, fopen("c:/windows/fonts/arialbd.ttf", "rb"));
-    stbtt_InitFont(&font, ___bufferd, 0);
-
-    scale = stbtt_ScaleForPixelHeight(&font, 15);
-    stbtt_GetFontVMetrics(&font, &ascent, 0, 0);
-    baseline = (int)(ascent * scale);
-
-    while (text[ch]) {
-        int advance, lsb, x0, y0, x1, y1;
-        float x_shift = xpos - (float)floor(xpos);
-        stbtt_GetCodepointHMetrics(&font, text[ch], &advance, &lsb);
-        stbtt_GetCodepointBitmapBoxSubpixel(&font, text[ch], scale, scale, x_shift, 0, &x0, &y0, &x1, &y1);
-        stbtt_MakeCodepointBitmapSubpixel(&font, &screen[baseline + y0][(int)xpos + x0], x1 - x0, y1 - y0, screen_y, scale, scale, x_shift, 0, text[ch]);
-        // note that this stomps the old data, so where character boxes overlap (e.g. 'lj') it's wrong
-        // because this API is really for baking character bitmaps into textures. if you want to render
-        // a sequence of characters, you really need to render each bitmap to a temp buffer, then
-        // "alpha blend" that into the working buffer
-        xpos += (advance * scale);
-        if (text[ch + 1])
-            xpos += scale * stbtt_GetCodepointKernAdvance(&font, text[ch], text[ch + 1]);
-        ++ch;
-    }
-
-    for (j = 0; j < screen_x; ++j) {
-        for (i = 0; i < screen_y; ++i)
-            putchar(" .:ioVM@"[screen[j][i] >> 5]);
-        putchar('\n');
-    }
-    return 0;
-}
+//struct {
+//    stbtt_fontinfo* info;
+//    stbtt_packedchar* chars;
+//    int texture_size;
+//    float size;
+//    float scale;
+//    int ascent;
+//    int baseline;
+//    std::unique_ptr<stbtt_packedchar[]> charInfo;
+//    GLuint texture_atlas = 0;
+//} font_;
+//
+//
+//unsigned char ___bufferd[24 << 20];
+//#define screen_x 200
+//#define screen_y 200
+//unsigned char screen[screen_x][screen_y];
+//#pragma warning(disable : 4996) // 
+//int load_system_font() {
+//    stbtt_fontinfo font;
+//    int i, j, ascent, baseline, ch = 0;
+//    float scale, xpos = 2; // leave a little padding in case the character extends left
+//    char* text = "HELLO WORLD!"; // intentionally misspelled to show 'lj' brokenness
+//
+//    fread(___bufferd, 1, 1000000, fopen("c:/windows/fonts/arialbd.ttf", "rb"));
+//    stbtt_InitFont(&font, ___bufferd, 0);
+//
+//    scale = stbtt_ScaleForPixelHeight(&font, 15);
+//    stbtt_GetFontVMetrics(&font, &ascent, 0, 0);
+//    baseline = (int)(ascent * scale);
+//
+//    while (text[ch]) {
+//        int advance, lsb, x0, y0, x1, y1;
+//        float x_shift = xpos - (float)floor(xpos);
+//        stbtt_GetCodepointHMetrics(&font, text[ch], &advance, &lsb);
+//        stbtt_GetCodepointBitmapBoxSubpixel(&font, text[ch], scale, scale, x_shift, 0, &x0, &y0, &x1, &y1);
+//        stbtt_MakeCodepointBitmapSubpixel(&font, &screen[baseline + y0][(int)xpos + x0], x1 - x0, y1 - y0, screen_y, scale, scale, x_shift, 0, text[ch]);
+//        // note that this stomps the old data, so where character boxes overlap (e.g. 'lj') it's wrong
+//        // because this API is really for baking character bitmaps into textures. if you want to render
+//        // a sequence of characters, you really need to render each bitmap to a temp buffer, then
+//        // "alpha blend" that into the working buffer
+//        xpos += (advance * scale);
+//        if (text[ch + 1])
+//            xpos += scale * stbtt_GetCodepointKernAdvance(&font, text[ch], text[ch + 1]);
+//        ++ch;
+//    }
+//
+//    for (j = 0; j < screen_x; ++j) {
+//        for (i = 0; i < screen_y; ++i)
+//            putchar(" .:ioVM@"[screen[j][i] >> 5]);
+//        putchar('\n');
+//    }
+//    return 0;
+//}
 
 //void load_system_font() {
 //
@@ -209,7 +209,7 @@ void rd::init() {
     sg_setup(&d);
 
     register_render_asset_types();
-    load_system_font();
+   // load_system_font();
     // First create a dynamic streaming buffer
   /*  sg_buffer_desc buff_d = { 0 };
     buff_d.type = SG_BUFFERTYPE_VERTEXBUFFER;
@@ -535,7 +535,7 @@ void draw_entities(entt::registry& r, const glm::mat3& vp_mat) {
         for (auto entity : lines) {
             auto& ltr = lines.get<cp::transform>(entity);
             auto& lr = lines.get<cp::line_rd>(entity);
-            draw_line(r, vp_mat * ltr.ltw, lr.points, lr.color);
+            draw_line(r, vp_mat * ltr.local_to_world, lr.points, lr.color);
         }
     }
 
@@ -544,7 +544,7 @@ void draw_entities(entt::registry& r, const glm::mat3& vp_mat) {
         for (auto entity : rects) {
             auto& ltr = rects.get<cp::transform>(entity);
             auto& rr = rects.get<cp::rect_rd>(entity);
-            draw_rect(r, vp_mat * ltr.ltw, rr.size, rr.color, rr.filled);
+            draw_rect(r, vp_mat * ltr.local_to_world, rr.size, rr.color, rr.filled);
         }
     }
 
@@ -553,7 +553,7 @@ void draw_entities(entt::registry& r, const glm::mat3& vp_mat) {
         for (auto entity : sprs) {
             auto& ltr = sprs.get<cp::transform>(entity);
             auto& spr = sprs.get<cp::sprite_rd>(entity);
-            draw_sprite(r, vp_mat * ltr.ltw, spr.sprite_id, spr.color);
+            draw_sprite(r, vp_mat * ltr.local_to_world, spr.sprite_id, spr.color);
         }
     }
 
@@ -562,7 +562,7 @@ void draw_entities(entt::registry& r, const glm::mat3& vp_mat) {
         for (auto entity : circles) {
             auto& ltr = circles.get<cp::transform>(entity);
             auto& circle = circles.get<cp::circle_rd>(entity);
-            draw_circle(r, vp_mat * ltr.ltw, circle.radius, circle.color, circle.filled);
+            draw_circle(r, vp_mat * ltr.local_to_world, circle.radius, circle.color, circle.filled);
         }
     }
 }
@@ -583,7 +583,7 @@ void draw_camera(entt::registry& r, glm::ivec2 vp_size, const cp::camera& cam, c
     glm::mat3 projection_mat(glm::ortho(-cam.aspect * cam.half_vsize, cam.aspect * cam.half_vsize, -cam.half_vsize, cam.half_vsize ));
 
     // Setup view matrix from inverse camera
-    glm::mat3 view_mat = glm::inverse(tr_cam.ltw);
+    glm::mat3 view_mat = glm::inverse(tr_cam.local_to_world);
 
     draw_entities(r, projection_mat * view_mat);
 }

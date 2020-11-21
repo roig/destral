@@ -14,8 +14,8 @@ namespace ds::cp {
 		glm::vec2 position = glm::vec2(0);
 		glm::vec2 scale = glm::vec2(1);
 		float rot_radians = 0.0f;
-		glm::mat3 ltp = glm::mat3(1);
-		glm::mat3 ltw = glm::mat3(1);
+		glm::mat3 local_to_parent = glm::mat3(1);
+		glm::mat3 local_to_world = glm::mat3(1);
 		entt::entity parent = entt::null;
 		std::vector<entt::entity> children;
 	};

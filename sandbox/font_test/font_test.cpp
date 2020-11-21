@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include <ap_debug.h>
-#include <ap_sdl.h>
+#include <ap/ap_debug.h>
+#include <ap/ap_sdl.h>
 #include <destral/destral.h>
 #include <destral/archtypes.h>
 #include <destral/render.h>

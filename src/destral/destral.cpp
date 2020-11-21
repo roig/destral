@@ -6,6 +6,7 @@
 #include "assets.h"
 #include "entt/entity/registry.hpp"
 #include "ecs.h"
+#include "bp/bp.h"
 
 entt::registry g_world;
 namespace ds {
@@ -16,6 +17,7 @@ void app_init(void* data) {
     ds::tr::set_callbacks(g_world);
     ds::rd::init();
     ds::as::init();
+    ds::bp::init();
 
     platform_app_desc* app = (platform_app_desc*)data;
     if (app->init_cb)
@@ -38,8 +40,8 @@ void app_cleanup(void* data) {
     platform_app_desc* app = (platform_app_desc*)data;
     if (app->cleanup_cb) app->cleanup_cb(g_world);
 
-
-    ds::as::shutdown(); // this should be the first one
+    ds::bp::shutdown();
+    ds::as::shutdown();
     ds::rd::shutdown();
     ds::ecs::shutdown();
     AP_INFO("Destral engine shutdown");

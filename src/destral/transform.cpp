@@ -10,32 +10,32 @@ inline void update_matrices(entt::registry& r, cp::transform& tr) {
 	if (tr.parent != entt::null) {
 		auto parent_tr = r.try_get<cp::transform>(tr.parent);
 		AP_ASSERT(parent_tr);
-		parent_ltw = parent_tr->ltw;
+		parent_ltw = parent_tr->local_to_world;
 	}
 	// calculate new local to parent matrix
-	tr.ltp = glm::mat3{ 1 };
-	tr.ltp = glm::translate(tr.ltp, tr.position);
-	tr.ltp = glm::rotate(tr.ltp, tr.rot_radians);
-	tr.ltp = glm::scale(tr.ltp, tr.scale);
+	tr.local_to_parent = glm::mat3{ 1 };
+	tr.local_to_parent = glm::translate(tr.local_to_parent, tr.position);
+	tr.local_to_parent = glm::rotate(tr.local_to_parent, tr.rot_radians);
+	tr.local_to_parent = glm::scale(tr.local_to_parent, tr.scale);
 
-	tr.ltw = parent_ltw * tr.ltp;
-//	const auto ltp = (Magnum::Matrix3::translation(tr.position) * Magnum::Matrix3::rotation(Magnum::Rad(Magnum::Deg(tr.rotation)))) * Magnum::Matrix3::scaling(tr.scale);
+	tr.local_to_world = parent_ltw * tr.local_to_parent;
+//	const auto local_to_parent = (Magnum::Matrix3::translation(tr.position) * Magnum::Matrix3::rotation(Magnum::Rad(Magnum::Deg(tr.rotation)))) * Magnum::Matrix3::scaling(tr.scale);
 }
 
 inline void update_children(entt::registry& r, cp::transform& parent_tr) {
-	const auto parent_ltw = parent_tr.ltw;
+	const auto parent_ltw = parent_tr.local_to_world;
 	for (auto child : parent_tr.children) {
 		auto child_tr = r.try_get<cp::transform>(child);
 		AP_ASSERT(child_tr);
 
-		// update the new ltp and ltw for that child
-		child_tr->ltp = glm::mat3{ 1 };
-		child_tr->ltp = glm::translate(child_tr->ltp, child_tr->position);
-		child_tr->ltp = glm::rotate(child_tr->ltp, child_tr->rot_radians);
-		child_tr->ltp = glm::scale(child_tr->ltp, child_tr->scale);
+		// update the new local_to_parent and local_to_world for that child
+		child_tr->local_to_parent = glm::mat3{ 1 };
+		child_tr->local_to_parent = glm::translate(child_tr->local_to_parent, child_tr->position);
+		child_tr->local_to_parent = glm::rotate(child_tr->local_to_parent, child_tr->rot_radians);
+		child_tr->local_to_parent = glm::scale(child_tr->local_to_parent, child_tr->scale);
 
-		//const auto ltp = (Magnum::Matrix3::translation(trchild->position) * Magnum::Matrix3::rotation(Magnum::Rad(Magnum::Deg(trchild->rotation)))) * Magnum::Matrix3::scaling(trchild->scale);
-		child_tr->ltw = parent_ltw * child_tr->ltp;
+		//const auto local_to_parent = (Magnum::Matrix3::translation(trchild->position) * Magnum::Matrix3::rotation(Magnum::Rad(Magnum::Deg(trchild->rotation)))) * Magnum::Matrix3::scaling(trchild->scale);
+		child_tr->local_to_world = parent_ltw * child_tr->local_to_parent;
 		update_children(r, *child_tr);
 	}
 }
