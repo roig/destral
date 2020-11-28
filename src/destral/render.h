@@ -114,9 +114,3 @@ namespace ds::rd {
 
 	sg_image create_image(const char* file_name);
 }
-
-
-
-//void ds_rd_draw_line(vec2 p0, vec2 position);
-//void ds_rd_draw_sprite(SDL_Texture* texture);
-//void ds_rd_draw();

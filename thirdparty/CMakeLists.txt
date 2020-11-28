@@ -1,4 +1,4 @@
-add_subdirectory(lua54)
+#add_subdirectory(lua54)
 #add_subdirectory(flecs)
 
 # ######### TMXLITE

@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include <destral/ap_debug.h>
-#include <destral/ap_sdl.h>
+#include <ap/ap_debug.h>
+#include <ap/ap_sdl.h>
 #include <destral/destral.h>
 #include <destral/archtypes.h>
 #include <destral/render.h>
@@ -77,10 +77,10 @@ void update_ball(entt::registry& r) {
 }
 
 
-void ak_tick(entt::registry* r) {
+void ak_tick(entt::registry& r) {
 
-	update_player(*r);
-	update_ball(*r);
+	update_player(r);
+	update_ball(r);
 
 
 }
@@ -95,41 +95,41 @@ entt::entity create_wall(entt::registry& r, glm::vec2 position, glm::vec2 wall_s
 
 
 
-void ak_init(entt::registry* r) {
+void ak_init(entt::registry& r) {
 	// create a default camera
-	ds::create_camera(*r, {});
+	ds::create_camera(r, {});
 
 	// create the player entity that is in the root a collider
 	{
 		auto sprite_size = glm::vec2{ 349, 69 };
 		auto player_ppu = 2.5f;
-		auto pl_e = ds::create_collider_rect(*r, sprite_size / player_ppu / 2.0f, { 0, -300 });
-		r->emplace<player>(pl_e);
-		auto rect_pl_e = ds::create_rectangle(*r, {}, sprite_size / player_ppu, true);
-		tr::set_parent(*r, rect_pl_e, pl_e);
-		ecs::add_to_group(*r, pl_e, rect_pl_e);
+		auto pl_e = ds::create_collider_rect(r, sprite_size / player_ppu / 2.0f, { 0, -300 });
+		r.emplace<player>(pl_e);
+		auto rect_pl_e = ds::create_rectangle(r, {}, sprite_size / player_ppu, true);
+		tr::set_parent(r, rect_pl_e, pl_e);
+		ecs::add_to_group(r, pl_e, rect_pl_e);
 	}
 
 	// CREATE THE BALL
 	{
 		auto ball_radius = 66.f;
 		auto ball_ppu = 2.5f;
-		auto ball_e = ds::create_collider_circle(*r, ball_radius / ball_ppu, { 0, 0 });
-		r->emplace<ball>(ball_e);
+		auto ball_e = ds::create_collider_circle(r, ball_radius / ball_ppu, { 0, 0 });
+		r.emplace<ball>(ball_e);
 
-		auto ball_circle_e = ds::create_circle(*r, {}, ball_radius / ball_ppu, true);
+		auto ball_circle_e = ds::create_circle(r, {}, ball_radius / ball_ppu, true);
 
-		tr::set_parent(*r, ball_circle_e, ball_e);
-		ecs::add_to_group(*r, ball_e, ball_circle_e);
+		tr::set_parent(r, ball_circle_e, ball_e);
+		ecs::add_to_group(r, ball_e, ball_circle_e);
 	}
 
 	{ // Create walls
-		create_wall(*r, { 0, 360 }, { 1280, 16 });
+		create_wall(r, { 0, 360 }, { 1280, 16 });
 	}
 }
 
 
-void ak_shutdown(entt::registry* r) {
+void ak_shutdown(entt::registry& r) {
 
 
 
@@ -137,15 +137,12 @@ void ak_shutdown(entt::registry* r) {
 }
 
 int main() {
-	ds::app_desc = { 0 };
-
-	app_desc.frame_cb = ak_tick;
+	ds::platform_app_desc app_desc = { 0 };
+	app_desc.tick_cb = ak_tick;
 	app_desc.init_cb = ak_init;
 	app_desc.cleanup_cb = ak_shutdown;
 	app_desc.window_name = "Arkanoid Game";
 	app_desc.window_width = 1280;
 	app_desc.window_height = 720;
-
-
-	return ds_app_run(&app_desc);
+	return ds::app_run(app_desc);
 }

@@ -17,12 +17,113 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include <array>
 #include <filesystem>
+
+
 #include "ap/stb_truetype.h"
 
-//#include <glm/gtx/matrix_transform_2d.hpp>
+
+#include "ap/sokol_gfx.h"
+#include "ap/sokol_gl.h"
+#include "ap/fontstash.h"
+#include "ap/sokol_fontstash.h"
+
 
 
 using namespace ds;
+
+
+typedef struct {
+    FONScontext* fons;
+    float dpi_scale;
+    int font_normal;
+    int font_italic;
+    int font_bold;
+    int font_japanese;
+    uint8_t font_normal_data[256 * 1024];
+    uint8_t font_italic_data[256 * 1024];
+    uint8_t font_bold_data[256 * 1024];
+    uint8_t font_japanese_data[2 * 1024 * 1024];
+} state_t;
+static state_t fons_state;
+
+
+
+void fonts_init() {
+    const int atlas_dim = 512;
+    FONScontext* fons_context = sfons_create(atlas_dim, atlas_dim, FONS_ZERO_TOPLEFT);
+    fons_state.fons = fons_context;
+    fons_state.font_normal = FONS_INVALID;
+    fons_state.font_italic = FONS_INVALID;
+    fons_state.font_bold = FONS_INVALID;
+    fons_state.font_japanese = FONS_INVALID;
+
+
+    // Read font
+    FILE* f = nullptr;
+    fopen_s(&f, "c:/windows/fonts/arialbd.ttf", "rb");
+    // Determine file size
+    fseek(f, 0, SEEK_END);
+    int buffer_size = (int)ftell(f);
+
+    // Allocate and read file
+    unsigned char* buffer_ptr = new unsigned char[buffer_size];
+    rewind(f);
+    fread(buffer_ptr, sizeof(char), buffer_size, f);
+        
+    fons_state.font_normal = fonsAddFontMem(fons_state.fons, "sans", buffer_ptr, buffer_size, false);
+   // FIX ME  delete[] buffer_ptr;   // don't know the ownership yet.
+}
+
+void fonts_frame() {
+    /* text rendering via fontstash.h */
+    float sx, sy, dx, dy, lh = 0.0f;
+
+    sx = 50; sy = 50;
+    dx = sx; dy = sy;
+
+    glm::ivec2 ws;
+    SDL_GetWindowSize(ap_sdl_app_window(), &ws.x, &ws.y);
+    sgl_defaults();
+    sgl_matrix_mode_projection();
+    sgl_ortho(0.0f, (float)ws.x, (float)ws.x, 0.0f, -1.0f, +1.0f);
+
+    FONScontext* fs = fons_state.fons;
+    fonsSetFont(fs, fons_state.font_normal);
+    fonsSetSize(fs, 124.0f);
+    fonsVertMetrics(fs, NULL, NULL, &lh);
+    dx = sx;
+    dy += lh;
+    uint32_t white = sfons_rgba(255, 255, 255, 255);
+    fonsSetColor(fs, white);
+    const char8_t* text = u8"Eloi ves a la merda";
+    dx = fonsDrawText(fs, dx, dy,(const char*)text, NULL);
+    //dx = fonsDrawText(fs, dx, dy, "", NULL);
+    
+
+    /* flush fontstash's font atlas to sokol-gfx texture */
+    sfons_flush(fs);
+
+    /* render pass */
+    sg_pass_action pass_action = {0};
+    pass_action.colors[0].action = SG_ACTION_CLEAR;
+    pass_action.colors[0].val[0] = 0.3f;
+    pass_action.colors[0].val[1] = 0.3f;
+    pass_action.colors[0].val[2] = 0.32f;
+    pass_action.colors[0].val[3] = 1.0f;
+    sg_begin_default_pass(pass_action, ws.x, ws.y);
+    sgl_draw();
+    sg_end_pass();
+    sg_commit();
+
+}
+
+void fonts_shutdown() {
+    sfons_destroy(fons_state.fons);
+
+}
+
+
+
 
 void sprite::init_from_texture(as::id tex_id) {
     texture_id = tex_id;
@@ -205,8 +306,12 @@ void register_render_asset_types() {
 //}
 
 void rd::init() {
-    sg_desc d = { 0 };
-    sg_setup(&d);
+    sg_desc sg_desc = { 0 };
+    sg_setup(&sg_desc);
+    sgl_desc_t sgl_desc = { 0 };
+    sgl_setup(&sgl_desc);
+
+    fonts_init();
 
     register_render_asset_types();
    // load_system_font();
@@ -606,11 +711,16 @@ void rd::draw_all(entt::registry& r) {
 
     sg_end_pass();
     sg_commit();
+
+    fonts_frame();
 }
+
 
 
 void rd::shutdown() {
     /* cleanup */
+    fonts_shutdown();
+    sgl_shutdown();
     sg_shutdown();
 }
 

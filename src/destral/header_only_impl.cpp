@@ -8,10 +8,33 @@
 #define AP_GLLOADER_IMPL
 #include "ap/ap_gl33.h"
 
+
+
+//////////////// SOKOL headers configuration
 #define SOKOL_NO_DEPRECATED
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "ap/sokol_gfx.h"
+
+
+#define SOKOL_GL_IMPL
+#include "ap/sokol_gl.h"
+
+
+#pragma warning( push )
+#pragma warning(disable : 4505)
+#pragma warning(disable : 4996)
+#pragma warning(disable : 4267)
+#define FONTSTASH_IMPLEMENTATION
+#include "ap/fontstash.h"
+#pragma warning( pop )
+
+
+#define SOKOL_FONTSTASH_IMPL
+#include "ap/sokol_fontstash.h"
+
+
+
 
 #define AP_SDL_IMPL
 #include "ap/ap_sdl.h"
@@ -35,7 +58,8 @@
 #define CUTE_C2_IMPLEMENTATION
 #include "ap/cute_c2.h"
 
-#define STB_TRUETYPE_IMPLEMENTATION
-#include "ap/stb_truetype.h"
+//#define STB_TRUETYPE_IMPLEMENTATION
+//#include "ap/stb_truetype.h"
+
 
 

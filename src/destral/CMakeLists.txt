@@ -11,8 +11,6 @@ set(Destral_PUBLIC_HEADERS
 "assets.h"
 "rect.h"
 "ecs.h"
-"bp/bp.h"
-"bp/bp_bindings.h"
 "math_funs.h"
 ) 
 
@@ -32,8 +30,6 @@ set(Destral_SOURCES
 "rect.cpp"
 "collision.cpp"
 "ecs.cpp"
-"bp/bp.cpp"
-"bp/bp_bindings.cpp"
 "math_funs.cpp"
 )
 
@@ -55,7 +51,7 @@ ${Destral_PRIVATE_HEADERS}
 target_link_libraries(Destral PUBLIC
 	SDL2::SDL2
 	Opengl32
-	LuaLib54
+	#LuaLib54
 )
 
 # Header only dependencies
