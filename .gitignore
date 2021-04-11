@@ -1,3 +1,10 @@
+# Destral
+out/*
+
+# Visual studio
+*.vs
+
+
 # Prerequisites
 *.d
 
