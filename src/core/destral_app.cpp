@@ -5,105 +5,119 @@
 #include "../backends/destral_platform_backend.h"
 #include "../backends/destral_graphics_backend.h"
 
+#include <thread>
 
 // Idea from:
 // https://github.com/NoelFB/blah/blob/master/src/core/app.cpp
 
 namespace ds::app {
+	struct time {
+		std::chrono::duration<float> dt_fixed_acc = std::chrono::seconds(0);
+		std::chrono::duration<float> current_frame_dt = std::chrono::seconds(0);
+		std::chrono::duration<float> current_fixed_dt = std::chrono::seconds(0);
+	};
 
 	struct app {
 		bool is_exiting = false;
-		float fps = 0.0f; // frames per second
-		float dt = 0.0f; // delta time in seconds
+		
 	};
 
 
 	// global application instance
 	static app g_app;
+	static config g_cfg;
+	static time g_time;
 
-	bool run(const config& params) {
-		platform_backend::init(params);
+	bool run(const config& cfg_) {
+		g_cfg = cfg_;
+		platform_backend::init(g_cfg);
 		graphics_backend::init();
 		// input_backend::init();
 
 
-		if (params.on_init) {
-			params.on_init();
+		if (g_cfg.on_init) {
+			g_cfg.on_init();
 		}
-
-		// Loop application
-		const float MAX_FPS = 200.0f;
-		const float MIN_FPS = 2.0f;  // 1 / 2 FPS = 500 milliseconds = > 0.5 seconds
-		const float MIN_DELTA_SECONDS = 1.0f / MAX_FPS;
-		const float MAX_DELTA_SECONDS = 1.0f / MIN_FPS;
 
 		using namespace std::chrono;
 		typedef high_resolution_clock hrclock;
 		hrclock::time_point last = hrclock::now();
 		
+		// Update loop
 		while (!g_app.is_exiting) {
 
 			// poll platform events
 			platform_backend::frame();
 
+			// target fixed tick seconds
+			g_time.current_fixed_dt = std::chrono::duration<float>(1.0f / g_cfg.fixed_target_framerate);
 
-			/////////////////////////////////////////////////////////// 
-			/// Maybe we can make a loop that ticks with a fixed timestep
-			/// 
+			// 1) compute delta
+			{ 
+				// First set new full frame delta and increment dt_fixed_acc
+				hrclock::time_point now = hrclock::now();
+				g_time.current_frame_dt = (now - last);
+				g_time.dt_fixed_acc += (now - last);
+				last = now;
 
-			const hrclock::time_point now = hrclock::now();
-			g_app.dt += std::chrono::duration<float>(now - last).count();
-			last = now;
+				// check if we are going too fast and sleep if necessary
+				// this checks if no we can't make a fixed_tick currently and will wait till we can make at least one
+				while (g_time.dt_fixed_acc < g_time.current_fixed_dt) {
+					// wait
+					std::this_thread::sleep_for(g_time.current_fixed_dt - g_time.dt_fixed_acc);
 
-			// Avoid death spiral (TODO MIRAR BE COM FUNCIONA L'SPIRAL DEATH)
-			if (g_app.dt > MAX_DELTA_SECONDS) {
-				g_app.dt = MAX_DELTA_SECONDS;
-				// We are going very slow! discard some delta
-			}
+					// then add the new delta to dt and dt_fixed_accum
+					now = hrclock::now();
+					g_time.current_frame_dt += (now - last);
+					g_time.dt_fixed_acc += (now - last);
+					last = now;
+				}
 
-			if (g_app.dt < MIN_DELTA_SECONDS) {
-				// We are going too fast!! skip this frame
-				continue;
-			}
-
-			g_app.fps = 1.0f / g_app.dt;
-
-			///
-			/////////////////////////////////////////////////////////// 
-
-
-			// delta time tick (non-fixed...)
-			{
-				//input_backend::frame();
-				graphics_backend::frame();
-
-				if (params.on_frame) {
-					params.on_frame();
+				// check if we are doing too many updates (avoid spiral of death)
+				// this checks if we are doing too many fixed_ticks
+				const auto max_time_allowed = g_time.current_fixed_dt * g_cfg.max_frame_iterations;
+				if (g_time.dt_fixed_acc > max_time_allowed) {
+					DS_WARNING("Too many updates, set max time allowed as dt_acc_time to avoid possible spiral of death");
+					g_time.current_frame_dt = max_time_allowed - (g_time.current_frame_dt - g_time.dt_fixed_acc);
+					g_time.dt_fixed_acc = max_time_allowed;
 				}
 			}
 
-			// render
+
+			// 2) Tick for the full frame dt (independent timestep
+			if (g_cfg.on_tick) {
+				g_cfg.on_tick();
+			}
+
+
+			// 2) Do as many fixed updates as we can (fixed timestep)
+			{
+				while (g_time.dt_fixed_acc >= g_time.current_fixed_dt) {
+					if (g_cfg.on_fixed_tick) {
+						g_cfg.on_fixed_tick();
+					}
+					g_time.dt_fixed_acc -= g_time.current_fixed_dt;
+				}
+			}
+
+			// 3) render loop
 			{
 				graphics_backend::before_render();
 
-				if (params.on_render) {
-					params.on_render();
+				if (g_cfg.on_render) {
+					g_cfg.on_render();
 				}
 
 				graphics_backend::after_render();
 				platform_backend::present();
 			}
-			
-
-			// reset elapsed accumulator
-			g_app.dt = 0.0f;
 		}
 
 
 		// Cleanup process
 		{
-			if (params.on_shutdown) {
-				params.on_shutdown();
+			if (g_cfg.on_shutdown) {
+				g_cfg.on_shutdown();
 			}
 
 			//input_backend::shutdown();
@@ -117,8 +131,16 @@ namespace ds::app {
 	void exit_request() {
 		g_app.is_exiting = true;
 	}
-}
 
+	float fixed_dt() {
+		return g_time.current_fixed_dt.count();
+	}
+
+	float dt() {
+		return g_time.current_frame_dt.count();
+	}
+
+}
 
 
 

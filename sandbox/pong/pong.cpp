@@ -70,7 +70,7 @@ int main() {
         /* a pass action to framebuffer to black */
         sg_pass_action apassaction = { 0 };
         apassaction.colors[0].action = SG_ACTION_CLEAR;
-        apassaction.colors[0].value = {1.0f, 0.0f, 0.0f, 1.0f };
+        apassaction.colors[0].value = {0.0f, 0.0f, 0.0f, 1.0f };
 
         state.pass_action = apassaction;
 
