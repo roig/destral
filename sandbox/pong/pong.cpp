@@ -11,15 +11,15 @@ static struct {
 } state;
 
 int main() {
-	
 	ds::app::config cfg;
+    ds::ecs::registry_create();
 
 
     cfg.on_init = []() {
         /* a vertex buffer with 3 vertices */
         float vertices[] = {
             // positions            // colors
-             0.0f,  0.2f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
+             0.0f,  0.2f, 0.5f,     0.76f, 0.38f, 0.23f, 1.0f,
              0.5f, -0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
             -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f
         };

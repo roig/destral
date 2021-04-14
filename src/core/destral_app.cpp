@@ -22,7 +22,6 @@ namespace ds::app {
 		
 	};
 
-
 	// global application instance
 	static app g_app;
 	static config g_cfg;

@@ -142,4 +142,29 @@ namespace ds {
 	using u64 = uint64_t;
 }
 
+/** Error Structure */
+namespace ds {
+	struct error {
+		static inline error failure(const std::string& str) { error e; e.is_error = true; e.details = str; return e; }
+		static inline error success() { return {}; }
+		bool is_error = false;
+		std::string details;
+	};
+}
+
+
+/** Hash strings functions and literals */
+namespace ds {
+	// Fowler–Noll–Vo hash function v. 1a - the good
+	namespace detail { 
+		constexpr u64 fnv1a_64bit(const char* curr) { 
+			auto value = 14695981039346656037ull; while (*curr != 0) { value = (value ^ static_cast<u64>(*(curr++))) * 1099511628211ull; }
+			return value;
+		} 
+	}
+	inline namespace literals { constexpr u64 operator""_hs(const char* s, std::size_t) { return ds::detail::fnv1a_64bit(s); } }
+}
+
+
+
 

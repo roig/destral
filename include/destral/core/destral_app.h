@@ -15,7 +15,7 @@ namespace ds::app {
 
         // constant framerate tick (normally you can use 60, 240, 480 etc..)
         // this will be used to call on_fixed_tick callback N times a frame
-        i32 fixed_target_framerate = 60;
+        i32 fixed_target_framerate = 480;
 
         // max tick iterations that we will allow before discarding the rest of the tick
         // (this is to prevent the spiral of death)

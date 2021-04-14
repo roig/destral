@@ -9,12 +9,14 @@
 namespace ds::platform_backend {
 	namespace impl {
 		void sdl_log_redirect(void* userdata, int category, SDL_LogPriority priority, const char* message) 	{
-			if (priority <= SDL_LOG_PRIORITY_INFO)
+			if (priority <= SDL_LOG_PRIORITY_INFO) {
 				DS_LOG(message);
-			else if (priority <= SDL_LOG_PRIORITY_WARN)
+			} else if (priority <= SDL_LOG_PRIORITY_WARN) {
 				DS_WARNING(message);
-			else
+
+			} else {
 				DS_FATAL(message);
+			}
 		}
 	}
 	static SDL_Window* g_window = nullptr;

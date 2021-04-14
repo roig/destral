@@ -17,7 +17,7 @@ add_subdirectory(libs/fmt-7.1.3)
 
 # Edv source files list
 file(GLOB_RECURSE DESTRAL_SOURCE_FILES "src/*.cpp" "src/*.hpp")
-file(GLOB_RECURSE DESTRAL_PUBLIC_HEADER_FILES "include/*.h" "include/*.hpp")
+file(GLOB_RECURSE DESTRAL_PUBLIC_HEADER_FILES  "include/*.h" "include/*.hpp")
 
 
 #add_library(Destral 
