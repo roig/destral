@@ -13,7 +13,7 @@ namespace ds::platform_backend {
 	void shutdown();
 
 	// Called every frame, will poll system events
-	void frame();
+	void tick();
 
 	// Called to present the window contents
 	void present();
@@ -26,5 +26,8 @@ namespace ds::platform_backend {
 	void* gl_context_create();
 	void gl_context_make_current(void* context);
 	void gl_context_destroy(void* context);
+
+	void get_drawable_size(int* width, int* height);
+	
 
 }

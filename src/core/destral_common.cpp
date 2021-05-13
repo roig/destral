@@ -51,7 +51,7 @@ namespace ds::log {
         }
         // build message log
        
-        const std::string full_msg = fmt::format(style, "{:%x %X}.{:0>3} {} {}:{} {}\n", tm_t, now_milis.count(), lvl_char, file_name, line, msg);
+        const std::string full_msg = fmt::format("{:%x %X}.{:0>3} {} {}:{} {}\n", tm_t, now_milis.count(), lvl_char, file_name, line, msg);
 
   /*    std::stringstream full_msg;
         full_msg << std::put_time(&tm_t, "%x %X") << "." << std::setfill('0') << std::setw(3) << now_milis.count()
@@ -59,8 +59,8 @@ namespace ds::log {
         // write the message to log
         //std::cout << full_msg.rdbuf();
 
-
-        fmt::print(full_msg);
+        std::printf("%s", full_msg.c_str());
+        //fmt::print(full_msg);
         if (g_logfile) {
             /*full_msg.seekg(0, std::ios::beg);
             g_logfile << full_msg.rdbuf();*/

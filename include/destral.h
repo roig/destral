@@ -9,7 +9,7 @@
 #include <destral/math/destral_math.h>
 
 
-#include <destral/graphics/destral_graphics.h>
+#include <destral/graphics/destral_renderer.h>
 
 #include <destral/input/destral_input.h>
 

@@ -3,7 +3,8 @@
 #include <iostream>
 
 #include "../backends/destral_platform_backend.h"
-#include "../backends/destral_graphics_backend.h"
+#include "../backends/destral_input_backend.h"
+#include <destral/graphics/destral_renderer.h>
 
 #include <thread>
 
@@ -22,7 +23,7 @@ namespace ds::app {
 		
 	};
 
-	// global application instance
+	// global instances
 	static app g_app;
 	static config g_cfg;
 	static time g_time;
@@ -30,7 +31,7 @@ namespace ds::app {
 	bool run(const config& cfg_) {
 		g_cfg = cfg_;
 		platform_backend::init(g_cfg);
-		graphics_backend::init();
+		rd::init();
 		// input_backend::init();
 
 
@@ -45,14 +46,11 @@ namespace ds::app {
 		// Update loop
 		while (!g_app.is_exiting) {
 
-			// poll platform events
-			platform_backend::frame();
-
-			// target fixed tick seconds
-			g_time.current_fixed_dt = std::chrono::duration<float>(1.0f / g_cfg.fixed_target_framerate);
-
 			// 1) compute delta
 			{ 
+				// target fixed tick seconds
+				g_time.current_fixed_dt = std::chrono::duration<float>(1.0f / g_cfg.fixed_target_framerate);
+
 				// First set new full frame delta and increment dt_fixed_acc
 				hrclock::time_point now = hrclock::now();
 				g_time.current_frame_dt = (now - last);
@@ -82,14 +80,25 @@ namespace ds::app {
 				}
 			}
 
+			// 1) Begin Frame
+			{
+				input_backend::on_input_begin_frame();
+			}
 
-			// 2) Tick for the full frame dt (independent timestep
-			if (g_cfg.on_tick) {
-				g_cfg.on_tick();
+			// 2) Full tick perform
+			{
+				platform_backend::tick();
+				rd::tick();
+
+
+				// 2) Tick for the full frame dt (independent timestep)
+				if (g_cfg.on_tick) {
+					g_cfg.on_tick();
+				}
 			}
 
 
-			// 2) Do as many fixed updates as we can (fixed timestep)
+			// 3) Do as many fixed updates as we can (fixed timestep)
 			{
 				while (g_time.dt_fixed_acc >= g_time.current_fixed_dt) {
 					if (g_cfg.on_fixed_tick) {
@@ -99,15 +108,15 @@ namespace ds::app {
 				}
 			}
 
-			// 3) render loop
+			// 4) render loop
 			{
-				graphics_backend::before_render();
+				rd::before_render();
 
 				if (g_cfg.on_render) {
 					g_cfg.on_render();
 				}
 
-				graphics_backend::after_render();
+				rd::after_render();
 				platform_backend::present();
 			}
 		}
@@ -120,7 +129,7 @@ namespace ds::app {
 			}
 
 			//input_backend::shutdown();
-			graphics_backend::shutdown();
+			rd::shutdown();
 			platform_backend::shutdown();
 		}
 

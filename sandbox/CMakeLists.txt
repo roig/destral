@@ -1,1 +1,1 @@
-add_subdirectory(pong)
+add_subdirectory(test_graphics)

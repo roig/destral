@@ -3,11 +3,11 @@ cmake_minimum_required(VERSION 3.1)
 #find_package(SDL2)
 
 
-add_executable(Pong "pong.cpp")
+add_executable(test_graphics "test_graphics.cpp")
 
 
 # warnings suppression Visual studio and multithreading compiling /MP
-target_compile_options(Pong PUBLIC
+target_compile_options(test_graphics PUBLIC
 /W4
 #/WX
 #/wd4251 #dll interface shit
@@ -15,6 +15,6 @@ target_compile_options(Pong PUBLIC
 #/wd6011
 /MP)
 
-target_compile_features(Pong PUBLIC cxx_std_20)
-target_link_libraries(Pong PUBLIC Destral)
+target_compile_features(test_graphics PUBLIC cxx_std_20)
+target_link_libraries(test_graphics PUBLIC Destral)
 

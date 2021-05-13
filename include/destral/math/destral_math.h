@@ -13,6 +13,7 @@
     - vector/matrix types
     - transform type
     - axis aligned rectangle (rect)
+
     -- Math useful functions --
     - lerp/lerp inverted template.
     - mapping functions
@@ -23,9 +24,9 @@ namespace ds {
     using vec3 = glm::vec<3, float>;
     using vec4 = glm::vec<4, float>;
 
-    using ivec2 = glm::vec<2, ds::i64>;
-    using ivec3 = glm::vec<3, ds::i64>;
-    using ivec4 = glm::vec<4, ds::i64>;
+    using ivec2 = glm::vec<2, ds::i32>;
+    using ivec3 = glm::vec<3, ds::i32>;
+    using ivec4 = glm::vec<4, ds::i32>;
 
     using mat3 = glm::mat<3, 3, float>;
     using mat4 = glm::mat<4, 4, float>;
@@ -103,18 +104,19 @@ namespace ds {
 
     /**
     *	Axis aligned rectangle, minimal coordinate is inclusive, maximal coordinate is exclusive.
-    *	    min ------------------{max.x,min.y}
+    *	{min.x,max.y} --------------  max    
     *	    |			               |
-    *	{min.x,max.y} --------------  max
+    *      min ------------------{max.x,min.y}
+    *	
     *
     *      X goes to the right.
-    *      Y goes down.
+    *      Y goes up.
     *
     * NOTE: Implementation details from Magnum Engine
     */
     struct rect {
-        vec2 min = { 0,0 }; // top left
-        vec2 max = { 0,0 }; // bottom-right
+        vec2 min = { 0,0 }; // bottom left
+        vec2 max = { 0,0 }; // top-right
 
         /**
         * @brief Create a rect from minimal coordinates and size
@@ -135,22 +137,22 @@ namespace ds {
 
 
         /** @brief bottom left corner */
-        vec2 bottom_left() { return { min.x, max.y }; }
+        vec2 top_left() { return { min.x, max.y }; }
         /** @brief top right corner */
-        vec2 top_right() { return { max.x, min.y }; }
+        vec2 bottom_right() { return { max.x, min.y }; }
         /** @brief top left corner equal to min*/
-        vec2 top_left() { return min; }
+        vec2 bottom_left() { return min; }
         /** @brief bottom right corner equal to max*/
-        vec2 bottom_right() { return max; }
+        vec2 top_right() { return max; }
 
         /** @brief Left edge */
         float left() { return min.x; }
         /** @brief right edge */
         float right() { return max.x; }
         /** @brief top edge */
-        float top() { return min.y; }
+        float top() { return max.y; }
         /** @brief bottom edge */
-        float bottom() { return max.y; }
+        float bottom() { return min.y; }
 
         /** @brief rect size */
         vec2 size() { return max - min; }
@@ -211,6 +213,17 @@ namespace ds {
 
 
     namespace math {
+
+        static inline mat3 build_matrix(const vec2& translation, float rotation_radians, const vec2& scaling) {
+            return glm::scale(glm::rotate(glm::translate(glm::mat3{ 1 }, translation), rotation_radians), scaling);
+        }
+        static inline mat3 build_matrix(const vec2& translation, float rotation_radians) {
+            return glm::rotate(glm::translate(glm::mat3{ 1 }, translation), rotation_radians);
+        }
+        static inline mat3 build_matrix(const vec2& translation) {
+            return glm::translate(glm::mat3{ 1 }, translation);
+        }
+
         template<typename T>
         inline T lerp(T x, T y, T a) {
             return glm::mix(x, y, a);
