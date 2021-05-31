@@ -74,7 +74,7 @@ namespace ds::app {
 				// this checks if we are doing too many fixed_ticks
 				const auto max_time_allowed = g_time.current_fixed_dt * g_cfg.max_frame_iterations;
 				if (g_time.dt_fixed_acc > max_time_allowed) {
-					DS_WARNING("Too many updates, set max time allowed as dt_acc_time to avoid possible spiral of death");
+					//DS_WARNING("Too many updates, set max time allowed as dt_acc_time to avoid possible spiral of death");
 					g_time.current_frame_dt = max_time_allowed - (g_time.current_frame_dt - g_time.dt_fixed_acc);
 					g_time.dt_fixed_acc = max_time_allowed;
 				}

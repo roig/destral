@@ -10,7 +10,8 @@
 namespace ds::input_backend {
 
 	void on_input_begin_frame();
-	void on_key_change(bool is_pressed, ds::in::Key key);
+	void on_key_change(bool is_pressed, ds::in::Key key, i32 controller_id);
 	void on_mouse_motion(ds::ivec2 pos, ds::ivec2 relative);
-	void on_mouse_button_change(bool is_pressed, ds::in::MouseButton button);
+	void on_gamepad_axis_change(float value, in::Key axis, i32 controller_idx);
+
 }
