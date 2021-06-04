@@ -149,20 +149,30 @@ namespace ds::ecs {
     void registry_destroy(registry* r) {
         dscheck(r);
         // delete all the entities...
-        // TODO (FIX) DANI important!!
+        auto all = all_entities(r);
+        for (auto i = 0; i < all.size(); i++) {
+            entity_delete(r, all[i]);
+        }
 
         // delete all the context variables
         ctx_unset_all(r);
         delete r;
     }
 
-    static inline void s_release_entity(registry* r, entity e, uint32_t desired_version) {
+    // Performs the release of an entity in the registry by adding it to the recycle list
+    static inline void s_release_entity(registry* r, entity e) {
         const uint32_t e_id = entity_id(e);
-        r->entities[e_id] = entity_assemble(r->available_id, desired_version, 0);
+        uint32_t new_version = entity_version(e);
+        ++new_version;
+
+        // assemble an entity to be used for recycling
+        r->entities[e_id] = entity_assemble(r->available_id, new_version, 0);
         r->available_id = e_id;
     }
 
-    static inline entity s_create_enitty(registry* r, uint32_t type_idx) {
+    // Performs the creation process of a new entity of type_idx either by
+    // recycling an entity id or by creating a new one if no available for recycling.
+    static inline entity s_create_entity(registry* r, uint32_t type_idx) {
         dscheck(r);
         if (r->available_id == entity_null) {
             // Generate a new entity
@@ -212,6 +222,8 @@ namespace ds::ecs {
         r->entity_hashed_types.push_back(type_id);
     }
 
+    // Process the full creation of an entity type id.
+    // This includes the creation of all the components and their initialization in order
     entity entity_make(registry* r, std::uint64_t e_id) {
         dscheck(r);
         dscheck(r->types.contains(e_id));
@@ -223,7 +235,7 @@ namespace ds::ecs {
             }
         }
         // create the entity
-        entity e = s_create_enitty(r, type_idx);
+        entity e = s_create_entity(r, type_idx);
         // and emplace all the components
         entity_type* type = &r->types[e_id];
         for (size_t i = 0; i < type->cp_ids.size(); ++i) {
@@ -250,6 +262,8 @@ namespace ds::ecs {
         return e;
     }
 
+    // Process the full destruction of an entity.
+    // This includes the cleanup of all the components and their destruction in reverse order
     void entity_delete(registry* r, entity e) {
         dscheck(r);
         // retrieve the entity type from entity
@@ -257,7 +271,7 @@ namespace ds::ecs {
         dscheck(type_idx < r->entity_hashed_types.size());
         const std::uint64_t hashed_type_id = r->entity_hashed_types[type_idx];
         dscheck(r->types.contains(hashed_type_id));
-        // cleanup the cps in inverse order
+        // cleanup the cps in reverse order
         std::vector<std::uint64_t>& cps = r->types[hashed_type_id].cp_ids;
         for (size_t i = 0; i < cps.size(); ++i) {
             const size_t cp_id = cps[cps.size() - 1 - i];
@@ -276,13 +290,11 @@ namespace ds::ecs {
                 st->delete_fn(cp_data);
             }
 
-            // 3 -> remove it from the cp storage
+            // 3 -> remove the cp from the cp storage
             st->remove(e);
         }
         // 4 -> release_entity with a desired new version
-        uint32_t new_version = entity_version(e);
-        ++new_version;
-        s_release_entity(r, e, new_version);
+        s_release_entity(r, e);
     }
 
     void* entity_get(registry* r, entity e, const char* cp) {
@@ -304,6 +316,26 @@ namespace ds::ecs {
         const uint32_t id = entity_id(e);
         return (id < r->entities.size()) && (r->entities[id] == e);
     }
+
+    std::vector<entity> all_entities(registry* r) {
+        dscheck(r);
+        // If no entities are available to recycle, means that the full vector is valid
+        if (r->available_id == entity_null) {
+            return r->entities;
+        } else {
+            std::vector<entity> alive;
+            for (std::uint64_t i = 0; i < r->entities.size(); ++i) {
+                const entity e = r->entities[i];
+                
+                // if the entity id is the same as the index, means its not a recycled one
+                if (entity_id(e) == i) {
+                    alive.push_back(e);
+                }
+            }
+            return alive;
+        }
+    }
+
 
     void cp_register(registry* r, const char* name_id, size_t cp_sizeof,
         placement_new_fn* placement_new_fn, delete_fn* del_fn,

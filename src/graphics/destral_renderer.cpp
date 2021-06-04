@@ -217,6 +217,9 @@ namespace ds::rd {
 
 	void render_present() {
 
+		// If no vertex data, return!
+
+
 		// upload all the vertex data to the gpu
 		sg_range vbo_range;
 		vbo_range.ptr = g_rs.vertex_data.data();
@@ -224,10 +227,11 @@ namespace ds::rd {
 		if (g_rs.vertex_data.size() * sizeof(float) > g_rs.MAX_VERTEX_DATA_BYTES_SIZE) {
 			DS_WARNING("Vertex data exceds the maximum VBO size, probably some primitives will be not rendered.");
 		}
-		sg_update_buffer(g_rs.vbo, vbo_range);
-		
-		
-		
+
+		// only update the buffer if it has data
+		if (g_rs.vertex_data.size() != 0) {
+			sg_update_buffer(g_rs.vbo, vbo_range);
+		}
 
 		ivec2 draw_sz;
 		platform_backend::get_drawable_size(&draw_sz.x, &draw_sz.y);

@@ -13,6 +13,62 @@
     TODO: Something like entt::basic_handle: https://github.com/skypjack/entt/blob/master/src/entt/entity/handle.hpp
 
 
+    ////////// Registry information.
+
+    * The registry holds the registered components, entities and systems that are always registered at the start.
+    * After you register a component or an entity or a system, you can't unregister them. 
+    
+
+    ////////// Components
+
+    Components are structs that you can register into the registry and assign them a type name to acces them later.
+    
+    The registry provides an special template to ease the registration process:   ecs::cp_register<T>
+
+    This is an example of registration of two components:
+
+    struct player {
+        float x = 0;
+        float y = 0;
+        int health = 100;
+        std::string name = "awesome player";
+        void init(ecs::registry* r, ecs::entity e) { }
+        void deinit(ecs::registry* r, ecs::entity e) { }
+    };
+    
+    struct enemy {
+        float x = 0;
+        std::string enemy_name = "very bad enemy";
+        void init(ecs::registry* r, ecs::entity e) { }
+        void deinit(ecs::registry* r, ecs::entity e) { }
+    };
+
+
+    registry *g_rs = ecs::registry_create();
+    DS_ECS_CP_REGISTER(g_r, player); // same ecs::cp_register<player>(g_r, "player");
+    DS_ECS_CP_REGISTER(g_r, enemy);
+    
+    IMPORTANT: After this you can identify each component with the name "player" and "enemy".
+
+    Things to remember, the functions init and deinit ARE MANDATORY they are always executed AFTER creating an
+    entity that has those components. This allows initialization and deinitialization at entity level. The entity
+    that owns this component is passed in the init and deinit second argument.
+
+
+    ////////// Entities
+
+    Entities are type identifiers that are composed by components.
+    The registry allows the registration of entities with a number of components using the ecs::entity_register() function.
+    
+
+    
+
+    1) register the components
+
+
+
+    
+
     ////////// Construction of an entity:
     0 -> create the entity in the registry
 
@@ -100,15 +156,15 @@ static constexpr uint32_t entity_id(entity e) { return e & 0xFFFFFFFF; }
 static constexpr uint32_t entity_version(entity e) { return e >> 48; }
 /* Returns the type index part of the entity */
 static constexpr uint32_t entity_type_idx(entity e) { return (e << 16) >> 48; }
-/* Makes a entity from an id and version */
+/* Makes a entity from an id, version and type_idx */
 static constexpr entity entity_assemble(uint32_t id, uint32_t version, uint32_t type_idx) { return (entity(id) | (entity(type_idx) << 32)) | (entity(version) << 48); }
 /* The entity_null is a entity that represents a null entity. */
 static constexpr entity entity_null = entity_max_id();
 
 //--------------------------------------------------------------------------------------------------
 // Registry: global context that holds each storage for each component types and the entities.
-
 struct registry;
+
 registry* registry_create(); /*  Allocates and initializes a registry context */
 void registry_destroy(registry* r); /*  Deinitializes and frees a registry context */
 
@@ -132,8 +188,12 @@ view view_create(registry* r, const std::vector<std::uint64_t>& cp_ids);
 
 //--------------------------------------------------------------------------------------------------
 // System Functions
+
+// This adds a system function to be executed after the last one
 typedef void (sys_update_fn) (registry* r, view* view);
 void system_add(registry* r, const char* name_id, const std::vector<std::uint64_t>& cp_ids, sys_update_fn* update_fn);
+
+// This runs all the registered systems
 void run_systems(registry* r);
 
 //--------------------------------------------------------------------------------------------------
@@ -142,7 +202,7 @@ void run_systems(registry* r);
 // Registers an entity type with it's components
 void entity_register(registry* r, const char* entity_name_id, std::vector<std::uint64_t> cps);
 // Instantiates an entity
-entity entity_make(registry* r, std::uint64_t id);
+entity entity_make(registry* r, std::uint64_t type_id);
 // Returns the component cp for the entity e. If entity has not the cp, undefined behaviour. Use entity_try_get instead
 void* entity_get(registry* r, entity e, std::uint64_t cp_id);
 // Returns the component cp for the entity e if it exists or nullptr.
@@ -151,6 +211,9 @@ void* entity_try_get(registry* r, entity e, std::uint64_t cp_id);
 bool entity_valid(registry* r, entity e);
 // Deletes the entity with the components associated with (do not call this function while iterating views. Will invalidate pointers)
 void entity_delete(registry* r, entity e);
+// Returns a copy of all the entities in the registry (WARNING: this is a slow operation)
+// Remember that after operations this vector will not be update.
+std::vector<entity> all_entities(registry* r);
 
 //--------------------------------------------------------------------------------------------------
 // Context Variables Functions
@@ -308,6 +371,8 @@ struct view {
         dscheck(cp_idx < _impl.cp_storages.size());
         return (T*)_impl.cp_storages[cp_idx]->get(_impl.cur_entity);
     }
+
+
 
     // Advances the next entity that has all the components for the view
     inline void next() {

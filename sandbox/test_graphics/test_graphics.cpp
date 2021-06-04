@@ -67,11 +67,11 @@ int main() {
         switch (mode) {
         case 0:
             rd::draw_circle({ x,y }, 0.5f, vec4(1, 0, 0, 1), 5);
-          /*  rd::draw_rect(math::build_matrix({ 0.5, 0 }, rot), { 0.5, 0.5 }, vec4(0, 1, 0, 1), 4);
+            rd::draw_rect(math::build_matrix({ 0.5, 0 }, rot), { 0.5, 0.5 }, vec4(0, 1, 0, 1), 4);
             rd::draw_fill_rect(math::build_matrix({ -0.5, 0 }, rot), { 0.5, 0.5 }, vec4(1, 0, 0, 1), 3);
             rd::draw_line({ { 0.5, 0.5 } , { 0.0, 0.5 }, {0, -0.5}, {-0.5, -0.5 } }, vec4(0, 0, 1, 1), 2);
             rd::draw_line({ { 0.3, 0.2 } , { 0.2, 0.7 }, {0, -0.5}, {0.5, 0.5 } }, vec4(0, 1, 1, 1), 1);
-            rd::draw_texture(math::build_matrix({ 0, 0 }), img, { 1,1 }, rect::from_size({ 0,0 }, { 1, 1 }), vec4{ 1,1,1,1 }, 7);*/
+            rd::draw_texture(math::build_matrix({ 0, 0 }), img, { 1,1 }, rect::from_size({ 0,0 }, { 1, 1 }), vec4{ 1,1,1,1 }, 7);
 
             
             break;
