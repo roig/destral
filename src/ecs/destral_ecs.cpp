@@ -297,18 +297,18 @@ namespace ds::ecs {
         s_release_entity(r, e);
     }
 
-    void* entity_get(registry* r, entity e, const char* cp) {
+    void* entity_get(registry* r, entity e, std::uint64_t cp_id) {
         dscheck(r);
         dscheck(entity_valid(r, e));
-        dscheck(s_get_storage(r, ds::detail::fnv1a_64bit(cp)));
-        return s_get_storage(r, ds::detail::fnv1a_64bit(cp))->get(e);
+        dscheck(s_get_storage(r, cp_id));
+        return s_get_storage(r, cp_id)->get(e);
     }
 
-    void* entity_try_get(registry* r, entity e, const char* cp) {
+    void* entity_try_get(registry* r, entity e, std::uint64_t cp_id) {
         dscheck(r);
         dscheck(entity_valid(r, e));
-        dscheck(s_get_storage(r, ds::detail::fnv1a_64bit(cp)));
-        return s_get_storage(r, ds::detail::fnv1a_64bit(cp))->try_get(e);
+        dscheck(s_get_storage(r, cp_id));
+        return s_get_storage(r, cp_id)->try_get(e);
     }
 
     bool entity_valid(registry* r, entity e) {

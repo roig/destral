@@ -7,20 +7,73 @@ using namespace ds;
 static ecs::registry* g_r = nullptr;
 
 
+struct bullet {
+    vec2 pos;
+    float velocity = 5.f;
+    void init(ecs::registry* r, ecs::entity e) { DS_LOG("bullet init call!"); }
+    void deinit(ecs::registry* r, ecs::entity e) { DS_LOG("bullet deinit call!"); }
+    static void update(ecs::registry* r, ecs::view* v) {
+
+
+        auto bullet_cpidx = v->index("bullet"_hs);
+        while (v->valid()) {
+            bullet* p = v->data<bullet>(bullet_cpidx);
+
+            p->pos.y = p->pos.y + (p->velocity * app::dt());
+            rd::draw_circle(p->pos, 0.1f, vec4(1, 0, 1, 1), 4);
+            v->next();
+        }
+    }
+
+};
+
 struct player {
-    float x = 0;
-    float y = 0;
-    int health = 100;
+    vec2 pos = { 0,-0.7f };
+    float velocity = 2;
+
     std::string name = "awesome player";
     void init(ecs::registry* r, ecs::entity e) { DS_LOG("player init call!"); }
     void deinit(ecs::registry* r, ecs::entity e) { DS_LOG("enemy deinit call!"); }
+
+
+    static void update(ecs::registry* r, ecs::view* v) {
+        auto player_cpidx = v->index("player"_hs);
+        while (v->valid()) {
+            player* p = v->data<player>(player_cpidx);
+           
+            if (in::is_key_triggered(in::Key::Space)) {
+                // Here I want to create an entity and set the position of the bullet entity to 
+                auto ebullet = ecs::entity_make(g_r, "BulletEntity"_hs);
+                bullet* cp_bullet = (bullet*)ecs::entity_get(g_r, ebullet, "bullet"_hs);
+                cp_bullet->pos = p->pos;
+            }
+
+
+            float dir = 0.f;
+            if (in::is_key_pressed(in::Key::Left) || in::is_key_pressed(in::Key::Gamepad_Left_Left)) {
+                dir = -1.f;
+            } else if (in::is_key_pressed(in::Key::Right) || in::is_key_pressed(in::Key::Gamepad_Left_Right)) {
+                dir = 1.f;
+            }
+
+            p->pos.x = p->pos.x + (p->velocity * app::dt() * dir);
+            rd::draw_rect(math::build_matrix(p->pos), { 0.5, 0.5 }, vec4(0, 1, 0, 1), 4);
+            v->next();
+        }
+    }
+   
 };
+
+
 
 struct enemy {
     float x = 0;
     std::string enemy_name = "very bad enemy";
     void init(ecs::registry* r, ecs::entity e) { DS_LOG("enemy init call!"); }
     void deinit(ecs::registry* r, ecs::entity e) { DS_LOG("enemy deinit call!"); }
+    static void update(ecs::registry* r, ecs::view* v) {
+
+    }
 };
 
 
@@ -29,37 +82,22 @@ void init() {
     g_r = ecs::registry_create();
     DS_ECS_CP_REGISTER(g_r, player); // same ecs::cp_register<player>(g_r, "player");
     DS_ECS_CP_REGISTER(g_r, enemy); // the identifier of the component is "enemy"_hs 
+    DS_ECS_CP_REGISTER(g_r, bullet);
 
     // Register the entities
     ecs::entity_register(g_r, "PlayerEntity", { "player"_hs });
     ecs::entity_register(g_r, "BadEnemyEntity", { "enemy"_hs });
+    ecs::entity_register(g_r, "BulletEntity", { "bullet"_hs });
 
     // Register the systems
-    ecs::system_add(g_r, "UpdatePlayerSystem", { "player"_hs }, [](ecs::registry* r, ecs::view* v) {
-        DS_LOG("UpdatePlayerSystem called.");
-
-        auto player_cpidx = v->index("player"_hs);
-        while (v->valid()) {
-            //rd::draw_rect({ 0,0 }, 0.5f);
-            
-            player* p = v->data<player>(player_cpidx);
-            DS_LOG(p->name.c_str());
-            v->next();
-        }
-    });
-
-    ecs::system_add(g_r, "UpdateEnemySystem", { "enemy"_hs }, [](ecs::registry* r, ecs::view* v) {
-        DS_LOG("UpdateEnemySystem called.");
-    });
+    ecs::system_add(g_r, "UpdatePlayerSystem", { "player"_hs }, player::update);
+    ecs::system_add(g_r, "UpdateEnemySystem", { "enemy"_hs }, enemy::update);
+    ecs::system_add(g_r, "UpdateEnemySystem", { "bullet"_hs }, bullet::update);
 
 
     // Create one player
     ecs::entity_make(g_r, "PlayerEntity"_hs);
     
-    // Create three enemies
-    ecs::entity_make(g_r, "BadEnemyEntity"_hs);
-    ecs::entity_make(g_r, "BadEnemyEntity"_hs);
-    ecs::entity_make(g_r, "BadEnemyEntity"_hs);
 
 }
 

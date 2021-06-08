@@ -39,8 +39,7 @@ namespace ds::app {
 			g_cfg.on_init();
 		}
 
-		using namespace std::chrono;
-		typedef high_resolution_clock hrclock;
+		typedef std::chrono::high_resolution_clock hrclock;
 		hrclock::time_point last = hrclock::now();
 		
 		// Update loop
