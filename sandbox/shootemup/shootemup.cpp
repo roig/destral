@@ -5,107 +5,130 @@ using namespace ds;
 
 
 static ecs::registry* g_r = nullptr;
-
+static ecs::syspool* g_syspool = nullptr;
 
 struct bullet {
     vec2 pos;
-    float velocity = 5.f;
-    void init(ecs::registry* r, ecs::entity e) { DS_LOG("bullet init call!"); }
-    void deinit(ecs::registry* r, ecs::entity e) { DS_LOG("bullet deinit call!"); }
-    static void update(ecs::registry* r, ecs::view* v) {
+    float velocity = 1.f;
+    float timetolive = 1.0f;
+};
+void bullet_init(ecs::registry* r, ecs::entity e) { DS_LOG("bullet init call!"); }
+void bullet_deinit(ecs::registry* r, ecs::entity e) { DS_LOG("bullet deinit call!"); }
+void bullet_update(ecs::registry* r, float dt) {
+   // DS_LOG("Start Bullet Update ---------");
+    
+
+   
+    ecs::view v = ecs::view::create(r, { "bullet" });
+    while (v.valid()) {
+        bullet* p = v.data<bullet>(v.index("bullet"));
+        p->pos.y = p->pos.y + (p->velocity * dt);
+        p->timetolive -= dt;
+        rd::draw_circle(p->pos, 0.1f, vec4(1, 0, 1, 1), 4);
+        //DS_LOG(fmt::format("entity: {}   ttl: {}", v->entity(), p->timetolive));
+        //if (p->timetolive < 0.0) {
+        //   // ecs::entity_destroy_deferred(r, v->entity());
+        //}
+        //if (in::is_key_triggered(in::Key::Space)) {
+        //    // Here I want to create an entity and set the position of the bullet entity to 
+        //    ecs::entity_make(g_r, "BulletEntity");
+        //    //bullet* cp_bullet = (bullet*)ecs::entity_try_get(g_r, ebullet, "bullet");
+        //    /*cp_bullet->pos = p->pos;*/
+        //}
+        v.next();
+    }
+    
+  //  DS_LOG("End Bullet Update ----------");
 
 
-        auto bullet_cpidx = v->index("bullet"_hs);
-        while (v->valid()) {
-            bullet* p = v->data<bullet>(bullet_cpidx);
 
-            p->pos.y = p->pos.y + (p->velocity * app::dt());
-            rd::draw_circle(p->pos, 0.1f, vec4(1, 0, 1, 1), 4);
-            v->next();
+    if (in::is_key_triggered(in::Key::Delete)) {
+        // Here I want to create an entity and set the position of the bullet entity to 
+
+        auto all = ecs::entity_all(r);
+        if (!all.empty()) {
+            auto etodestroy = all.at(0);
+
+            ecs::entity_destroy(g_r, etodestroy);
         }
+
+        //bullet* cp_bullet = (bullet*)ecs::entity_try_get(g_r, ebullet, "bullet");
+        /*cp_bullet->pos = p->pos;*/
     }
 
-};
+}
+
+
 
 struct player {
     vec2 pos = { 0,-0.7f };
     float velocity = 2;
-
     std::string name = "awesome player";
-    void init(ecs::registry* r, ecs::entity e) { DS_LOG("player init call!"); }
-    void deinit(ecs::registry* r, ecs::entity e) { DS_LOG("enemy deinit call!"); }
+};
+void player_init(ecs::registry* r, ecs::entity e) { DS_LOG("player init call!"); }
+void player_deinit(ecs::registry* r, ecs::entity e) { DS_LOG("player deinit call!"); }
+void player_update(ecs::registry* r, float dt) {
+    
+    ecs::view vobj = ecs::view::create(r, { "player" });
+    ecs::view* v = &vobj;
+    auto player_cpidx = v->index("player");
+    while (v->valid()) {
+        player* p = v->data<player>(player_cpidx);
 
-
-    static void update(ecs::registry* r, ecs::view* v) {
-        auto player_cpidx = v->index("player"_hs);
-        while (v->valid()) {
-            player* p = v->data<player>(player_cpidx);
-           
-            if (in::is_key_triggered(in::Key::Space)) {
-                // Here I want to create an entity and set the position of the bullet entity to 
-                auto ebullet = ecs::entity_make(g_r, "BulletEntity"_hs);
-                bullet* cp_bullet = (bullet*)ecs::entity_get(g_r, ebullet, "bullet"_hs);
-                cp_bullet->pos = p->pos;
-            }
-
-
-            float dir = 0.f;
-            if (in::is_key_pressed(in::Key::Left) || in::is_key_pressed(in::Key::Gamepad_Left_Left)) {
-                dir = -1.f;
-            } else if (in::is_key_pressed(in::Key::Right) || in::is_key_pressed(in::Key::Gamepad_Left_Right)) {
-                dir = 1.f;
-            }
-
-            p->pos.x = p->pos.x + (p->velocity * app::dt() * dir);
-            rd::draw_rect(math::build_matrix(p->pos), { 0.5, 0.5 }, vec4(0, 1, 0, 1), 4);
-            v->next();
+        if (in::is_key_triggered(in::Key::Space)) {
+            // Here I want to create an entity and set the position of the bullet entity to 
+            auto ebullet = ecs::entity_make_begin(g_r, "BulletEntity");
+            bullet* cp_bullet = (bullet*)ecs::entity_try_get(g_r, ebullet, "bullet");
+            cp_bullet->pos = p->pos;
+            ecs::entity_make_end(r, ebullet);
         }
+
+        float dir = 0.f;
+        if (in::is_key_pressed(in::Key::Left) || in::is_key_pressed(in::Key::Gamepad_Left_Left)) {
+            dir = -1.f;
+        } else if (in::is_key_pressed(in::Key::Right) || in::is_key_pressed(in::Key::Gamepad_Left_Right)) {
+            dir = 1.f;
+        }
+
+        p->pos.x = p->pos.x + (p->velocity * dt * dir);
+        rd::draw_rect(math::build_matrix(p->pos), { 0.5, 0.5 }, vec4(0, 1, 0, 1), 4);
+        v->next();
     }
-   
-};
 
 
 
-struct enemy {
-    float x = 0;
-    std::string enemy_name = "very bad enemy";
-    void init(ecs::registry* r, ecs::entity e) { DS_LOG("enemy init call!"); }
-    void deinit(ecs::registry* r, ecs::entity e) { DS_LOG("enemy deinit call!"); }
-    static void update(ecs::registry* r, ecs::view* v) {
-
-    }
-};
-
+}
 
 void init() {
     // Register components
     g_r = ecs::registry_create();
-    DS_ECS_CP_REGISTER(g_r, player); // same ecs::cp_register<player>(g_r, "player");
-    DS_ECS_CP_REGISTER(g_r, enemy); // the identifier of the component is "enemy"_hs 
-    DS_ECS_CP_REGISTER(g_r, bullet);
+    DS_ECS_COMPONENT_REGISTER(g_r, player);
+    DS_ECS_COMPONENT_REGISTER(g_r, bullet);
 
     // Register the entities
-    ecs::entity_register(g_r, "PlayerEntity", { "player"_hs });
-    ecs::entity_register(g_r, "BadEnemyEntity", { "enemy"_hs });
-    ecs::entity_register(g_r, "BulletEntity", { "bullet"_hs });
+    ecs::entity_register(g_r, "PlayerEntity", { "player" });
+    ecs::entity_register(g_r, "BulletEntity", { "bullet" });
 
     // Register the systems
-    ecs::system_add(g_r, "UpdatePlayerSystem", { "player"_hs }, player::update);
-    ecs::system_add(g_r, "UpdateEnemySystem", { "enemy"_hs }, enemy::update);
-    ecs::system_add(g_r, "UpdateEnemySystem", { "bullet"_hs }, bullet::update);
-
-
-    // Create one player
-    ecs::entity_make(g_r, "PlayerEntity"_hs);
+    g_syspool = ecs::syspool_create();
+    ecs::syspool_add(g_syspool, "UpdatePlayerSystem", player_update);
+    ecs::syspool_add(g_syspool, "UpdateBulletSystem", bullet_update);
     
+    // Create one player
+    ecs::entity_make(g_r, "PlayerEntity");
+}
+
+void tick(float dt) {
+    ecs::syspool_run(g_syspool, g_r, dt);
+}
+
+void fixed_tick(float dt) {
 
 }
 
-void tick() {
-    ecs::run_systems(g_r);
-}
 
 void deinit() {
+    ecs::syspool_destroy(g_syspool);
     ecs::registry_destroy(g_r);
 }
 
@@ -118,89 +141,6 @@ int main() {
     cfg.on_tick = tick;
     cfg.on_shutdown = deinit;
     app::run(cfg);
-  
-
-//    sg_image img = { 0 };
-//
-////    ecs::registry* r;
-//    cfg.on_init = [&]() {
-//        img = rd::load_texture("zelda_gba_tileset.png");
-//
-//
-//
-//  //      r = ecs::registry_create();
-//    };
-//    
-//    cfg.on_shutdown = [&]() {
-////        ecs::registry_destroy(r);
-//    };
-//
-//    static float rot = 0.01f;
-//    static i32 mode = 0;
-//
-//    static float x = 0;
-//    static float y = 0;
-//
-//
-//    cfg.on_tick = [&]() {
-//        rot += 0.001f;
-//
-//
-//        if (in::is_key_triggered(in::Key::D) || in::is_key_triggered(in::Key::MouseRightButton)) {
-//            mode = (mode + 1 ) % 2;
-//        }
-//        
-//        if (in::is_key_pressed(in::Key::Gamepad_Left_Left) ) {
-//            x -= 0.001f;
-//        } else if (in::is_key_pressed(in::Key::Gamepad_Left_Right)) {
-//            x += 0.001f;
-//        }
-//
-//        if (in::is_key_pressed(in::Key::Gamepad_Right_Left)) {
-//            x -= 0.001f;
-//        } else if (in::is_key_pressed(in::Key::Gamepad_Right_Right)) {
-//            x += 0.001f;
-//        }
-//
-//        if (in::is_key_pressed(in::Key::Gamepad_Left_Up)) {
-//            y += 0.001f;
-//        } else if (in::is_key_pressed(in::Key::Gamepad_Left_Down)) {
-//            y -= 0.001f;
-//        }
-//
-//        if (in::is_key_pressed(in::Key::Gamepad_Right_Up)) {
-//            y += 0.001f;
-//        } else if (in::is_key_pressed(in::Key::Gamepad_Right_Down)) {
-//            y -= 0.001f;
-//        }
-//
-//
-//        switch (mode) {
-//        case 0:
-//            rd::draw_circle({ x,y }, 0.5f, vec4(1, 0, 0, 1), 5);
-//            rd::draw_rect(math::build_matrix({ 0.5, 0 }, rot), { 0.5, 0.5 }, vec4(0, 1, 0, 1), 4);
-//            rd::draw_fill_rect(math::build_matrix({ -0.5, 0 }, rot), { 0.5, 0.5 }, vec4(1, 0, 0, 1), 3);
-//            rd::draw_line({ { 0.5, 0.5 } , { 0.0, 0.5 }, {0, -0.5}, {-0.5, -0.5 } }, vec4(0, 0, 1, 1), 2);
-//            rd::draw_line({ { 0.3, 0.2 } , { 0.2, 0.7 }, {0, -0.5}, {0.5, 0.5 } }, vec4(0, 1, 1, 1), 1);
-//            rd::draw_texture(math::build_matrix({ 0, 0 }), img, { 1,1 }, rect::from_size({ 0,0 }, { 1, 1 }), vec4{ 1,1,1,1 }, 7);
-//
-//            
-//            break;
-//
-//        case 1:
-//            rd::draw_texture(math::build_matrix({ 0, 0 }), img, { 1,1 }, { { 0.5,0.5 }, { 1, 1 } }, vec4{ 1,1,1,1 }, 0);
-//            break;
-//        }
-//        
-//
-//    };
-//
-//    cfg.on_render = []() {
-//        //gfx::draw_quad({}, {});
-//    };
-
-
-    
 }
 
 

@@ -92,7 +92,7 @@ namespace ds::app {
 
 				// 2) Tick for the full frame dt (independent timestep)
 				if (g_cfg.on_tick) {
-					g_cfg.on_tick();
+					g_cfg.on_tick(dt());
 				}
 			}
 
@@ -101,7 +101,7 @@ namespace ds::app {
 			{
 				while (g_time.dt_fixed_acc >= g_time.current_fixed_dt) {
 					if (g_cfg.on_fixed_tick) {
-						g_cfg.on_fixed_tick();
+						g_cfg.on_fixed_tick(fixed_dt());
 					}
 					g_time.dt_fixed_acc -= g_time.current_fixed_dt;
 				}

@@ -156,13 +156,13 @@ namespace ds {
 /** Hash strings functions and literals */
 namespace ds {
 	// Fowler–Noll–Vo hash function v. 1a - the good
-	namespace detail { 
-		constexpr u64 fnv1a_64bit(const char* curr) { 
-			auto value = 14695981039346656037ull; while (*curr != 0) { value = (value ^ static_cast<u64>(*(curr++))) * 1099511628211ull; }
-			return value;
-		} 
+	constexpr u64 fnv1a_64bit(const char* curr) { 
+		auto value = 14695981039346656037ull; while (*curr != 0) { value = (value ^ static_cast<u64>(*(curr++))) * 1099511628211ull; }
+		return value;
 	}
-	inline namespace literals { constexpr u64 operator""_hs(const char* s, std::size_t) { return ds::detail::fnv1a_64bit(s); } }
+	constexpr u64 fnv1a_64bit(const std::string& str) {	return fnv1a_64bit(str.c_str());}
+	
+	inline namespace literals { constexpr u64 operator""_hs(const char* s, std::size_t) { return ds::fnv1a_64bit(s); } }
 }
 
 

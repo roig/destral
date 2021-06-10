@@ -28,12 +28,12 @@ namespace ds::app {
         // the on_tick callback is executed once per each frame with the full dt of the frame
         // this is where your indepenent framerate logic should be (particles, cosmetics.. )
         // this happens before on_fixed_tick calls
-        std::function<void(void)> on_tick = nullptr;
+        std::function<void(float dt)> on_tick = nullptr;
 
         // the on_fixed_tick callback is executed N times each frame tick with the fixed_target_framerate as dt of the fixed_tick
         // this is where your framerate dependent code should be (accelerations, physics, collisions..) 
         // this happens after on_tick call
-        std::function<void(void)> on_fixed_tick = nullptr;
+        std::function<void(float dt)> on_fixed_tick = nullptr;
 
         // the on_render callback is executed at the end of the frame
         std::function<void(void)> on_render = nullptr;
