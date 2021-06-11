@@ -169,7 +169,7 @@ void registry_destroy(registry* r); /*  Deinitializes and frees a registry conte
 // Component Functions
 #define DS_ECS_COMPONENT_REGISTER(r,T) component_register<T>(r, #T) 
 
-typedef void (cp_serialize_fn)(registry* r, entity e, void* cp); // TODO
+typedef void (cp_serialize_fn)(registry* r, entity e, void* cp); // TODO not used yet
 typedef void (placement_new_fn)(void* ptr);
 typedef void (delete_fn)(void* ptr);
 void component_register(registry* r, const std::string& name_id, size_t cp_sizeof, placement_new_fn* placement_new_fn = nullptr,

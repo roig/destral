@@ -94,9 +94,6 @@ void player_update(ecs::registry* r, float dt) {
         rd::draw_rect(math::build_matrix(p->pos), { 0.5, 0.5 }, vec4(0, 1, 0, 1), 4);
         v->next();
     }
-
-
-
 }
 
 void init() {

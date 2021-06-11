@@ -22,7 +22,7 @@
 #include <filesystem>
 
 namespace ds::rd {
-
+	
 	sg_image load_texture(const std::string& filename) {
 		int x,y,n;
 		stbi_set_flip_vertically_on_load(true);
