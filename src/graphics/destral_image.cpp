@@ -1,7 +1,7 @@
-
+#include <destral/core/destral_common.h>
 
 #define STBI_ASSERT(x) dscheck(x)
-#define STB_IMAGE_IMPLEMENTATION
+//#define STB_IMAGE_IMPLEMENTATION
 #include "../thirdparty/stb_image.h"
 
 #include <destral/graphics/destral_image.h>
@@ -15,7 +15,7 @@ namespace ds {
 		//stbi_set_flip_vertically_on_load(true);
 		unsigned char* pixels = stbi_load(path.c_str(), &w, &h, &bpp, 0);
 		if (pixels == nullptr) {
-			DS_WARNING(fmt::format("Error loading the image: {}. Current path: {}", path, std::filesystem::current_path().string()));
+			DS_WARNING(std::format("Error loading the image: {}. Current path: {}", path, std::filesystem::current_path().string()));
 
 			return nullptr;
 		}

@@ -4,7 +4,7 @@
 #include <destral/input/destral_input.h>
 #include <SDL.h>
 #include <array>
-#include <fmt/ranges.h>
+
 // #include <SDL_syswm.h>
 
 // Idea taken from: https://github.com/NoelFB/blah/blob/master/src/internal/platform_backend_sdl2.cpp
@@ -285,7 +285,7 @@ namespace sdl {
 namespace ds::in {
 	static bool s_is_valid_gamepad_id(i32 gamepad_id) {
 		if (!(gamepad_id >= 0 && gamepad_id < max_controllers)) {
-			DS_WARNING(fmt::format("Gamepad id {} out of bounds!", gamepad_id));
+			DS_WARNING(std::format("Gamepad id {} out of bounds!", gamepad_id));
 			return false;
 		}
 		return true;
@@ -392,7 +392,7 @@ namespace ds::platform_backend {
 		// TODO: Print SDL version to the log
 		SDL_version version;
 		SDL_GetVersion(&version);
-		DS_LOG(fmt::format("SDL v.{}.{}.{}", version.major, version.minor, version.patch));
+		DS_LOG(std::format("SDL v.{}.{}.{}", version.major, version.minor, version.patch));
 
 
 		// initialize SDL
@@ -514,7 +514,7 @@ namespace ds::platform_backend {
 				i32 free_index = sdl::g_sdl.find_free_gamepad_index();
 				if (free_index >= 0) {
 					sdl::g_sdl.gamepads[free_index].joy_id = joy_id;
-					DS_LOG(fmt::format("controller added: {} [id = {}, internal_joy_id = {}]", name, free_index, joy_id));
+					DS_LOG(std::format("controller added: {} [id = {}, internal_joy_id = {}]", name, free_index, joy_id));
 				}
 
 
@@ -532,7 +532,7 @@ namespace ds::platform_backend {
 				if (gamepad_index >= 0) {
 					auto controller = SDL_GameControllerFromInstanceID(sdl::g_sdl.gamepads[gamepad_index].joy_id);
 					auto name = SDL_GameControllerName(controller);
-					DS_LOG(fmt::format("controller removed: {} [id = {}, internal_joy_id = {}]", name, gamepad_index, joy_id));
+					DS_LOG(std::format("controller removed: {} [id = {}, internal_joy_id = {}]", name, gamepad_index, joy_id));
 					sdl::g_sdl.gamepads[gamepad_index].clear();
 
 				}
@@ -604,7 +604,7 @@ namespace ds::platform_backend {
 				}
 
 				const float value = e.caxis.value >= 0 ? e.caxis.value / 32767.0f : e.caxis.value / 32768.0f;
-				//DS_LOG(fmt::format("axis {} value: {}", SDL_GameControllerGetStringForAxis((SDL_GameControllerAxis)e.caxis.axis), value));
+				//DS_LOG(std::format("axis {} value: {}", SDL_GameControllerGetStringForAxis((SDL_GameControllerAxis)e.caxis.axis), value));
 				input_backend::on_gamepad_axis_change(value, key, gamepad_index);
 			}break;
 
@@ -634,10 +634,10 @@ namespace ds::platform_backend {
 	}
 
 	void* gl_context_create() {
-		void* pointer = SDL_GL_CreateContext(sdl::g_sdl.window);
-		if (pointer == nullptr)
-			DS_FATAL(fmt::format("SDL_GL_CreateContext failed: {}", SDL_GetError()));
-		return pointer;
+		void* ctx = nullptr;
+		ctx = SDL_GL_CreateContext(sdl::g_sdl.window);
+		dsverifym(ctx, std::format("SDL_GL_CreateContext failed: {}", SDL_GetError()));
+		return ctx;
 	}
 
 	void gl_context_make_current(void* context) {

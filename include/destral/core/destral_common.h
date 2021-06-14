@@ -1,8 +1,6 @@
 #pragma once
 #include <cstdint>
-#include <fmt/core.h> // for logger
-
-
+#include <format> // for logger purposes
 
 /*	Assertion Macros */
 // https://docs.unrealengine.com/en-US/ProgrammingAndScripting/ProgrammingWithCPP/Assertions/index.html

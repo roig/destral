@@ -3,6 +3,7 @@
 #include <destral/core/destral_common.h>
 #include <destral/math/destral_math.h>
 #include <destral/thirdparty/sokol_gfx.h>
+#include <vector>
 
 namespace ds::rd {
 

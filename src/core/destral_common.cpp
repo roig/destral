@@ -1,14 +1,7 @@
 #include <destral/core/destral_common.h>
-//#include <iostream>
-//#include <string>
-//#include <sstream>
-#include <iomanip>
 #include <fstream>
 #include <chrono>
-#include <fmt/core.h>
-#include <fmt/color.h>
-#include <fmt/chrono.h>
-#include <fmt/format.h>
+
 
 namespace ds::log {
 
@@ -40,30 +33,22 @@ namespace ds::log {
 
         // select level character
         const char* lvl_char = "[U]";
-        fmt::text_style style = fg(fmt::color::white);
         switch (log_level) {
-        case level::DS_LOG_TRACE: { lvl_char = "[T]"; style = fg(fmt::color::forest_green); } break;
+        case level::DS_LOG_TRACE: { lvl_char = "[T]";  } break;
         case level::DS_LOG_INFO: { lvl_char = "[I]"; } break;
-        case level::DS_LOG_WARNING: { lvl_char = "[W]"; style = fg(fmt::color::yellow); }break;
-        case level::DS_LOG_ERROR: { lvl_char = "[E]";  style = fg(fmt::color::red); }break;
+        case level::DS_LOG_WARNING: { lvl_char = "[W]"; }break;
+        case level::DS_LOG_ERROR: { lvl_char = "[E]";  }break;
         default:
             break;
         }
+        
+        
         // build message log
-       
-        const std::string full_msg = fmt::format("{:%x %X}.{:0>3} {} {}:{} {}\n", tm_t, now_milis.count(), lvl_char, file_name, line, msg);
-
-  /*    std::stringstream full_msg;
-        full_msg << std::put_time(&tm_t, "%x %X") << "." << std::setfill('0') << std::setw(3) << now_milis.count()
-            << " " << lvl_char << " " << file_name << ":" << line << " " << msg << '\n';*/
-        // write the message to log
-        //std::cout << full_msg.rdbuf();
-
+        char time_str[256];
+        std::strftime(time_str, 256, "%Y-%m-%d %H:%M:%S", &tm_t);
+        std::string full_msg = std::format("{}.{:0>3} {} {}:{} {}\n", time_str, now_milis.count(), lvl_char, file_name, line, msg);
         std::printf("%s", full_msg.c_str());
-        //fmt::print(full_msg);
         if (g_logfile) {
-            /*full_msg.seekg(0, std::ios::beg);
-            g_logfile << full_msg.rdbuf();*/
             g_logfile << full_msg;
         }
 
@@ -76,7 +61,6 @@ namespace ds::log {
         }
 
         if (!g_logfile.is_open()) {
-
             time_t timer = time(NULL);
             struct tm tm_info;
             localtime_s(&tm_info, &timer);
@@ -90,7 +74,7 @@ namespace ds::log {
             filename += ".txt";
             g_logfile.open(filename, std::ios_base::trunc | std::ios_base::out | std::ios_base::in);
             if (!g_logfile.is_open()) {
-                fmt::print(fmt::emphasis::bold | fg(fmt::color::red), "{} {} {}", "Can't open log file ", filename, "for writting!\n Logging continues without writing to log file!");
+                std::printf("%s",std::format("Can't open log file {} for writting!\n Logging continues without writing to log file!", filename).c_str());
             }
         }
     }

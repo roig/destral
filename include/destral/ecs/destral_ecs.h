@@ -130,32 +130,29 @@
 #include <destral/core/destral_common.h>
 #include <vector>
 
-
-
-namespace ds::ecs {
+namespace ds {
 //--------------------------------------------------------------------------------------------------
-// Configuration
+// Entity recicles ids when arriving at max version number.
+// INFO: https://docs.cryengine.com/display/SDKDOC4/EntityID+Explained
 
-/* Entity opaque 64 bit identifier 
-    16 bits      | 16 bits   | 32 bits
-    [FFFF        | FFFF      | FFFF FFFF]
-    [65535       | 65535     | 4294967295]
-    Version       TypeIndex   Id
-*/
-using entity = std::uint64_t;
-static constexpr std::uint64_t entity_max_id() { return 0xFFFFFFFF; }
-static constexpr std::uint64_t entity_max_version() { return 0xFFFF; }
-static constexpr std::uint64_t entity_max_type_idx() { return 0xFFFF; }
-/* Returns the id part of the entity */
-static constexpr uint32_t entity_id(entity e) { return e & 0xFFFFFFFF; }
-/* Returns the version part of the entity */
-static constexpr uint32_t entity_version(entity e) { return e >> 48; }
-/* Returns the type index part of the entity */
-static constexpr uint32_t entity_type_idx(entity e) { return (e << 16) >> 48; }
-/* Makes a entity from an id, version and type_idx */
-static constexpr entity entity_assemble(uint32_t id, uint32_t version, uint32_t type_idx) { return (entity(id) | (entity(type_idx) << 32)) | (entity(version) << 48); }
+static constexpr u32 entity_max_id() { return 0xFFFFFFFF; }
+static constexpr u32 entity_max_version() { return 0xFFFFFFFF; }
+static constexpr u32 entity_max_type_idx() { return 0xFFFFFFFF; }
+
+struct entity {
+    // implementation details, never touch this
+    /* Returns the id part of the entity */
+    inline u32 id() { return handle & entity_max_id(); }
+    /* Returns the version part of the entity */
+    inline u32 version() { return handle >> 32; }
+    // [ version 32 bits | id 32 bits ]
+    u64 handle = entity_max_id();
+    u32 type = entity_max_type_idx();
+    bool operator==(const entity&) const = default;
+};
+
 /* The entity_null is a entity that represents a null entity. */
-static constexpr entity entity_null = entity_max_id();
+static constexpr entity entity_null = entity();
 
 //--------------------------------------------------------------------------------------------------
 // Registry 
@@ -184,7 +181,6 @@ template <typename T> void component_register(registry* r, const std::string& na
 
 //--------------------------------------------------------------------------------------------------
 // Entity Functions
-
 typedef void (entity_init_fn)(registry* r, entity e);
 typedef void (entity_deinit_fn)(registry* r, entity e);
 // Registers an entity name with it's components names. 
@@ -240,8 +236,6 @@ bool entity_is_destroy_delayed(registry* r, entity e);
 void entity_destroy_flush_delayed(registry* r);
 
 
-
-
 //--------------------------------------------------------------------------------------------------
 // System pool functions
 
@@ -259,24 +253,19 @@ void syspool_run(syspool* sys, registry* r, float dt);
 
 
 //--------------------------------------------------------------------------------------------------
-// Context Variables Functions
+// Context Variables (Globals in the registry)
+// Context variables are like global instances tied to the registry. You can add and remove them at any time.
+// When the registry is deleted, the context variables will be deleted in reverse order of addition.
 
-//void* ctx_register(registry* r, const char* name_id, void* instance_ptr, delete_fn* del_fn);
-//void* ctx_get(registry* r, std::uint64_t id);
-//
-//// Registers a context variable instance
-//template <typename T> T* ctx_register(registry* r, const char* id, T* instance_ptr) {
-//    return (T*)ctx_register(r, id, instance_ptr,[](void* ptr) {((T*)ptr)->~T();});
-//}
-//
-//// Registers a context variable instance (the instance is created inside the function)
-//template <typename T> T* ctx_register_instantiate(registry* r, const char* id) {
-//    return (T*)ctx_register(r, id, new T(), [](void* ptr) {((T*)ptr)->~T(); });
-//}
-//
-//template <typename T> T* ctx_get(registry* r, std::uint64_t ctx_id) {
-//    return (T*)ctx_get(r, ctx_id);
-//}
+void* ctx_set(registry* r, const std::string& ctx_name_id, void* instance_ptr, delete_fn* del_fn);
+template <typename T> T* ctx_set(registry* r, const std::string& ctx_name_id, T* instance_ptr) {  return (T*)ctx_set(r, ctx_name_id, instance_ptr,[](void* ptr) {((T*)ptr)->~T();});}
+template <typename T> T* ctx_set_instantiate(registry* r, const std::string& ctx_name_id) { return (T*)ctx_set(r, ctx_name_id, new T(), [](void* ptr) {((T*)ptr)->~T(); }); }
+void ctx_unset(registry* r, const std::string& ctx_name_id);
+
+
+// Returns the pointer to the context variable instance or nullptr
+void* ctx_get(registry* r, const std::string& ctx_name_id);
+template <typename T> T* ctx_get(registry* r, const std::string& ctx_name_id) { return (T*)ctx_get(r, ctx_name_id); }
 
 
 // Implementation details here...
@@ -311,27 +300,27 @@ struct cp_storage {
 
     inline bool contains(entity e) {
         dscheck(e != entity_null);
-        const uint32_t eid = entity_id(e);
-        return (eid < sparse.size()) && (sparse[eid] != entity_null);
+        const u32 eid = e.id();
+        return (eid < sparse.size()) && (sparse[eid] != entity_max_id());
     }
 
     void debug_arrays() {
         DS_LOG("Sparse:");
         for (auto i = 0; i < sparse.size(); i++) {
-            DS_LOG(fmt::format("[{}] => {}", i, sparse[i]));
+            DS_LOG(std::format("[{}] => {}", i, sparse[i]));
         }
 
         DS_LOG("Dense:");
         for (auto i = 0; i < dense.size(); i++) {
-            DS_LOG(fmt::format("[{}] => {}", i, entity_stringify(dense[i])));
+            DS_LOG(std::format("[{}] => {}", i, entity_stringify(dense[i])));
         }
 
-        DS_LOG(fmt::format("Components vector: (cp_size: {}  bytesize: {}  cp_sizeof: {}", cp_data.size() / (float)cp_sizeof,  cp_data.size(), cp_sizeof));
+        DS_LOG(std::format("Components vector: (cp_size: {}  bytesize: {}  cp_sizeof: {}", cp_data.size() / (float)cp_sizeof,  cp_data.size(), cp_sizeof));
     }
 
 
     std::string entity_stringify(entity e) {
-        return fmt::format("Entity: {}  ( id: {}  version: {}   type: {})", e, entity_id(e), entity_version(e), entity_type_idx(e));
+        return std::format("Entity: {}  ( id: {}  version: {}   type: {})", e.handle, e.id(),e.version(), e.type);
     }
 
     inline void* emplace(entity e) {
@@ -343,13 +332,13 @@ struct cp_storage {
         void* cp_data_ptr = &cp_data[cp_data.size() - cp_sizeof];
 
         // Then add the entity to the sparse/dense arrays
-        const uint32_t eid = entity_id(e);
-        DS_LOG(fmt::format("Adding {}", entity_stringify(e)) );
+        const u32 eid = e.id();
+        DS_LOG(std::format("Adding {}", entity_stringify(e)) );
         if (eid >= sparse.size()) { // check if we need to realloc
-            sparse.resize(eid + 1, entity_null); // should be 0xFFFFFFFF (32 bits of 1)
+            sparse.resize(eid + 1, entity_max_id()); // default to entity_maxid means that is not valid.
         }
         
-        sparse[eid] = (uint32_t)dense.size();
+        sparse[eid] = (u32)dense.size();
         dense.push_back(e);
        // debug_arrays();
         return cp_data_ptr;
@@ -357,14 +346,14 @@ struct cp_storage {
 
     inline void remove(entity e) {
         dscheck(contains(e));
-        DS_LOG(fmt::format("Removing {}", entity_stringify(e)));
+        DS_LOG(std::format("Removing {}", entity_stringify(e)));
 
         // Remove from sparse/dense arrays
-        const uint32_t pos_to_remove = sparse[entity_id(e)];
-        const entity other = dense.back();
-        sparse[entity_id(other)] = pos_to_remove;
+        const u32 pos_to_remove = sparse[e.id()];
+        entity other = dense.back();
+        sparse[other.id()] = pos_to_remove;
         dense[pos_to_remove] = other;
-        sparse[entity_id(e)] = entity_null;
+        sparse[e.id()] = entity_max_id();
         dense.pop_back();
         // swap to the last position (memmove because if cp_data_size 1 it will overlap dst and source.
         memmove(
@@ -387,7 +376,7 @@ struct cp_storage {
     inline void* get(entity e) {
         dscheck(e != entity_null);
         dscheck(contains(e));
-        return get_by_index(sparse[entity_id(e)]);
+        return get_by_index(sparse[e.id()]);
     }
 
     inline void* try_get(entity e) {
@@ -396,7 +385,6 @@ struct cp_storage {
     }
 };
 }
-
 
 //--------------------------------------------------------------------------------------------------
 // Views
@@ -427,11 +415,7 @@ struct cp_storage {
 // Not Allowed:
 // - Destroying entities, you should delay the destruction of entities.
 
-
-
 struct view {
-    static view create(registry* r, const std::vector<std::string>& cp_names);
-
     // returns true if the current iterating entity is valid else false
     inline bool valid() {
         return _impl.cur_entity != entity_null;
@@ -443,9 +427,9 @@ struct view {
     }
 
     // Returns the component index associated with a component id (use data function to retrieve the data)
-    inline std::size_t index(const std::string& cp_name) {
+    inline u32 index(const std::string& cp_name) {
         const auto cp_id_hashed = fnv1a_64bit(cp_name);
-        for (std::size_t i = 0; i < _impl.cp_storages.size(); i++) {
+        for (u32 i = 0; i < _impl.cp_storages.size(); i++) {
             if (_impl.cp_storages[i]->cp_id == cp_id_hashed) { return i; }
         }
         // error, no component with that cp_id in this view!
@@ -482,12 +466,12 @@ struct view {
 
     // implementation details
     struct view_impl {
-        std::vector<detail::cp_storage*> cp_storages;
         detail::cp_storage* iterating_storage = nullptr;
+        std::vector<detail::cp_storage*> cp_storages;
         std::size_t entity_index = 0;
         std::size_t entity_max_index = 0; // it's like _impl.iterating_storage->dense.size() 
-        ::ds::ecs::entity cur_entity = entity_null;
-        inline bool is_entity_in_all_storages(::ds::ecs::entity e) {
+        ::ds::entity cur_entity = entity_null;
+        inline bool is_entity_in_all_storages(::ds::entity e) {
             for (std::size_t st_id = 0; st_id < cp_storages.size(); ++st_id) {
                 if (!cp_storages[st_id]->contains(e)) {
                     return false;
@@ -500,8 +484,6 @@ struct view {
     view_impl _impl;
 };
 
-
-
-
+view view_create(registry* r, const std::vector<std::string>& cp_names);
 
 }

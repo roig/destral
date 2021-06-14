@@ -49,7 +49,7 @@ namespace ds::rd {
 			stbi_image_free(pixels);
 			return img;
 		}
-		DS_WARNING(fmt::format("Error loading the image: {}. Current path: {}", filename, std::filesystem::current_path().string()));
+		DS_WARNING(std::format("Error loading the image: {}. Current path: {}", filename, std::filesystem::current_path().string()));
 
 		
 		return {0}; // TODO BAD
@@ -242,7 +242,7 @@ namespace ds::rd {
 		sg_begin_default_pass(&pass_action, draw_sz.x, draw_sz.y);
 
 		for (auto &z : g_rs.render_list) {
-			//DS_LOG(fmt::format("Z : {}", z.first));
+			//DS_LOG(std::format("Z : {}", z.first));
 			for (auto& pip : z.second) {
 				
 				sg_apply_pipeline(sg_pipeline(pip.first));

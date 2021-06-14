@@ -81,10 +81,16 @@
 #include <destral/core/destral_base64.h>
 #include <unordered_map>
 
-namespace ds::ecs {
+namespace ds {
+    /* Returns the type index part of the entity */
+    static constexpr u32 entity_type_idx(entity e) { return e.type; }
+    /* Makes a entity from an id, version and type_idx */
+    static constexpr entity entity_assemble(u32 id, u32 version, u32 type_idx) { return entity{ .handle = ((u64)id | (((u64)version) << 32)), .type = type_idx }; }
 
-    struct context_variable {
+
+    struct ctx_variable_info {
         std::string name;
+        u64 hashed_name;
         void* instance_ptr = nullptr;
         delete_fn* deleter_fn = nullptr;
     };
@@ -109,7 +115,7 @@ namespace ds::ecs {
         std::vector<entity> entities;
 
         /* first index in the list to recycle */
-        uint32_t available_id = { entity_null };
+        u32 available_id = entity_max_id();
 
         /* Hold the component storages */
         std::unordered_map<std::uint64_t, detail::cp_storage> cp_storages;
@@ -126,8 +132,8 @@ namespace ds::ecs {
         
 
         // Context variables maps/arrays (both have the same pointer) only vector makes calls the delete
-        std::unordered_map<std::uint64_t, context_variable*> ctx_vars;
-        std::vector<context_variable*> ctx_vars_ordered;
+        std::unordered_map<u64, ctx_variable_info*> ctx_vars;
+        std::vector<ctx_variable_info*> ctx_vars_ordered;
     };
 
     /* Calls the deleter for each ctx variable set in inverse order of context variables registration. Then clears the maps/arrays of ctx vars */
@@ -135,10 +141,13 @@ namespace ds::ecs {
         dscheck(r);
         // call the deleter function first
         for (size_t i = 0; i < r->ctx_vars_ordered.size(); ++i) {
-            auto ctx_var = r->ctx_vars_ordered[r->ctx_vars_ordered.size() - 1 - i];
-            if (ctx_var->deleter_fn) {
-                ctx_var->deleter_fn(ctx_var->instance_ptr);
+            auto ctx_var_info_ptr = r->ctx_vars_ordered[r->ctx_vars_ordered.size() - 1 - i];
+            if (ctx_var_info_ptr->deleter_fn) {
+                // delete the context variable instance!
+                ctx_var_info_ptr->deleter_fn(ctx_var_info_ptr->instance_ptr);
             }
+            // deletes the pointer to the context var information
+            delete ctx_var_info_ptr;
         }
         r->ctx_vars.clear();
         r->ctx_vars_ordered.clear();
@@ -164,33 +173,34 @@ namespace ds::ecs {
 
     // Performs the release of an entity in the registry by adding it to the recycle list
     static inline void s_release_entity(registry* r, entity e) {
-        const uint32_t e_id = entity_id(e);
-        uint32_t new_version = entity_version(e);
+        const u32 e_id = e.id();
+        u32 new_version = e.version();
         ++new_version;
 
         // assemble an entity to be used for recycling
-        r->entities[e_id] = entity_assemble(r->available_id, new_version, 0);
+        r->entities[e_id] = entity_assemble(r->available_id, new_version, entity_max_type_idx());
         r->available_id = e_id;
     }
 
     // Performs the creation process of a new entity of type_idx either by
     // recycling an entity id or by creating a new one if no available for recycling.
-    static inline entity s_create_entity(registry* r, uint32_t type_idx) {
+    static inline entity s_create_entity(registry* r, u32 type_idx) {
         dscheck(r);
-        if (r->available_id == entity_null) {
+        if (r->available_id == entity_max_id()) {
             // Generate a new entity
-            dscheck(r->entities.size() < entity_max_id()); // can't create more entity identifiers
-            const entity e = entity_assemble((uint32_t)r->entities.size(), 0, type_idx);
+            // check if we can't create more
+            dsverifym(r->entities.size() < entity_max_id(), std::format("Can't create more entities!"));
+            const entity e = entity_assemble((u32)r->entities.size(), 0, type_idx);
             r->entities.push_back(e);
             return e;
         } else {
             // Recycle an entity
-            dscheck(r->available_id != entity_null);
+            dscheck(r->available_id != entity_max_id());
             // get the first available entity id
-            const uint32_t curr_id = r->available_id;
-            const uint32_t curr_ver = entity_version(r->entities[curr_id]);
+            const u32 curr_id = r->available_id;
+            const u32 curr_ver = r->entities[curr_id].version();
             // point the available_id to the "next" id
-            r->available_id = entity_id(r->entities[curr_id]);
+            r->available_id = r->entities[curr_id].id();
             // now join the id and version and type idx to create the new entity
             const entity recycled_e = entity_assemble(curr_id, curr_ver, type_idx);
             // assign it to the entities array
@@ -215,7 +225,7 @@ namespace ds::ecs {
         dscheck(r->entity_hashed_types.size() < entity_max_type_idx()); // no more types can be indexed..
         dscheck(!r->types.contains(entity_type_id)); // you are trying to register an existing entity type
         dscheckCode( // Check if all component ids exist
-            for (auto& c : et.cp_names) { dscheckm(s_get_storage(r, ds::fnv1a_64bit(c)), fmt::format("Component: {} not found/registered!", c)); }
+            for (auto& c : et.cp_names) { dscheckm(s_get_storage(r, ds::fnv1a_64bit(c)), std::format("Component: {} not found/registered!", c)); }
         );
 
         
@@ -232,7 +242,7 @@ namespace ds::ecs {
                 break;
             }
         }
-        DS_FATAL(fmt::format("Type id: {} Not found!", type_id));
+        DS_FATAL(std::format("Type id: {} Not found!", type_id));
     }
 
     // Returns the entity_type pointer from a valid entity
@@ -243,7 +253,7 @@ namespace ds::ecs {
         const auto etype_idx = entity_type_idx(e);
         dsverify(etype_idx < r->entity_hashed_types.size());
         const auto etype_hashed_id = r->entity_hashed_types[etype_idx];
-        dsverifym(r->types.contains(etype_hashed_id), fmt::format("Entity type id: {} not found.", etype_hashed_id));
+        dsverifym(r->types.contains(etype_hashed_id), std::format("Entity type id: {} not found.", etype_hashed_id));
         entity_type* type = &r->types[etype_hashed_id];
         return type;
     }
@@ -266,7 +276,7 @@ namespace ds::ecs {
         dscheck(r);
         dscheck(!entity_name.empty());
         const u64 entity_type_id = ds::fnv1a_64bit(entity_name);
-        dscheckm(r->types.contains(entity_type_id), fmt::format("Entity name: {} is not a registered one!", entity_name));
+        dscheckm(r->types.contains(entity_type_id), std::format("Entity name: {} is not a registered one!", entity_name));
 
 
         // Find the type index for that entity name
@@ -366,22 +376,27 @@ namespace ds::ecs {
 
     bool entity_valid(registry* r, entity e) {
         dscheck(r);
-        const uint32_t id = entity_id(e);
+        const u32 id = e.id();
+        entity e1, e2;
+        if (e1 == e2) {
+
+        }
+
         return (id < r->entities.size()) && (r->entities[id] == e);
     }
 
     std::vector<entity> entity_all(registry* r) {
         dscheck(r);
         // If no entities are available to recycle, means that the full vector is valid
-        if (r->available_id == entity_null) {
+        if (r->available_id == entity_max_id()) {
             return r->entities;
         } else {
             std::vector<entity> alive;
-            for (std::uint64_t i = 0; i < r->entities.size(); ++i) {
-                const entity e = r->entities[i];
+            for (u32 i = 0; i < r->entities.size(); ++i) {
+                entity e = r->entities[i];
                 
                 // if the entity id is the same as the index, means its not a recycled one
-                if (entity_id(e) == i) {
+                if (e.id() == i) {
                     alive.push_back(e);
                 }
             }
@@ -470,35 +485,66 @@ namespace ds::ecs {
         }
     }
 
-    /*void* ctx_register(registry* r, const char* name, void* ptr, delete_fn* del_fn) {
+    void* ctx_set(registry* r, const std::string& ctx_name_id, void* instance_ptr, delete_fn* del_fn) {
         dscheck(r);
-        dscheck(ptr);
-        const auto id = ds::fnv1a_64bit(name);
+        dscheck(!ctx_name_id.empty());
+        dscheck(instance_ptr);
+        const auto id = ds::fnv1a_64bit(ctx_name_id);
         dscheck(!r->ctx_vars.contains(id));
 
-        context_variable* ctx_var = new context_variable();
-        ctx_var->name = name;
+        ctx_variable_info* ctx_var = new ctx_variable_info();
+        ctx_var->name = ctx_name_id;
         ctx_var->deleter_fn = del_fn;
-        ctx_var->instance_ptr = ptr;
+        ctx_var->instance_ptr = instance_ptr;
         r->ctx_vars[id] = ctx_var;
         r->ctx_vars_ordered.push_back(ctx_var);
-
-        return ptr;
+        return instance_ptr;
     }
 
-    void* ctx_get(registry* r, std::uint64_t id) {
+    void ctx_unset(registry* r, const std::string& ctx_name_id) {
         dscheck(r);
+        dscheck(!ctx_name_id.empty());
+        const auto id = ds::fnv1a_64bit(ctx_name_id);
+        
+        // Find the element in the ordered variables vector
+        bool found = false;
+        std::size_t i;
+        for (i = 0; i < r->ctx_vars_ordered.size(); i++) {
+            if (r->ctx_vars_ordered[i]->hashed_name = id) {
+                found = true;
+            }
+        }
+
+        if (found) {
+            // delete the ctx var instance
+            auto var_info_ptr = r->ctx_vars_ordered[i];
+            if (var_info_ptr->deleter_fn) {
+                var_info_ptr->deleter_fn(var_info_ptr->instance_ptr);
+            }
+            // delete the info pointer
+            delete var_info_ptr;
+            // erase from the map
+            r->ctx_vars.erase(id);
+            
+            // erase the element from the vector (this will mantain the order)
+            r->ctx_vars_ordered.erase(r->ctx_vars_ordered.begin() + i);
+        } else {
+            DS_WARNING(std::format("Context variable name id: {} not found! When trying to delete it.", ctx_name_id));
+        }
+    }
+
+    void* ctx_get(registry* r, const std::string& ctx_name_id) {
+        dscheck(r);
+        dscheck(!ctx_name_id.empty());
+        auto id = ds::fnv1a_64bit(ctx_name_id);
         if (r->ctx_vars.contains(id)) {
             return r->ctx_vars[id]->instance_ptr;
         } else {
             return nullptr;
         }
-    }*/
+    }
 
-
-
-
-    view view::create(registry* r, const std::vector<std::string>& cp_ids) {
+    view view_create(registry* r, const std::vector<std::string>& cp_ids) {
         view view;
         // Retrieve all the system storages for component ids for this system
         // and find the shorter storage (the one with less entities to iterate)
@@ -506,7 +552,7 @@ namespace ds::ecs {
         for (size_t cp_id_idx = 0; cp_id_idx < cp_ids.size(); ++cp_id_idx) {
             const auto cp_id = cp_ids[cp_id_idx];
             auto* cp_storage = s_get_storage(r, ds::fnv1a_64bit(cp_id));
-            dscheckm(cp_storage, fmt::format("Component '{}' id not registered!", cp_id));
+            dscheckm(cp_storage, std::format("Component '{}' id not registered!", cp_id));
 
             // find the shorter storage to iterate it
             if (view._impl.iterating_storage == nullptr) {

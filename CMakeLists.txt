@@ -10,10 +10,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bins)
 
 # compile dependencies
 add_subdirectory(libs/SDL2-2.0.14) #find and compile SDL2 target
-add_subdirectory(libs/fmt-7.1.3)
-
-
-
 
 # Edv source files list
 file(GLOB_RECURSE DESTRAL_SOURCE_FILES "src/*.cpp" "src/*.hpp")
@@ -28,14 +24,13 @@ file(GLOB_RECURSE DESTRAL_PUBLIC_HEADER_FILES  "include/*.h" "include/*.hpp")
 #"src/backends/destral_graphics_sokol.cpp"
 #"src/backends/destral_platform_sdl_backend.cpp" "src/core/destral_common.cpp"  "include/destral/core/destral_common.h" "src/backends/destral_graphics_backend.h" "include/destral/graphics/destral_graphics.h" "src/graphics/destral_graphics.cpp"  "include/destral/thirdparty/ap_gl33core.h" "src/backends/destral_input_backend.h" "src/input/destral_input.cpp"
 #)
-add_library(Destral ${DESTRAL_PUBLIC_HEADER_FILES} ${DESTRAL_SOURCE_FILES} "src/graphics/destral_image.cpp" "include/destral/graphics/destral_image.h")
+add_library(Destral ${DESTRAL_PUBLIC_HEADER_FILES} ${DESTRAL_SOURCE_FILES} )
 
 target_link_libraries(Destral PRIVATE
 	SDL2
 	Opengl32
 
 	PUBLIC
-	fmt::fmt
 	#LuaLib54
 )
 

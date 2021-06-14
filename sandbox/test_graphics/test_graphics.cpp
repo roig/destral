@@ -31,7 +31,7 @@ int main() {
     static float y = 0;
 
 
-    cfg.on_tick = [&]() {
+    cfg.on_tick = [&](float dt) {
         rot += 0.001f;
 
 

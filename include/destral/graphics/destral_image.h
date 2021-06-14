@@ -1,4 +1,6 @@
+#pragma once
 #include <destral/math/destral_math.h>
+#include <vector>
 
 namespace ds {
 	struct image {
