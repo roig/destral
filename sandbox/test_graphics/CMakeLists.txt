@@ -18,3 +18,8 @@ target_compile_options(test_graphics PUBLIC
 target_compile_features(test_graphics PUBLIC cxx_std_20)
 target_link_libraries(test_graphics PUBLIC Destral)
 
+# For convenience set MSVC debugger's working directory in the build folder.
+# Also ask MSVC to make snake the startup project.
+#if (MSVC)
+	set_target_properties(test_graphics PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:test_graphics>")
+#endif()

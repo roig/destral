@@ -13,11 +13,15 @@ int main() {
 
 //    ecs::registry* r;
     cfg.on_init = [&]() {
-        img = rd::load_texture("zelda_gba_tileset.png");
 
+        caches_init();
+        cache_images_add_info("zelda_tileset_gba", "zelda_gba_tileset.png");
 
-
-  //      r = ecs::registry_create();
+        resource<image> t = cache_images()->get("zelda_tileset_gba");
+        
+        rd::load_texture("zelda_gba_tileset.png");
+        img = rd::load_texture(t);
+  //    r = ecs::registry_create();
     };
     
     cfg.on_shutdown = [&]() {

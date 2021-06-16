@@ -23,6 +23,26 @@
 
 namespace ds::rd {
 	
+	sg_image load_texture(resource<image>& image) {
+		if (!image) { return {}; }
+
+		sg_image_desc image_desc = { 0 };
+		image_desc.width = image->size.x;
+		image_desc.height = image->size.y;
+		image_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
+		image_desc.min_filter = SG_FILTER_NEAREST;
+		image_desc.mag_filter = SG_FILTER_NEAREST;
+		image_desc.data.subimage[0][0] = {
+			  .ptr = image->pixels.data(),
+			  .size = sizeof(unsigned char)
+		};
+
+		image_desc.label = "texture";
+		auto img = sg_make_image(image_desc);
+		return img;
+
+	}
+
 	sg_image load_texture(const std::string& filename) {
 		int x,y,n;
 		stbi_set_flip_vertically_on_load(true);

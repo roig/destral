@@ -3,6 +3,9 @@
 #include <destral/core/destral_common.h>
 #include <destral/math/destral_math.h>
 #include <destral/thirdparty/sokol_gfx.h>
+#include <destral/graphics/destral_image.h>
+#include <destral/resource/resource.h>
+
 #include <vector>
 
 namespace ds::rd {
@@ -24,6 +27,7 @@ namespace ds::rd {
 
 	// Loads a texture
 	sg_image load_texture(const std::string& filename);
+	sg_image load_texture(resource<image>& image);
 
 	// Destroys a texture
 	void destroy_texture(sg_image texture);

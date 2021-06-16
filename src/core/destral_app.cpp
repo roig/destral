@@ -30,6 +30,7 @@ namespace ds::app {
 
 	bool run(const config& cfg_) {
 		g_cfg = cfg_;
+		
 		platform_backend::init(g_cfg);
 		rd::init();
 		// input_backend::init();

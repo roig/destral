@@ -8,6 +8,7 @@
 #include <destral/core/destral_asset.h>
 #include <destral/math/destral_math.h>
 
+#include <destral/resource/resource_caches.h>
 
 #include <destral/graphics/destral_renderer.h>
 

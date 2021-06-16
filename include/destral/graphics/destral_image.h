@@ -15,10 +15,6 @@ namespace ds {
 		std::vector<u8> pixels;
 	};
 
-
-	// loads a image file
-	image* load_image(const std::string& path);
-
 }
 
 
