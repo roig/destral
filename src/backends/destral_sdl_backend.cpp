@@ -11,6 +11,7 @@
 
 // SDL state and structures
 namespace sdl {
+	using namespace ds;
 
 	void log_redirect(void* userdata, int category, SDL_LogPriority priority, const char* message) {
 		if (priority <= SDL_LOG_PRIORITY_INFO) {
@@ -46,7 +47,7 @@ namespace sdl {
 	struct gamepad_state {
 		// joy_id -1 is an invalid (not connected gamepad)
 		ds::i32 joy_id = -1;
-		std::unordered_map<ds::in::Key, key_state> buttons_state;
+		std::unordered_map<ds::key, key_state> buttons_state;
 
 		void clear() {
 			joy_id = -1;
@@ -79,15 +80,15 @@ namespace sdl {
 		SDL_Window* window = nullptr;
 
 		// details
-		std::unordered_map<ds::in::Key, key_details> keys;
+		std::unordered_map<ds::key, key_details> keys;
 
 		// keyboard and mouse keys state
-		std::unordered_map<ds::in::Key, key_state> kb_ms_state;
+		std::unordered_map<ds::key, key_state> kb_ms_state;
 
 		// This defines a relation with the gamepad index and the value (SDL_JoystickID)
-		std::array<gamepad_state, ds::in::max_controllers> gamepads;
+		std::array<gamepad_state, ds::input_max_gamepads> gamepads;
 
-		void add_key(ds::in::Key k, const key_details& d) {
+		void add_key(ds::key k, const key_details& d) {
 			keys[k] = d;
 			if (d.is_gamepad()) {
 				// add the default state in all the gamepads
@@ -128,153 +129,153 @@ namespace sdl {
 
 	void init_keys() {
 
-		g_sdl.add_key(ds::in::Key::A, {});
-		g_sdl.add_key(ds::in::Key::B, {});
-		g_sdl.add_key(ds::in::Key::C, {});
-		g_sdl.add_key(ds::in::Key::D, {});
-		g_sdl.add_key(ds::in::Key::E, {});
-		g_sdl.add_key(ds::in::Key::F, {});
-		g_sdl.add_key(ds::in::Key::G, {});
-		g_sdl.add_key(ds::in::Key::H, {});
-		g_sdl.add_key(ds::in::Key::I, {});
-		g_sdl.add_key(ds::in::Key::J, {});
-		g_sdl.add_key(ds::in::Key::K, {});
-		g_sdl.add_key(ds::in::Key::L, {});
-		g_sdl.add_key(ds::in::Key::M, {});
-		g_sdl.add_key(ds::in::Key::N, {});
-		g_sdl.add_key(ds::in::Key::O, {});
-		g_sdl.add_key(ds::in::Key::P, {});
-		g_sdl.add_key(ds::in::Key::Q, {});
-		g_sdl.add_key(ds::in::Key::R, {});
-		g_sdl.add_key(ds::in::Key::S, {});
-		g_sdl.add_key(ds::in::Key::T, {});
-		g_sdl.add_key(ds::in::Key::U, {});
-		g_sdl.add_key(ds::in::Key::V, {});
-		g_sdl.add_key(ds::in::Key::W, {});
-		g_sdl.add_key(ds::in::Key::X, {});
-		g_sdl.add_key(ds::in::Key::Y, {});
-		g_sdl.add_key(ds::in::Key::Z, {});
-		g_sdl.add_key(ds::in::Key::One, {});
-		g_sdl.add_key(ds::in::Key::Two, {});
-		g_sdl.add_key(ds::in::Key::Three, {});
-		g_sdl.add_key(ds::in::Key::Four, {});
-		g_sdl.add_key(ds::in::Key::Five, {});
-		g_sdl.add_key(ds::in::Key::Six, {});
-		g_sdl.add_key(ds::in::Key::Seven, {});
-		g_sdl.add_key(ds::in::Key::Eight, {});
-		g_sdl.add_key(ds::in::Key::Nine, {});
-		g_sdl.add_key(ds::in::Key::Ten, {});
-		g_sdl.add_key(ds::in::Key::Enter, {});
-		g_sdl.add_key(ds::in::Key::Escape, {});
-		g_sdl.add_key(ds::in::Key::Backspace, {});
-		g_sdl.add_key(ds::in::Key::Tab, {});
-		g_sdl.add_key(ds::in::Key::Space, {});
-		g_sdl.add_key(ds::in::Key::Minus, {});
-		g_sdl.add_key(ds::in::Key::Equals, {});
-		g_sdl.add_key(ds::in::Key::LeftBracket, {});
-		g_sdl.add_key(ds::in::Key::RightBracket, {});
-		g_sdl.add_key(ds::in::Key::Backslash, {});
-		g_sdl.add_key(ds::in::Key::Semicolon, {});
-		g_sdl.add_key(ds::in::Key::Apostrophe, {});
-		g_sdl.add_key(ds::in::Key::Tilde, {});
-		g_sdl.add_key(ds::in::Key::Comma, {});
-		g_sdl.add_key(ds::in::Key::Period, {});
-		g_sdl.add_key(ds::in::Key::Slash, {});
-		g_sdl.add_key(ds::in::Key::Capslock, {});
-		g_sdl.add_key(ds::in::Key::F1, {});
-		g_sdl.add_key(ds::in::Key::F2, {});
-		g_sdl.add_key(ds::in::Key::F3, {});
-		g_sdl.add_key(ds::in::Key::F4, {});
-		g_sdl.add_key(ds::in::Key::F5, {});
-		g_sdl.add_key(ds::in::Key::F6, {});
-		g_sdl.add_key(ds::in::Key::F7, {});
-		g_sdl.add_key(ds::in::Key::F8, {});
-		g_sdl.add_key(ds::in::Key::F9, {});
-		g_sdl.add_key(ds::in::Key::F10, {});
-		g_sdl.add_key(ds::in::Key::F11, {});
-		g_sdl.add_key(ds::in::Key::F12, {});
-		g_sdl.add_key(ds::in::Key::PrintScreen, {});
-		g_sdl.add_key(ds::in::Key::ScrollLock, {});
-		g_sdl.add_key(ds::in::Key::Pause, {});
-		g_sdl.add_key(ds::in::Key::Insert, {});
-		g_sdl.add_key(ds::in::Key::Home, {});
-		g_sdl.add_key(ds::in::Key::PageUp, {});
-		g_sdl.add_key(ds::in::Key::Delete, {});
-		g_sdl.add_key(ds::in::Key::End, {});
-		g_sdl.add_key(ds::in::Key::PageDown, {});
-		g_sdl.add_key(ds::in::Key::Right, {});
-		g_sdl.add_key(ds::in::Key::Left, {});
-		g_sdl.add_key(ds::in::Key::Down, {});
-		g_sdl.add_key(ds::in::Key::Up, {});
-		g_sdl.add_key(ds::in::Key::NumLock, {});
-		g_sdl.add_key(ds::in::Key::Keypad1, {});
-		g_sdl.add_key(ds::in::Key::Keypad2, {});
-		g_sdl.add_key(ds::in::Key::Keypad3, {});
-		g_sdl.add_key(ds::in::Key::Keypad4, {});
-		g_sdl.add_key(ds::in::Key::Keypad5, {});
-		g_sdl.add_key(ds::in::Key::Keypad6, {});
-		g_sdl.add_key(ds::in::Key::Keypad7, {});
-		g_sdl.add_key(ds::in::Key::Keypad8, {});
-		g_sdl.add_key(ds::in::Key::Keypad9, {});
-		g_sdl.add_key(ds::in::Key::KeypadDivide, {});
-		g_sdl.add_key(ds::in::Key::KeypadMultiply, {});
-		g_sdl.add_key(ds::in::Key::KeypadMinus, {});
-		g_sdl.add_key(ds::in::Key::KeypadPlus, {});
-		g_sdl.add_key(ds::in::Key::KeypadEnter, {});
-		g_sdl.add_key(ds::in::Key::KeypadPeroid, {});
-		g_sdl.add_key(ds::in::Key::KeypadEquals, {});
-		g_sdl.add_key(ds::in::Key::KeypadComma, {});
-		g_sdl.add_key(ds::in::Key::LeftControl, {});
-		g_sdl.add_key(ds::in::Key::LeftShift, {});
-		g_sdl.add_key(ds::in::Key::LeftAlt, {});
-		g_sdl.add_key(ds::in::Key::LeftOS, {});
-		g_sdl.add_key(ds::in::Key::RightControl, {});
-		g_sdl.add_key(ds::in::Key::RightShift, {});
-		g_sdl.add_key(ds::in::Key::RightAlt, {});
-		g_sdl.add_key(ds::in::Key::RightOS, {});
-		g_sdl.add_key(ds::in::Key::MouseLeftButton, { .flags = key_details::MouseButton });
-		g_sdl.add_key(ds::in::Key::MouseRightButton, { .flags = key_details::MouseButton });
-		g_sdl.add_key(ds::in::Key::MouseMiddleButton, { .flags = key_details::MouseButton });
-		g_sdl.add_key(ds::in::Key::MouseX1Button, { .flags = key_details::MouseButton });
-		g_sdl.add_key(ds::in::Key::MouseX2Button, { .flags = key_details::MouseButton });
-		g_sdl.add_key(ds::in::Key::MouseX, { .flags = key_details::MouseButton | key_details::FloatAxis });
-		g_sdl.add_key(ds::in::Key::MouseY, { .flags = key_details::MouseButton | key_details::FloatAxis });
-		//g_sdl.add_key( // Key::MouseScrollUp			,{.flags = key_details::MouseButton | key_details::FloatAxis});
-		//g_sdl.add_key( // Key::MouseScrollDown		,{.flags = key_details::MouseButton | key_details::FloatAxis});
-		//g_sdl.add_key( // Key::MouseWheelAxis			,{.flags = key_details::MouseButton | key_details::FloatAxis});
-		g_sdl.add_key(ds::in::Key::Gamepad_LeftX, { .flags = key_details::GamepadKey | key_details::FloatAxis });
-		g_sdl.add_key(ds::in::Key::Gamepad_LeftY, { .flags = key_details::GamepadKey | key_details::FloatAxis });
-		g_sdl.add_key(ds::in::Key::Gamepad_RightX, { .flags = key_details::GamepadKey | key_details::FloatAxis });
-		g_sdl.add_key(ds::in::Key::Gamepad_RightY, { .flags = key_details::GamepadKey | key_details::FloatAxis });
-		g_sdl.add_key(ds::in::Key::Gamepad_LeftTriggerAxis, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_RightTriggerAxis, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_LeftThumbstick, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_RightThumbstick, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_Special_Left, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_Special_Home, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_Special_Right, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_FaceButton_Bottom, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_FaceButton_Right, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_FaceButton_Left, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_FaceButton_Top, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_LeftShoulder, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_RightShoulder, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_LeftTrigger, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_RightTrigger, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_DPad_Up, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_DPad_Down, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_DPad_Right, { .flags = key_details::GamepadKey });
-		g_sdl.add_key(ds::in::Key::Gamepad_DPad_Left, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::A, {});
+		g_sdl.add_key(key::B, {});
+		g_sdl.add_key(key::C, {});
+		g_sdl.add_key(key::D, {});
+		g_sdl.add_key(key::E, {});
+		g_sdl.add_key(key::F, {});
+		g_sdl.add_key(key::G, {});
+		g_sdl.add_key(key::H, {});
+		g_sdl.add_key(key::I, {});
+		g_sdl.add_key(key::J, {});
+		g_sdl.add_key(key::K, {});
+		g_sdl.add_key(key::L, {});
+		g_sdl.add_key(key::M, {});
+		g_sdl.add_key(key::N, {});
+		g_sdl.add_key(key::O, {});
+		g_sdl.add_key(key::P, {});
+		g_sdl.add_key(key::Q, {});
+		g_sdl.add_key(key::R, {});
+		g_sdl.add_key(key::S, {});
+		g_sdl.add_key(key::T, {});
+		g_sdl.add_key(key::U, {});
+		g_sdl.add_key(key::V, {});
+		g_sdl.add_key(key::W, {});
+		g_sdl.add_key(key::X, {});
+		g_sdl.add_key(key::Y, {});
+		g_sdl.add_key(key::Z, {});
+		g_sdl.add_key(key::One, {});
+		g_sdl.add_key(key::Two, {});
+		g_sdl.add_key(key::Three, {});
+		g_sdl.add_key(key::Four, {});
+		g_sdl.add_key(key::Five, {});
+		g_sdl.add_key(key::Six, {});
+		g_sdl.add_key(key::Seven, {});
+		g_sdl.add_key(key::Eight, {});
+		g_sdl.add_key(key::Nine, {});
+		g_sdl.add_key(key::Ten, {});
+		g_sdl.add_key(key::Enter, {});
+		g_sdl.add_key(key::Escape, {});
+		g_sdl.add_key(key::Backspace, {});
+		g_sdl.add_key(key::Tab, {});
+		g_sdl.add_key(key::Space, {});
+		g_sdl.add_key(key::Minus, {});
+		g_sdl.add_key(key::Equals, {});
+		g_sdl.add_key(key::LeftBracket, {});
+		g_sdl.add_key(key::RightBracket, {});
+		g_sdl.add_key(key::Backslash, {});
+		g_sdl.add_key(key::Semicolon, {});
+		g_sdl.add_key(key::Apostrophe, {});
+		g_sdl.add_key(key::Tilde, {});
+		g_sdl.add_key(key::Comma, {});
+		g_sdl.add_key(key::Period, {});
+		g_sdl.add_key(key::Slash, {});
+		g_sdl.add_key(key::Capslock, {});
+		g_sdl.add_key(key::F1, {});
+		g_sdl.add_key(key::F2, {});
+		g_sdl.add_key(key::F3, {});
+		g_sdl.add_key(key::F4, {});
+		g_sdl.add_key(key::F5, {});
+		g_sdl.add_key(key::F6, {});
+		g_sdl.add_key(key::F7, {});
+		g_sdl.add_key(key::F8, {});
+		g_sdl.add_key(key::F9, {});
+		g_sdl.add_key(key::F10, {});
+		g_sdl.add_key(key::F11, {});
+		g_sdl.add_key(key::F12, {});
+		g_sdl.add_key(key::PrintScreen, {});
+		g_sdl.add_key(key::ScrollLock, {});
+		g_sdl.add_key(key::Pause, {});
+		g_sdl.add_key(key::Insert, {});
+		g_sdl.add_key(key::Home, {});
+		g_sdl.add_key(key::PageUp, {});
+		g_sdl.add_key(key::Delete, {});
+		g_sdl.add_key(key::End, {});
+		g_sdl.add_key(key::PageDown, {});
+		g_sdl.add_key(key::Right, {});
+		g_sdl.add_key(key::Left, {});
+		g_sdl.add_key(key::Down, {});
+		g_sdl.add_key(key::Up, {});
+		g_sdl.add_key(key::NumLock, {});
+		g_sdl.add_key(key::Keypad1, {});
+		g_sdl.add_key(key::Keypad2, {});
+		g_sdl.add_key(key::Keypad3, {});
+		g_sdl.add_key(key::Keypad4, {});
+		g_sdl.add_key(key::Keypad5, {});
+		g_sdl.add_key(key::Keypad6, {});
+		g_sdl.add_key(key::Keypad7, {});
+		g_sdl.add_key(key::Keypad8, {});
+		g_sdl.add_key(key::Keypad9, {});
+		g_sdl.add_key(key::KeypadDivide, {});
+		g_sdl.add_key(key::KeypadMultiply, {});
+		g_sdl.add_key(key::KeypadMinus, {});
+		g_sdl.add_key(key::KeypadPlus, {});
+		g_sdl.add_key(key::KeypadEnter, {});
+		g_sdl.add_key(key::KeypadPeroid, {});
+		g_sdl.add_key(key::KeypadEquals, {});
+		g_sdl.add_key(key::KeypadComma, {});
+		g_sdl.add_key(key::LeftControl, {});
+		g_sdl.add_key(key::LeftShift, {});
+		g_sdl.add_key(key::LeftAlt, {});
+		g_sdl.add_key(key::LeftOS, {});
+		g_sdl.add_key(key::RightControl, {});
+		g_sdl.add_key(key::RightShift, {});
+		g_sdl.add_key(key::RightAlt, {});
+		g_sdl.add_key(key::RightOS, {});
+		g_sdl.add_key(key::MouseLeftButton, { .flags = key_details::MouseButton });
+		g_sdl.add_key(key::MouseRightButton, { .flags = key_details::MouseButton });
+		g_sdl.add_key(key::MouseMiddleButton, { .flags = key_details::MouseButton });
+		g_sdl.add_key(key::MouseX1Button, { .flags = key_details::MouseButton });
+		g_sdl.add_key(key::MouseX2Button, { .flags = key_details::MouseButton });
+		g_sdl.add_key(key::MouseX, { .flags = key_details::MouseButton | key_details::FloatAxis });
+		g_sdl.add_key(key::MouseY, { .flags = key_details::MouseButton | key_details::FloatAxis });
+		//g_sdl.add_key( // MouseScrollUp			,{.flags = key_details::MouseButton | key_details::FloatAxis});
+		//g_sdl.add_key( // MouseScrollDown		,{.flags = key_details::MouseButton | key_details::FloatAxis});
+		//g_sdl.add_key( // MouseWheelAxis			,{.flags = key_details::MouseButton | key_details::FloatAxis});
+		g_sdl.add_key(key::Gamepad_LeftX, { .flags = key_details::GamepadKey | key_details::FloatAxis });
+		g_sdl.add_key(key::Gamepad_LeftY, { .flags = key_details::GamepadKey | key_details::FloatAxis });
+		g_sdl.add_key(key::Gamepad_RightX, { .flags = key_details::GamepadKey | key_details::FloatAxis });
+		g_sdl.add_key(key::Gamepad_RightY, { .flags = key_details::GamepadKey | key_details::FloatAxis });
+		g_sdl.add_key(key::Gamepad_LeftTriggerAxis, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_RightTriggerAxis, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_LeftThumbstick, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_RightThumbstick, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_Special_Left, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_Special_Home, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_Special_Right, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_FaceButton_Bottom, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_FaceButton_Right, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_FaceButton_Left, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_FaceButton_Top, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_LeftShoulder, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_RightShoulder, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_LeftTrigger, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_RightTrigger, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_DPad_Up, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_DPad_Down, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_DPad_Right, { .flags = key_details::GamepadKey });
+		g_sdl.add_key(key::Gamepad_DPad_Left, { .flags = key_details::GamepadKey });
 		
 		// virtual key codes used for input axis button press/release emulation
-		g_sdl.add_key( ds::in::Key::Gamepad_Left_Up				,{.flags = key_details::GamepadKey });
-		g_sdl.add_key( ds::in::Key::Gamepad_Left_Down			,{.flags = key_details::GamepadKey });
-		g_sdl.add_key( ds::in::Key::Gamepad_Left_Right			,{.flags = key_details::GamepadKey });
-		g_sdl.add_key( ds::in::Key::Gamepad_Left_Left			,{.flags = key_details::GamepadKey });
-		g_sdl.add_key( ds::in::Key::Gamepad_Right_Up			,{.flags = key_details::GamepadKey });
-		g_sdl.add_key( ds::in::Key::Gamepad_Right_Down			,{.flags = key_details::GamepadKey });
-		g_sdl.add_key( ds::in::Key::Gamepad_Right_Right			,{.flags = key_details::GamepadKey });
-		g_sdl.add_key( ds::in::Key::Gamepad_Right_Left			,{.flags = key_details::GamepadKey });
+		g_sdl.add_key( key::Gamepad_Left_Up				,{.flags = key_details::GamepadKey });
+		g_sdl.add_key( key::Gamepad_Left_Down			,{.flags = key_details::GamepadKey });
+		g_sdl.add_key( key::Gamepad_Left_Right			,{.flags = key_details::GamepadKey });
+		g_sdl.add_key( key::Gamepad_Left_Left			,{.flags = key_details::GamepadKey });
+		g_sdl.add_key( key::Gamepad_Right_Up			,{.flags = key_details::GamepadKey });
+		g_sdl.add_key( key::Gamepad_Right_Down			,{.flags = key_details::GamepadKey });
+		g_sdl.add_key( key::Gamepad_Right_Right			,{.flags = key_details::GamepadKey });
+		g_sdl.add_key( key::Gamepad_Right_Left			,{.flags = key_details::GamepadKey });
 
 
 	}
@@ -282,16 +283,16 @@ namespace sdl {
 }
 
 // destral_input.h public functions implementation based on SDL state and structures
-namespace ds::in {
+namespace ds {
 	static bool s_is_valid_gamepad_id(i32 gamepad_id) {
-		if (!(gamepad_id >= 0 && gamepad_id < max_controllers)) {
+		if (!(gamepad_id >= 0 && gamepad_id < input_max_gamepads)) {
 			DS_WARNING(std::format("Gamepad id {} out of bounds!", gamepad_id));
 			return false;
 		}
 		return true;
 	}
 
-	bool is_axis(Key k) {
+	bool key_is_axis(key k) {
 		auto it_key = sdl::g_sdl.keys.find(k);
 		if (it_key != sdl::g_sdl.keys.end()) {
 			return it_key->second.is_axis_float();
@@ -299,7 +300,7 @@ namespace ds::in {
 		return false;
 	}
 
-	bool is_gamepad_key(Key k) {
+	bool key_is_gamepad(key k) {
 		auto it_key = sdl::g_sdl.keys.find(k);
 		if (it_key != sdl::g_sdl.keys.end()) {
 			return it_key->second.is_gamepad();
@@ -307,12 +308,12 @@ namespace ds::in {
 		return false;
 	}
 
-	float axis_value(Key key, i32 gamepad_id) {
+	float key_axis_value(key key, i32 gamepad_id) {
 		if (!s_is_valid_gamepad_id(gamepad_id)) {
 			return 0;
 		}
 
-		if (key == Key::None) return 0;
+		if (key == key::None) return 0;
 
 		auto it_key = sdl::g_sdl.keys.find(key);
 		if (it_key != sdl::g_sdl.keys.end()) {
@@ -323,12 +324,12 @@ namespace ds::in {
 		return 0;
 	}
 
-	bool is_key_triggered(Key key, i32 gamepad_id) {
+	bool key_is_triggered(key key, i32 gamepad_id) {
 		if (!s_is_valid_gamepad_id(gamepad_id)) {
 			return false;
 		}
 
-		if (key == Key::None) return false;
+		if (key == key::None) return false;
 
 		auto it_key = sdl::g_sdl.keys.find(key);
 		if (it_key != sdl::g_sdl.keys.end()) {
@@ -343,13 +344,13 @@ namespace ds::in {
 		}
 		return false;
 	}
-	bool is_key_pressed(Key key, i32 gamepad_id) {
+	bool key_is_pressed(key key, i32 gamepad_id) {
 			
 		if (!s_is_valid_gamepad_id(gamepad_id)) {
 			return false;
 		}
 
-		if (key == Key::None) return false;
+		if (key == key::None) return false;
 		auto it_key = sdl::g_sdl.keys.find(key);
 		if (it_key != sdl::g_sdl.keys.end()) {
 			if (it_key->second.is_gamepad()) {
@@ -361,12 +362,12 @@ namespace ds::in {
 		return false;
 	}
 
-	bool is_key_released(Key key, i32 gamepad_id) {
+	bool key_is_released(key key, i32 gamepad_id) {
 		if (!s_is_valid_gamepad_id(gamepad_id)) {
 			return false;
 		}
 
-		if (key == Key::None) return false;
+		if (key == key::None) return false;
 		auto it_key = sdl::g_sdl.keys.find(key);
 		if (it_key != sdl::g_sdl.keys.end()) {
 			if (it_key->second.is_gamepad()) {
@@ -382,7 +383,7 @@ namespace ds::in {
 // platform_backend implementation for SDL
 namespace ds::platform_backend {
 	// Called to initialize the platform backend
-	void init(const app::config& config) {
+	void init(const app_config& config) {
 
 		// TODO: Redirect the sdl logs to our own function
 		// control this via some kind of config flag
@@ -458,7 +459,7 @@ namespace ds::platform_backend {
 			switch (e.type) {
 			case SDL_QUIT:
 			{
-				app::exit_request();
+				app_exit_request();
 				/*auto config = app::config();
 				if (config->on_exit_request != nullptr)
 					config->on_exit_request();*/
@@ -475,13 +476,13 @@ namespace ds::platform_backend {
 			case SDL_MOUSEBUTTONUP:
 			case SDL_MOUSEBUTTONDOWN:
 			{
-				in::Key mouse_key = in::Key::None;
+				key mouse_key = key::None;
 				switch (e.button.button) {
-				case SDL_BUTTON_LEFT: mouse_key = in::Key::MouseLeftButton; break;
-				case SDL_BUTTON_MIDDLE: mouse_key = in::Key::MouseMiddleButton; break;
-				case SDL_BUTTON_RIGHT: mouse_key = in::Key::MouseRightButton; break;
-				case SDL_BUTTON_X1: mouse_key = in::Key::MouseX1Button; break;
-				case SDL_BUTTON_X2: mouse_key = in::Key::MouseX2Button; break;
+				case SDL_BUTTON_LEFT: mouse_key = key::MouseLeftButton; break;
+				case SDL_BUTTON_MIDDLE: mouse_key = key::MouseMiddleButton; break;
+				case SDL_BUTTON_RIGHT: mouse_key = key::MouseRightButton; break;
+				case SDL_BUTTON_X1: mouse_key = key::MouseX1Button; break;
+				case SDL_BUTTON_X2: mouse_key = key::MouseX2Button; break;
 				}
 				input_backend::on_key_change(e.button.state == SDL_PRESSED, mouse_key, 0);
 			} break;
@@ -491,7 +492,7 @@ namespace ds::platform_backend {
 			{
 				if (e.key.repeat == 0) {
 					// The key enum identifier in ds::Key is the same of SDL scancode, so we can cast transparently here
-					input_backend::on_key_change(e.key.state == SDL_PRESSED, (in::Key)e.key.keysym.scancode, 0);
+					input_backend::on_key_change(e.key.state == SDL_PRESSED, (key)e.key.keysym.scancode, 0);
 				}
 			} break;
 
@@ -547,33 +548,33 @@ namespace ds::platform_backend {
 					break;
 				}
 
-				in::Key key = in::Key::None;
+				key key = key::None;
 				switch (e.cbutton.button) {
-				case SDL_CONTROLLER_BUTTON_A:	key = in::Key::Gamepad_FaceButton_Bottom; break;
-				case SDL_CONTROLLER_BUTTON_B:	key = in::Key::Gamepad_FaceButton_Right; break;
-				case SDL_CONTROLLER_BUTTON_X:	key = in::Key::Gamepad_FaceButton_Left; break;
-				case SDL_CONTROLLER_BUTTON_Y:	key = in::Key::Gamepad_FaceButton_Top; break;
-				case SDL_CONTROLLER_BUTTON_BACK:	key = in::Key::Gamepad_Special_Left; break;
-				case SDL_CONTROLLER_BUTTON_GUIDE:	key = in::Key::Gamepad_Special_Home; break;
-				case SDL_CONTROLLER_BUTTON_START:	key = in::Key::Gamepad_Special_Right; break;
-				case SDL_CONTROLLER_BUTTON_LEFTSTICK:	key = in::Key::Gamepad_LeftThumbstick; break;
-				case SDL_CONTROLLER_BUTTON_RIGHTSTICK:	key = in::Key::Gamepad_RightThumbstick; break;
-				case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:	key = in::Key::Gamepad_LeftShoulder; break;
-				case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:	key = in::Key::Gamepad_RightShoulder; break;
-				case SDL_CONTROLLER_BUTTON_DPAD_UP:	key = in::Key::Gamepad_DPad_Up; break;
-				case SDL_CONTROLLER_BUTTON_DPAD_DOWN:	key = in::Key::Gamepad_DPad_Down; break;
-				case SDL_CONTROLLER_BUTTON_DPAD_LEFT:	key = in::Key::Gamepad_DPad_Left; break;
-				case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:	key = in::Key::Gamepad_DPad_Right; break;
-					/*case SDL_CONTROLLER_BUTTON_MISC1		:	key = in::Key::Gamepad_FaceButton_Bottom; break;
-					case SDL_CONTROLLER_BUTTON_PADDLE1		:	key = in::Key::Gamepad_FaceButton_Bottom; break;
-					case SDL_CONTROLLER_BUTTON_PADDLE2		:	key = in::Key::Gamepad_FaceButton_Bottom; break;
-					case SDL_CONTROLLER_BUTTON_PADDLE3		:	key = in::Key::Gamepad_FaceButton_Bottom; break;
-					case SDL_CONTROLLER_BUTTON_PADDLE4		:	key = in::Key::Gamepad_FaceButton_Bottom; break;
-					case SDL_CONTROLLER_BUTTON_TOUCHPAD		:	key = in::Key::Gamepad_FaceButton_Bottom; break;*/
+				case SDL_CONTROLLER_BUTTON_A:	key = key::Gamepad_FaceButton_Bottom; break;
+				case SDL_CONTROLLER_BUTTON_B:	key = key::Gamepad_FaceButton_Right; break;
+				case SDL_CONTROLLER_BUTTON_X:	key = key::Gamepad_FaceButton_Left; break;
+				case SDL_CONTROLLER_BUTTON_Y:	key = key::Gamepad_FaceButton_Top; break;
+				case SDL_CONTROLLER_BUTTON_BACK:	key = key::Gamepad_Special_Left; break;
+				case SDL_CONTROLLER_BUTTON_GUIDE:	key = key::Gamepad_Special_Home; break;
+				case SDL_CONTROLLER_BUTTON_START:	key = key::Gamepad_Special_Right; break;
+				case SDL_CONTROLLER_BUTTON_LEFTSTICK:	key = key::Gamepad_LeftThumbstick; break;
+				case SDL_CONTROLLER_BUTTON_RIGHTSTICK:	key = key::Gamepad_RightThumbstick; break;
+				case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:	key = key::Gamepad_LeftShoulder; break;
+				case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:	key = key::Gamepad_RightShoulder; break;
+				case SDL_CONTROLLER_BUTTON_DPAD_UP:	key = key::Gamepad_DPad_Up; break;
+				case SDL_CONTROLLER_BUTTON_DPAD_DOWN:	key = key::Gamepad_DPad_Down; break;
+				case SDL_CONTROLLER_BUTTON_DPAD_LEFT:	key = key::Gamepad_DPad_Left; break;
+				case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:	key = key::Gamepad_DPad_Right; break;
+					/*case SDL_CONTROLLER_BUTTON_MISC1		:	key = Gamepad_FaceButton_Bottom; break;
+					case SDL_CONTROLLER_BUTTON_PADDLE1		:	key = Gamepad_FaceButton_Bottom; break;
+					case SDL_CONTROLLER_BUTTON_PADDLE2		:	key = Gamepad_FaceButton_Bottom; break;
+					case SDL_CONTROLLER_BUTTON_PADDLE3		:	key = Gamepad_FaceButton_Bottom; break;
+					case SDL_CONTROLLER_BUTTON_PADDLE4		:	key = Gamepad_FaceButton_Bottom; break;
+					case SDL_CONTROLLER_BUTTON_TOUCHPAD		:	key = Gamepad_FaceButton_Bottom; break;*/
 				}
 
 
-				if (key != in::Key::None) {
+				if (key != key::None) {
 					input_backend::on_key_change(e.button.state == SDL_PRESSED, key, gamepad_index);
 				}
 
@@ -588,18 +589,18 @@ namespace ds::platform_backend {
 					break;
 				}
 
-				in::Key key = in::Key::None;
+				key key = key::None;
 				switch (e.caxis.axis) {
-				case SDL_CONTROLLER_AXIS_LEFTX: key = in::Key::Gamepad_LeftX; break;
-				case SDL_CONTROLLER_AXIS_LEFTY: key = in::Key::Gamepad_LeftY; break;
-				case SDL_CONTROLLER_AXIS_RIGHTX: key = in::Key::Gamepad_RightX; break;
-				case SDL_CONTROLLER_AXIS_RIGHTY: key = in::Key::Gamepad_RightY; break;
-				case SDL_CONTROLLER_AXIS_TRIGGERLEFT: key = in::Key::Gamepad_LeftTriggerAxis; break;
-				case SDL_CONTROLLER_AXIS_TRIGGERRIGHT: key = in::Key::Gamepad_RightTriggerAxis; break;
+				case SDL_CONTROLLER_AXIS_LEFTX: key = key::Gamepad_LeftX; break;
+				case SDL_CONTROLLER_AXIS_LEFTY: key = key::Gamepad_LeftY; break;
+				case SDL_CONTROLLER_AXIS_RIGHTX: key = key::Gamepad_RightX; break;
+				case SDL_CONTROLLER_AXIS_RIGHTY: key = key::Gamepad_RightY; break;
+				case SDL_CONTROLLER_AXIS_TRIGGERLEFT: key = key::Gamepad_LeftTriggerAxis; break;
+				case SDL_CONTROLLER_AXIS_TRIGGERRIGHT: key = key::Gamepad_RightTriggerAxis; break;
 				default: break;
 				}
 
-				if (key == in::Key::None) {
+				if (key == key::None) {
 					break;
 				}
 
@@ -682,12 +683,12 @@ namespace ds::input_backend {
 	}
 
 	void on_mouse_motion(ivec2 mouse_pos, ivec2 mouse_rel) {
-		sdl::g_sdl.kb_ms_state[in::Key::MouseX].value = static_cast<float>(mouse_pos.x);
-		sdl::g_sdl.kb_ms_state[in::Key::MouseY].value = static_cast<float>(mouse_pos.y);
+		sdl::g_sdl.kb_ms_state[key::MouseX].value = static_cast<float>(mouse_pos.x);
+		sdl::g_sdl.kb_ms_state[key::MouseY].value = static_cast<float>(mouse_pos.y);
 	}
 
-	void on_key_change(bool is_pressed, in::Key key, i32 controller_idx) {
-		dscheck(controller_idx >= 0 && controller_idx < in::max_controllers);
+	void on_key_change(bool is_pressed, key key, i32 controller_idx) {
+		dscheck(controller_idx >= 0 && controller_idx < input_max_gamepads);
 		auto it_key = sdl::g_sdl.keys.find(key);
 		if (it_key != sdl::g_sdl.keys.end()) {
 			if (it_key->second.is_gamepad()) {
@@ -704,8 +705,8 @@ namespace ds::input_backend {
 		}
 	}
 
-	void on_gamepad_axis_change(float value, in::Key axis, i32 controller_idx) {
-		dscheck(controller_idx >= 0 && controller_idx < in::max_controllers);
+	void on_gamepad_axis_change(float value, key axis, i32 controller_idx) {
+		dscheck(controller_idx >= 0 && controller_idx < input_max_gamepads);
 		auto it_key = sdl::g_sdl.keys.find(axis);
 		if (it_key != sdl::g_sdl.keys.end()) {
 			if (it_key->second.is_axis_float() && it_key->second.is_gamepad()) {
@@ -716,44 +717,44 @@ namespace ds::input_backend {
 				const float virtual_key_threshold = 0.3f;
 				// Handle virtual keys based on axis
 				switch (axis) {
-				case in::Key::Gamepad_LeftX: 
+				case key::Gamepad_LeftX:
 					if (value >= virtual_key_threshold) {
-						on_key_change(true, in::Key::Gamepad_Left_Right, controller_idx);
+						on_key_change(true, key::Gamepad_Left_Right, controller_idx);
 					} else if (value <= -virtual_key_threshold) {
-						on_key_change(true, in::Key::Gamepad_Left_Left, controller_idx);
+						on_key_change(true, key::Gamepad_Left_Left, controller_idx);
 					} else {
-						on_key_change(false, in::Key::Gamepad_Left_Right, controller_idx);
-						on_key_change(false, in::Key::Gamepad_Left_Left, controller_idx);
+						on_key_change(false, key::Gamepad_Left_Right, controller_idx);
+						on_key_change(false, key::Gamepad_Left_Left, controller_idx);
 					}
 					break;
-				case in::Key::Gamepad_LeftY:
+				case key::Gamepad_LeftY:
 					if (value >= virtual_key_threshold) {
-						on_key_change(true, in::Key::Gamepad_Left_Down, controller_idx);
+						on_key_change(true, key::Gamepad_Left_Down, controller_idx);
 					} else if (value <= -virtual_key_threshold) {
-						on_key_change(true, in::Key::Gamepad_Left_Up, controller_idx);
+						on_key_change(true, key::Gamepad_Left_Up, controller_idx);
 					} else {
-						on_key_change(false, in::Key::Gamepad_Left_Down, controller_idx);
-						on_key_change(false, in::Key::Gamepad_Left_Up, controller_idx);
+						on_key_change(false, key::Gamepad_Left_Down, controller_idx);
+						on_key_change(false, key::Gamepad_Left_Up, controller_idx);
 					}
 					break;
-				case in::Key::Gamepad_RightX:
+				case key::Gamepad_RightX:
 					if (value >= virtual_key_threshold) {
-						on_key_change(true, in::Key::Gamepad_Right_Right, controller_idx);
+						on_key_change(true, key::Gamepad_Right_Right, controller_idx);
 					} else if (value <= -virtual_key_threshold) {
-						on_key_change(true, in::Key::Gamepad_Right_Left, controller_idx);
+						on_key_change(true, key::Gamepad_Right_Left, controller_idx);
 					} else {
-						on_key_change(false, in::Key::Gamepad_Right_Right, controller_idx);
-						on_key_change(false, in::Key::Gamepad_Right_Left, controller_idx);
+						on_key_change(false, key::Gamepad_Right_Right, controller_idx);
+						on_key_change(false, key::Gamepad_Right_Left, controller_idx);
 					}
 					break; 			
-				case in::Key::Gamepad_RightY:
+				case key::Gamepad_RightY:
 					if (value >= virtual_key_threshold) {
-						on_key_change(true, in::Key::Gamepad_Right_Down, controller_idx);
+						on_key_change(true, key::Gamepad_Right_Down, controller_idx);
 					} else if (value <= -virtual_key_threshold) {
-						on_key_change(true, in::Key::Gamepad_Right_Up, controller_idx);
+						on_key_change(true, key::Gamepad_Right_Up, controller_idx);
 					} else {
-						on_key_change(false, in::Key::Gamepad_Right_Down, controller_idx);
-						on_key_change(false, in::Key::Gamepad_Right_Up, controller_idx);
+						on_key_change(false, key::Gamepad_Right_Down, controller_idx);
+						on_key_change(false, key::Gamepad_Right_Up, controller_idx);
 					}
 					break;
 				default: break;

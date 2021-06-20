@@ -1,10 +1,11 @@
 #pragma once
 #include <destral/destral_common.h>
+#include <destral/destral_ecs.h>
 #include <functional>
 
-namespace ds::app {
+namespace ds {
 
-	struct config {
+	struct app_config {
         // window application name
 		const char* name = "Destral Engine";
 
@@ -43,15 +44,18 @@ namespace ds::app {
 	};
 	
 
-	bool run(const config& params);
+	bool app_run(const app_config& params);
     
     // request application exit, this is not immediate it will exit after the end of the loop
-    void exit_request();
+    void app_exit_request();
 
     // get the current fixed tick delta time
-    float fixed_dt();
+    float app_fixed_dt();
 
     // get the current non-fixed frame delta time
-    float dt();
+    float app_dt();
+
+    // returns the application registry global
+    registry* app_registry();
 
 }

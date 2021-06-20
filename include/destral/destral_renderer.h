@@ -19,7 +19,6 @@ namespace ds {
 
 
 
-
 	// Called to initialize the graphics renderer
 	void render_init();
 
@@ -34,8 +33,6 @@ namespace ds {
 
 	// Called once per frame, calls render_present internally to draw all submitted primitives.
 	void render_after_render();
-
-
 
 	// This draws all the render primitives previously submitted
 	void render_present();

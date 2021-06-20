@@ -6,7 +6,7 @@ using namespace ds;
 
 
 int main() {
-	app::config cfg;
+    app_config cfg;
     cfg.width = 800;
     cfg.height = 800;
 
@@ -43,31 +43,31 @@ int main() {
         rot += 0.001f;
 
 
-        if (in::is_key_triggered(in::Key::D) || in::is_key_triggered(in::Key::MouseRightButton)) {
+        if (key_is_triggered(key::D) || key_is_triggered(key::MouseRightButton)) {
             mode = (mode + 1 ) % 2;
         }
         
-        if (in::is_key_pressed(in::Key::Gamepad_Left_Left) ) {
+        if (key_is_pressed(key::Gamepad_Left_Left) ) {
             x -= 0.001f;
-        } else if (in::is_key_pressed(in::Key::Gamepad_Left_Right)) {
+        } else if (key_is_pressed(key::Gamepad_Left_Right)) {
             x += 0.001f;
         }
 
-        if (in::is_key_pressed(in::Key::Gamepad_Right_Left)) {
+        if (key_is_pressed(key::Gamepad_Right_Left)) {
             x -= 0.001f;
-        } else if (in::is_key_pressed(in::Key::Gamepad_Right_Right)) {
+        } else if (key_is_pressed(key::Gamepad_Right_Right)) {
             x += 0.001f;
         }
 
-        if (in::is_key_pressed(in::Key::Gamepad_Left_Up)) {
+        if (key_is_pressed(key::Gamepad_Left_Up)) {
             y += 0.001f;
-        } else if (in::is_key_pressed(in::Key::Gamepad_Left_Down)) {
+        } else if (key_is_pressed(key::Gamepad_Left_Down)) {
             y -= 0.001f;
         }
 
-        if (in::is_key_pressed(in::Key::Gamepad_Right_Up)) {
+        if (key_is_pressed(key::Gamepad_Right_Up)) {
             y += 0.001f;
-        } else if (in::is_key_pressed(in::Key::Gamepad_Right_Down)) {
+        } else if (key_is_pressed(key::Gamepad_Right_Down)) {
             y -= 0.001f;
         }
 
@@ -98,7 +98,7 @@ int main() {
         //gfx::draw_quad({}, {});
     };
 
-	app::run(cfg);
+	app_run(cfg);
     
 }
 

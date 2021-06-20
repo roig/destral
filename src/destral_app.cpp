@@ -11,7 +11,7 @@
 // Idea from:
 // https://github.com/NoelFB/blah/blob/master/src/core/app.cpp
 
-namespace ds::app {
+namespace ds {
 	struct time {
 		std::chrono::duration<float> dt_fixed_acc = std::chrono::seconds(0);
 		std::chrono::duration<float> current_frame_dt = std::chrono::seconds(0);
@@ -25,17 +25,21 @@ namespace ds::app {
 
 	// global instances
 	static app g_app;
-	static config g_cfg;
+	static app_config g_cfg;
 	static time g_time;
+	static registry* g_registry = nullptr;
 
-	bool run(const config& cfg_) {
+	bool app_run(const app_config& cfg_) {
 		g_cfg = cfg_;
 		
+
+
 		platform_backend::init(g_cfg);
 		render_init();
 		// input_backend::init();
 
 
+		g_registry = registry_create();
 		if (g_cfg.on_init) {
 			g_cfg.on_init();
 		}
@@ -93,7 +97,7 @@ namespace ds::app {
 
 				// 2) Tick for the full frame dt (independent timestep)
 				if (g_cfg.on_tick) {
-					g_cfg.on_tick(dt());
+					g_cfg.on_tick(app_dt());
 				}
 			}
 
@@ -102,7 +106,7 @@ namespace ds::app {
 			{
 				while (g_time.dt_fixed_acc >= g_time.current_fixed_dt) {
 					if (g_cfg.on_fixed_tick) {
-						g_cfg.on_fixed_tick(fixed_dt());
+						g_cfg.on_fixed_tick(app_fixed_dt());
 					}
 					g_time.dt_fixed_acc -= g_time.current_fixed_dt;
 				}
@@ -128,24 +132,33 @@ namespace ds::app {
 				g_cfg.on_shutdown();
 			}
 
+
+			registry_destroy(g_registry);
 			//input_backend::shutdown();
 			render_shutdown();
 			platform_backend::shutdown();
+
+
 		}
 
 		return 0;
 	}
 
-	void exit_request() {
+	void app_exit_request() {
 		g_app.is_exiting = true;
 	}
 
-	float fixed_dt() {
+	float app_fixed_dt() {
 		return g_time.current_fixed_dt.count();
 	}
 
-	float dt() {
+	float app_dt() {
 		return g_time.current_frame_dt.count();
+	}
+
+	// returns the application registry global
+	registry* app_registry() {
+		return g_registry;
 	}
 
 }

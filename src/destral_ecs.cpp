@@ -169,6 +169,7 @@ namespace ds {
         // delete all the context variables
         ctx_unset_all(r);
         delete r;
+        r = nullptr;
     }
 
     // Performs the release of an entity in the registry by adding it to the recycle list

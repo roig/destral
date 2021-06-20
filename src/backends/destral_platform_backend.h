@@ -7,7 +7,7 @@
 namespace ds::platform_backend {
 
 	// Called to initialize the platform backend
-	void init(const app::config& config);
+	void init(const app_config& config);
 
 	// Called during shutdown
 	void shutdown();

@@ -44,7 +44,7 @@ void bullet_update(registry* r, float dt) {
         //if (p->timetolive < 0.0) {
         //   // ecs::entity_destroy_deferred(r, v->entity());
         //}
-        //if (in::is_key_triggered(in::Key::Space)) {
+        //if (in::is_key_triggered(Space)) {
         //    // Here I want to create an entity and set the position of the bullet entity to 
         //    ecs::entity_make(g_r, "BulletEntity");
         //    //bullet* cp_bullet = (bullet*)ecs::entity_try_get(g_r, ebullet, "bullet");
@@ -57,7 +57,7 @@ void bullet_update(registry* r, float dt) {
 
 
 
-    if (in::is_key_triggered(in::Key::Delete)) {
+    if (key_is_pressed(key::Delete)) {
         // Here I want to create an entity and set the position of the bullet entity to 
 
         auto all = entity_all(r);
@@ -90,7 +90,7 @@ void player_update(registry* r, float dt) {
     while (v->valid()) {
         player* p = v->data<player>(player_cpidx);
 
-        if (in::is_key_triggered(in::Key::Space)) {
+        if (key_is_triggered(key::Space)) {
             // Here I want to create an entity and set the position of the bullet entity to 
             auto ebullet = entity_make_begin(g_r, "BulletEntity");
             bullet* cp_bullet = (bullet*)entity_try_get(g_r, ebullet, "bullet");
@@ -99,9 +99,9 @@ void player_update(registry* r, float dt) {
         }
 
         float dir = 0.f;
-        if (in::is_key_pressed(in::Key::Left) || in::is_key_pressed(in::Key::Gamepad_Left_Left)) {
+        if (key_is_pressed(key::Left) || key_is_pressed(key::Gamepad_Left_Left)) {
             dir = -1.f;
-        } else if (in::is_key_pressed(in::Key::Right) || in::is_key_pressed(in::Key::Gamepad_Left_Right)) {
+        } else if (key_is_pressed(key::Right) || key_is_pressed(key::Gamepad_Left_Right)) {
             dir = 1.f;
         }
 
@@ -146,13 +146,13 @@ void deinit() {
 
 
 int main() {
-	app::config cfg;
+    app_config cfg;
     cfg.width = 800;
     cfg.height = 800;
     cfg.on_init = init;
     cfg.on_tick = tick;
     cfg.on_shutdown = deinit;
-    app::run(cfg);
+    app_run(cfg);
 }
 
 

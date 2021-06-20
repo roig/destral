@@ -7,9 +7,9 @@
 // which are in turn based on the USB standards:
 // https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf
 
-namespace ds::in {
+namespace ds {
 
-enum class Key: ds::i32 {
+enum class key: i32 {
 	None = 0,
 
 	// Keyboard keys starting from 4 to 256
@@ -167,26 +167,26 @@ enum class Key: ds::i32 {
 	Gamepad_Right_Left= 430,
 
 };
-	// maximum number of controllers the input can handle
-	constexpr i32 max_controllers = 8;
+	// maximum number of gamepads the input can handle
+	constexpr i32 input_max_gamepads = 8;
 
 	/** Check if the key is released in this frame (only returns 1 the frame that state switchs from pressed to released) Example: SDLK_PLUS*/
-	bool is_key_triggered(Key key, i32 gamepad_id = 0);
+	bool key_is_triggered(key k, i32 gamepad_id = 0);
 
 	/** Check if the key is pressed*/
-	bool is_key_pressed(Key key, i32 gamepad_id = 0);
+	bool key_is_pressed(key k, i32 gamepad_id = 0);
 
 	/** Check if the key is released*/
-	bool is_key_released(Key key, i32 gamepad_id = 0);
+	bool key_is_released(key k, i32 gamepad_id = 0);
 
 	/** Returns the axis value [-1,1] for the axis Key in the gamepad  or 0 if it's not an axis Key */
-	float axis_value(Key key, i32 gamepad_id = 0);
+	float key_axis_value(key k, i32 gamepad_id = 0);
 
 	/** Returns true if the Key k is an axis */
-	bool is_axis(Key k);
+	bool key_is_axis(key k);
 
 	/** Returns true if the Key k is a gamepad key*/
-	bool is_gamepad_key(Key k);
+	bool key_is_gamepad(key k);
 
 
 	// TODO callbacks when a gamepad connects/disconnects

@@ -15,8 +15,6 @@ add_subdirectory(libs/SDL2-2.0.14) #find and compile SDL2 target
 file(GLOB_RECURSE DESTRAL_SOURCE_FILES "src/*.cpp" "src/*.hpp")
 file(GLOB_RECURSE DESTRAL_PUBLIC_HEADER_FILES  "include/*.h" "include/*.hpp")
 
-
-
 #add_library(Destral 
 #"include/destral.h"
 #"include/destral/core/destral_app.h"
