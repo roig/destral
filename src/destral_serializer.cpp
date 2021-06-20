@@ -1,8 +1,8 @@
 #pragma once
-#include <destral/core/destral_kv.h>
+#include <destral/destral_kv.h>
 #include <destral/thirdparty/json.hpp>
 
-#include <destral/core/destral_base64.h>
+#include <destral/destral_base64.h>
 
 using namespace nlohmann;
 

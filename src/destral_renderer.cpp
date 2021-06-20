@@ -1,37 +1,28 @@
-#include <destral/graphics/destral_renderer.h>
-#include "../backends/destral_platform_backend.h"
-#include <destral/ecs/destral_ecs.h>
-
-#define AP_GL33CORE_IMPL
+#include <destral/destral_renderer.h>
+#include "backends/destral_platform_backend.h"
+#include <destral/destral_ecs.h>
 #include <destral/thirdparty/ap_gl33core.h>
-
-#define SOKOL_IMPL
-#define SOKOL_GLCORE33
-#define SOKOL_LOG(msg) DS_LOG(msg)
-#define SOKOL_ASSERT(c) dscheck(c)
-#define SOKOL_EXTERNAL_GL_LOADER
-#include <destral/thirdparty/sokol_gfx.h>
-
-#define STBI_ASSERT(x) dscheck(x)
-#define STB_IMAGE_IMPLEMENTATION
-#include "../thirdparty/stb_image.h"
+#include "thirdparty/stb_image.h"
 
 #include <unordered_map>
 #include <map>
 
-#include <filesystem>
 
-namespace ds::rd {
+
+namespace ds {
 	
 	sg_image load_texture(resource<image>& image) {
 		if (!image) { return {}; }
-
+		
 		sg_image_desc image_desc = { 0 };
 		image_desc.width = image->size.x;
 		image_desc.height = image->size.y;
 		image_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
 		image_desc.min_filter = SG_FILTER_NEAREST;
 		image_desc.mag_filter = SG_FILTER_NEAREST;
+		image_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
+		image_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
+		image_desc.wrap_w = SG_WRAP_CLAMP_TO_EDGE;
 		image_desc.data.subimage[0][0] = {
 			  .ptr = image->pixels.data(),
 			  .size = sizeof(unsigned char)
@@ -43,36 +34,40 @@ namespace ds::rd {
 
 	}
 
+	sg_image load_texture(const u8* pixels_data, i32 width, i32 height) {
+		sg_image_desc image_desc = { 0 };
+		image_desc.width = width;
+		image_desc.height = height;
+		image_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
+		image_desc.min_filter = SG_FILTER_NEAREST;
+		image_desc.mag_filter = SG_FILTER_NEAREST;
+		image_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
+		image_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
+		image_desc.wrap_w = SG_WRAP_CLAMP_TO_EDGE;
+		image_desc.data.subimage[0][0] = {
+			  .ptr = pixels_data,
+			  .size = sizeof(pixels_data)
+		};
+
+		//image_desc.label = "texture";
+		return sg_make_image(image_desc);
+	}
+
 	sg_image load_texture(const std::string& filename) {
 		int x,y,n;
 		stbi_set_flip_vertically_on_load(true);
 		unsigned char *pixels = stbi_load(filename.c_str(), &x, &y, &n, 0);
 		if (pixels != nullptr) {
-
 			// ... process data if not null ...
 			// ... x = width, y = height, n = # 8-bit components per pixel ...
 			// ... replace '0' with '1'..'4' to force that many components per pixel
 			// ... but 'n' will always be the number that it would have been if you said 0
-			sg_image_desc image_desc = { 0 };
-			image_desc.width = x;
-			image_desc.height = y;
-			image_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-			image_desc.min_filter = SG_FILTER_NEAREST;
-			image_desc.mag_filter = SG_FILTER_NEAREST;
-			image_desc.data.subimage[0][0] = {
-				  .ptr = pixels,
-				  .size = sizeof(pixels)
-			};
-			
-			image_desc.label = "texture";
-			auto img = sg_make_image(image_desc);
+			sg_image img = load_texture(pixels, x, y);
 			stbi_image_free(pixels);
 			return img;
 		}
-		DS_WARNING(std::format("Error loading the image: {}. Current path: {}", filename, std::filesystem::current_path().string()));
-
-		
-		return {0}; // TODO BAD
+		DS_WARNING(std::format("Error loading the image: {}. Current path: {}", filename));
+		return {0}; 
 	}
 
 	void destroy_texture(sg_image texture) {
@@ -177,6 +172,16 @@ namespace ds::rd {
 		sg_pipeline_desc tri_textured_pipdesc = { 0 };
 		tri_textured_pipdesc.shader = g_rs.textured_sh;
 		tri_textured_pipdesc.label = "tris-textured-pipeline";
+		
+		// Default blending
+		tri_textured_pipdesc.colors[0].blend.enabled = true;
+		tri_textured_pipdesc.colors[0].blend.src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA;
+		tri_textured_pipdesc.colors[0].blend.dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+		tri_textured_pipdesc.colors[0].blend.op_rgb = SG_BLENDOP_ADD;
+		tri_textured_pipdesc.colors[0].blend.src_factor_alpha = SG_BLENDFACTOR_SRC_ALPHA;
+		tri_textured_pipdesc.colors[0].blend.dst_factor_alpha = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+		tri_textured_pipdesc.colors[0].blend.op_alpha = SG_BLENDOP_ADD;
+
 		tri_textured_pipdesc.layout.attrs[0].format = SG_VERTEXFORMAT_FLOAT2;
 		tri_textured_pipdesc.layout.attrs[1].format = SG_VERTEXFORMAT_FLOAT4;
 		tri_textured_pipdesc.layout.attrs[2].format = SG_VERTEXFORMAT_FLOAT2;
@@ -192,7 +197,7 @@ namespace ds::rd {
 	/// //////////////////////////////////////
 	
 
-	void init() {
+	void render_init() {
 		// Create GL context
 		platform_backend::gl_context_create();
 
@@ -217,21 +222,21 @@ namespace ds::rd {
 		create_shaders_and_pipelines();
 	}
 
-	void shutdown() {
+	void render_shutdown() {
 		sg_shutdown();
 	}
 
-	void before_render() {
+	void render_before_render() {
 
 	}
 
-	void tick() {
+	void render_tick() {
 
 	}
 
 
 
-	void after_render() {
+	void render_after_render() {
 		render_present();
 	}
 
@@ -283,7 +288,7 @@ namespace ds::rd {
 	}
 
 
-	void rd::draw_line(const std::vector<vec2>& points, vec4 color, i32 depth) {
+	void draw_line(const std::vector<vec2>& points, vec4 color, i32 depth) {
 		mesh_data md;
 		md.bind.vertex_buffers[0] = g_rs.vbo;
 		md.vertex_start = (int)g_rs.vertex_data.size() / 8;
@@ -409,6 +414,10 @@ namespace ds::rd {
 
 	// size world units (aqui tinc dubtes..)
 	// uv_rect: normalized uv coordinates rectangle
+	void draw_texture(const mat3& tx, resource<image> image, vec2 size, rect uv_rect, vec4 color, i32 depth) {
+		draw_texture(tx, image->gpu_texid, size, uv_rect, color, depth);
+	}
+
 	void draw_texture(const mat3& tx, sg_image texture, vec2 size, rect uv_rect, vec4 color, i32 depth) {
 		// TEST IMAGE
 		//static sg_image test_img = { .id = 0 };

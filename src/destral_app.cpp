@@ -1,10 +1,10 @@
-#include <destral/core/destral_app.h>
+#include <destral/destral_app.h>
 #include <chrono>
 #include <iostream>
 
-#include "../backends/destral_platform_backend.h"
-#include "../backends/destral_input_backend.h"
-#include <destral/graphics/destral_renderer.h>
+#include "backends/destral_platform_backend.h"
+#include "backends/destral_input_backend.h"
+#include <destral/destral_renderer.h>
 
 #include <thread>
 
@@ -32,7 +32,7 @@ namespace ds::app {
 		g_cfg = cfg_;
 		
 		platform_backend::init(g_cfg);
-		rd::init();
+		render_init();
 		// input_backend::init();
 
 
@@ -88,7 +88,7 @@ namespace ds::app {
 			// 2) Full tick perform
 			{
 				platform_backend::tick();
-				rd::tick();
+				render_tick();
 
 
 				// 2) Tick for the full frame dt (independent timestep)
@@ -110,13 +110,13 @@ namespace ds::app {
 
 			// 4) render loop
 			{
-				rd::before_render();
+				render_before_render();
 
 				if (g_cfg.on_render) {
 					g_cfg.on_render();
 				}
 
-				rd::after_render();
+				render_after_render();
 				platform_backend::present();
 			}
 		}
@@ -129,7 +129,7 @@ namespace ds::app {
 			}
 
 			//input_backend::shutdown();
-			rd::shutdown();
+			render_shutdown();
 			platform_backend::shutdown();
 		}
 

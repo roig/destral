@@ -77,8 +77,8 @@
 
 */
 
-#include <destral/ecs/destral_ecs.h>
-#include <destral/core/destral_base64.h>
+#include <destral/destral_ecs.h>
+#include <destral/destral_base64.h>
 #include <unordered_map>
 
 namespace ds {
@@ -90,7 +90,7 @@ namespace ds {
 
     struct ctx_variable_info {
         std::string name;
-        u64 hashed_name;
+        u64 hashed_name = 0;
         void* instance_ptr = nullptr;
         delete_fn* deleter_fn = nullptr;
     };

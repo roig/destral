@@ -1,36 +1,41 @@
 #pragma once
 
-#include <destral/core/destral_common.h>
-#include <destral/math/destral_math.h>
+#include <destral/destral_common.h>
+#include <destral/destral_math.h>
 #include <destral/thirdparty/sokol_gfx.h>
-#include <destral/graphics/destral_image.h>
-#include <destral/resource/resource.h>
-
+#include <destral/destral_resource.h>
+#include <destral/destral_image.h>
 #include <vector>
 
-namespace ds::rd {
-
-	// Called to initialize the graphics renderer
-	void init();
-
-	// Shuts down the graphics renderer
-	void shutdown();
-
-	// Called once per frame (does nothing for now)
-	void tick();
-
-	// Called once per frame (does nothing for now)
-	void before_render();
-
-	// Called once per frame, calls render_present internally to draw all submitted primitives.
-	void after_render();
-
+namespace ds {
 	// Loads a texture
 	sg_image load_texture(const std::string& filename);
-	sg_image load_texture(resource<image>& image);
+
+	// Loads a texture to the gpu
+	sg_image load_texture(const u8* pixels_data, i32 width, i32 height);
 
 	// Destroys a texture
 	void destroy_texture(sg_image texture);
+
+
+
+
+	// Called to initialize the graphics renderer
+	void render_init();
+
+	// Shuts down the graphics renderer
+	void render_shutdown();
+
+	// Called once per frame (does nothing for now)
+	void render_tick();
+
+	// Called once per frame (does nothing for now)
+	void render_before_render();
+
+	// Called once per frame, calls render_present internally to draw all submitted primitives.
+	void render_after_render();
+
+
 
 	// This draws all the render primitives previously submitted
 	void render_present();
@@ -56,5 +61,6 @@ namespace ds::rd {
 
 	// Submit a draw texture rectangle primitive
 	void draw_texture(const mat3& tx, sg_image texture = { 0 }, vec2 size = { 1,1 }, rect source_texture_rect = rect::from_size({ 0,0 }, { 1, 1 }), vec4 color = { 1,1,1,1 }, i32 depth = 0);
+	void draw_texture(const mat3& tx, resource<image> img, vec2 size = { 1,1 }, rect source_texture_rect = rect::from_size({ 0,0 }, { 1, 1 }), vec4 color = { 1,1,1,1 }, i32 depth = 0);
 
 }

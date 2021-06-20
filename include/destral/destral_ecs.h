@@ -127,7 +127,7 @@
     
 
 */
-#include <destral/core/destral_common.h>
+#include <destral/destral_common.h>
 #include <vector>
 
 namespace ds {
@@ -332,10 +332,10 @@ struct cp_storage {
         void* cp_data_ptr = &cp_data[cp_data.size() - cp_sizeof];
 
         // Then add the entity to the sparse/dense arrays
-        const u32 eid = e.id();
+        const u64 eid = e.id();
         DS_LOG(std::format("Adding {}", entity_stringify(e)) );
         if (eid >= sparse.size()) { // check if we need to realloc
-            sparse.resize(eid + 1, entity_max_id()); // default to entity_maxid means that is not valid.
+            sparse.resize(eid + (u64)1, entity_max_id()); // default to entity_maxid means that is not valid.
         }
         
         sparse[eid] = (u32)dense.size();

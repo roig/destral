@@ -1,5 +1,5 @@
 #pragma once
-#include <destral/core/destral_app.h>
+#include <destral/destral_app.h>
 
 // Idea taken from:
 // https://github.com/NoelFB/blah/blob/master/src/internal/platform_backend.h

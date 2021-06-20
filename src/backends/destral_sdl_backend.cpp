@@ -1,7 +1,7 @@
 #include "destral_platform_backend.h"
 #include "destral_input_backend.h"
-#include <destral/core/destral_common.h>
-#include <destral/input/destral_input.h>
+#include <destral/destral_common.h>
+#include <destral/destral_input.h>
 #include <SDL.h>
 #include <array>
 

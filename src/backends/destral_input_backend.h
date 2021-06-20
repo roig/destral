@@ -1,7 +1,7 @@
 #pragma once
-#include <destral/core/destral_common.h>
-#include <destral/math/destral_math.h>
-#include <destral/input/destral_input.h>
+#include <destral/destral_common.h>
+#include <destral/destral_math.h>
+#include <destral/destral_input.h>
 
 // Idea taken from:
 // https://github.com/NoelFB/blah/blob/14a53c0f3a5b68278cc63d7c2769d2e3c750a190/src/internal/graphics_backend.h

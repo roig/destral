@@ -1,7 +1,7 @@
 #pragma once
 
-#include <destral/core/destral_common.h>
-#include <destral/math/destral_math.h>
+#include <destral/destral_common.h>
+#include <destral/destral_math.h>
 
 // These are generally copied from the SDL2 Scancode Keys,
 // which are in turn based on the USB standards:

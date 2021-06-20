@@ -1,18 +1,6 @@
 #include <destral.h>
-#include <destral/resource/resource.h>
 
 using namespace ds;
-
-
-
-
-
-struct component {
-    resource<image> tex = cache_images()->get("Zelda");
-};
-
-
-
 void resources_test() {
 
     cache_images_add_info("Zelda", "content/zelda.png");
@@ -22,71 +10,6 @@ void resources_test() {
 
     resource<image> t = cache_images()->get("Zelda");
     resource<int> it;
-
-
-
-
-    
-
-    //images_cache()->
-    // tex_cache.set_loader();
-
-    // Init
-    //resource_loader<texture> tex_loader;
-    //tex_loader.type_name = "Texture";
-    //tex_loader.create_from_file_fn = [](const std::string& file) { return new texture; };
-    //tex_loader.can_create_from_file_fn = [](const std::string& file) { return true; };
-
-    //resource_cache<texture> tex_cache(tex_loader);
-    //tex_cache.add_resource_info("Zelda", "content/zelda.png");
-    //tex_cache.add_resource_info("Mario", "content/mario.png");
-
-
-    //// Runtime
-    //resource_key zelda_key("Zelda");
-    //resource_handle<texture> zelda_tex(zelda_key); // No initialized (just only the key)
-    //resource_handle<texture> zelda_tex2({"Zelda"}); // No initialized (just only the key)
-    //resource_handle<texture> zelda_tex3 = tex_cache.get(zelda_tex.key()); // resource handle Initialized (can be valid or not) gets/loads the texture if resource_info exists for the id
-    //resource_handle<texture> zelda_tex4 = tex_cache.get(zelda_key); // resource handle Initialized (can be valid or not) gets/loads the texture if resource_info exists for the id
-
-    //if (zelda_tex.valid()) {
-    //    texture* tex_ptr = zelda_tex.get();
-    //}
-
-
-
-    //struct image {
-
-    //};
-    //resource_manager rm;
-
-
-    //rm.add_description({ { "Zelda", "Image" }, "content/zelda.png"});
-    //rm.add_description({ { "Mario", "Image" }, "content/mario.png" });
-
-
-    //resource res_zelda({ "Zelda", "Image" }); // invalid resource refrence (just only ids)
-
-    //// 
-    //res_zelda = rm.get({ "Zelda", "Image" }); // this is a valid resource reference (returned from resource manager)
-
-
-    //// accces :
-    //if (res_zelda.valid()) {
-    //    image* img = res_zelda.get<image>();
-
-    //} else {
-
-    //}
-    //
-    //// but the resource is not loaded yet.
-    //
-    //// this sets a resource pointer
-    //// passing the void
-    //rm.set(c.texture.key, new image());
-    //
-
-
 
 }
 
@@ -116,7 +39,7 @@ void bullet_update(registry* r, float dt) {
         bullet* p = v.data<bullet>(v.index("bullet"));
         p->pos.y = p->pos.y + (p->velocity * dt);
         p->timetolive -= dt;
-        rd::draw_circle(p->pos, 0.1f, vec4(1, 0, 1, 1), 4);
+        draw_circle(p->pos, 0.1f, vec4(1, 0, 1, 1), 4);
         //DS_LOG(fmt::format("entity: {}   ttl: {}", v->entity(), p->timetolive));
         //if (p->timetolive < 0.0) {
         //   // ecs::entity_destroy_deferred(r, v->entity());
@@ -183,7 +106,7 @@ void player_update(registry* r, float dt) {
         }
 
         p->pos.x = p->pos.x + (p->velocity * dt * dir);
-        rd::draw_rect(math::build_matrix(p->pos), { 0.5, 0.5 }, vec4(0, 1, 0, 1), 4);
+        draw_rect(math::build_matrix(p->pos), { 0.5, 0.5 }, vec4(0, 1, 0, 1), 4);
         v->next();
     }
 }
