@@ -1,2 +1,3 @@
 add_subdirectory(test_graphics)
 add_subdirectory(shootemup)
+add_subdirectory(zelda_nes)

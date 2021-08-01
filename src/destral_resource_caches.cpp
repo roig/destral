@@ -42,8 +42,8 @@ namespace ds {
 		if (flip_horizontal) {
 			flip_image_horizontal(*img);
 		}
-		img->gpu_texid = load_texture(img->pixels.data(), w, h);
-
+		img->gpu_texid = load_texture_memory(img->pixels.data(), w, h);
+		
 		return img;
 	}
 

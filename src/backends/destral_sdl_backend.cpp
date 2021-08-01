@@ -28,11 +28,8 @@ namespace sdl {
 	// key_details: information about a key/button/etc... name if is mouse or axis etc..
 	// key_state: information about the state of a key/button/etc.. 
 
-
-
 	// map<key, key_details> keys_config; // map with the key to key_details information.
 	// map<key, key_state> kb_ms_state; // map with the keyboard and mouse keys state information (no gamepads)
-
 
 	// controller: contains the SDL_Joystick id and the gamepad_state;
 	// map<key, key_state> gamepad_state; // map with the gamepad keys state information (no keyboard/mouse)

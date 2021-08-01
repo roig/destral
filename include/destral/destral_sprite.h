@@ -8,6 +8,9 @@ namespace ds {
 	struct animation_frame {
 		resource<image> image;
 		float time = 0;
+
+		// this is the source rectangle that will be drawn from image in pixels
+		rect source_rect_px;
 	};
 
 	struct animation {

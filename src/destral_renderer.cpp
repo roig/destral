@@ -34,7 +34,7 @@ namespace ds {
 
 	}
 
-	sg_image load_texture(const u8* pixels_data, i32 width, i32 height) {
+	sg_image load_texture_memory(const u8* pixels_data, i32 width, i32 height) {
 		sg_image_desc image_desc = { 0 };
 		image_desc.width = width;
 		image_desc.height = height;
@@ -53,7 +53,7 @@ namespace ds {
 		return sg_make_image(image_desc);
 	}
 
-	sg_image load_texture(const std::string& filename) {
+	sg_image load_texture_file(const std::string& filename) {
 		int x,y,n;
 		stbi_set_flip_vertically_on_load(true);
 		unsigned char *pixels = stbi_load(filename.c_str(), &x, &y, &n, 0);
@@ -62,7 +62,7 @@ namespace ds {
 			// ... x = width, y = height, n = # 8-bit components per pixel ...
 			// ... replace '0' with '1'..'4' to force that many components per pixel
 			// ... but 'n' will always be the number that it would have been if you said 0
-			sg_image img = load_texture(pixels, x, y);
+			sg_image img = load_texture_memory(pixels, x, y);
 			stbi_image_free(pixels);
 			return img;
 		}
@@ -92,6 +92,10 @@ namespace ds {
 		std::map<i32, std::unordered_map<std::uint32_t /* sg_pipeline */, std::vector<mesh_data> > > render_list;
 
 		std::vector<float> vertex_data;
+
+		// Holds the vertex data vertices transformed
+		std::vector<float> vertex_data_transformed;
+
 		// Per frame vertex buffer object
 		static constexpr std::size_t MAX_VERTEX_DATA_BYTES_SIZE = 250000 * 4; // Maximum vertex data in the VBO
 		sg_buffer vbo = { 0 };
@@ -240,11 +244,98 @@ namespace ds {
 		render_present();
 	}
 
+
+	// This draws all primitives using the projection and view passed by parameters
+	void draw_all_primitives(const mat3& projection, const mat3& view) {
+		// TODO check frustrum culling
+
+	}
+	
+	//void draw_present_all(const mat3& projection, const mat3& view) {
+
+	//	g_rs.vertex_data_transformed = g_rs.vertex_data;
+
+	//	const mat3 VP = projection * view;
+
+	//	// Transforms all the vertex data with the View projection matrix
+	//	for (auto vertex_idx = 0; vertex_idx < g_rs.vertex_data.size(); vertex_idx = vertex_idx + 8) {
+	//		vec3 point = VP * vec3(g_rs.vertex_data_transformed[vertex_idx], g_rs.vertex_data_transformed[vertex_idx + 1], 1);
+	//		g_rs.vertex_data_transformed[vertex_idx] = point.x;
+	//		g_rs.vertex_data_transformed[vertex_idx+1] = point.y;
+	//	}
+
+	//	// If no vertex data, return!
+	//	// upload all the vertex data to the gpu
+	//	sg_range vbo_range;
+	//	vbo_range.ptr = g_rs.vertex_data_transformed.data();
+	//	vbo_range.size = g_rs.vertex_data_transformed.size() * sizeof(float) <= g_rs.MAX_VERTEX_DATA_BYTES_SIZE ? g_rs.vertex_data_transformed.size() * sizeof(float) : g_rs.MAX_VERTEX_DATA_BYTES_SIZE;
+	//	if (g_rs.vertex_data_transformed.size() * sizeof(float) > g_rs.MAX_VERTEX_DATA_BYTES_SIZE) {
+	//		DS_WARNING("Vertex data exceds the maximum VBO size, probably some primitives will be not rendered.");
+	//	}
+
+	//	// only update the buffer if it has data
+	//	if (g_rs.vertex_data_transformed.size() != 0) {
+	//		sg_update_buffer(g_rs.vbo, vbo_range);
+	//	}
+
+	//	ivec2 draw_sz;
+	//	platform_backend::get_drawable_size(&draw_sz.x, &draw_sz.y);
+	//	/* default pass action (clear to grey) */
+	//	sg_pass_action pass_action = { 0 };
+	//	pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .value = {0.5f, 0.5f, 0.5f, 1.0f } };
+
+	//	sg_begin_default_pass(&pass_action, draw_sz.x, draw_sz.y);
+
+	//	for (auto& z : g_rs.render_list) {
+	//		//DS_LOG(std::format("Z : {}", z.first));
+	//		for (auto& pip : z.second) {
+
+	//			sg_apply_pipeline(sg_pipeline(pip.first));
+	//			for (auto& md : pip.second) {
+	//				sg_apply_bindings(md.bind);
+	//				//	sg_apply_uniforms(..) // this is optinal to update uniform data when using custom shaders
+	//				sg_draw(md.vertex_start, md.vertex_count, 1);
+	//			}
+	//		}
+	//	}
+	//	sg_end_pass();
+	//	sg_commit();
+
+	//	
+
+
+	//}
+
+	void draw_camera(ivec2 vp_size, vec4 /* un rect potser? */camera_vp, const mat3& camera_ltw, float aspect, float half_vsize, vec4 clear_color)
+	{
+		sg_apply_viewport((i32)(camera_vp.x * vp_size.x), (i32)(camera_vp.y * vp_size.y),
+			(i32)((camera_vp.z * vp_size.x) - (camera_vp.x * vp_size.x)), (i32)((camera_vp.w * vp_size.y) - (camera_vp.y * vp_size.y)), false);
+		sg_apply_scissor_rect((i32)(camera_vp.x * vp_size.x), (i32)(camera_vp.y * vp_size.y),
+			(i32)((camera_vp.z * vp_size.x) - (camera_vp.x * vp_size.x)), (i32)((camera_vp.w * vp_size.y) - (camera_vp.y * vp_size.y)), false);
+
+		glClearColor(clear_color.r, clear_color.g, clear_color.b, clear_color.a);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		// Set up projection
+		mat3 projection_mat(glm::ortho(-aspect * half_vsize, aspect * half_vsize, -half_vsize, half_vsize));
+
+		// Setup view matrix from inverse camera
+		glm::mat3 view_mat = glm::inverse(camera_ltw);
+
+		draw_all_primitives(projection_mat, view_mat);
+	}
+
+	
+
+
+	
+
 	void render_present() {
 
+		/*g_rs.vertex_data.clear();
+		g_rs.render_list.clear();*/
+
 		// If no vertex data, return!
-
-
 		// upload all the vertex data to the gpu
 		sg_range vbo_range;
 		vbo_range.ptr = g_rs.vertex_data.data();
@@ -275,7 +366,6 @@ namespace ds {
 					sg_apply_bindings(md.bind);
 					//	sg_apply_uniforms(..) // this is optinal to update uniform data when using custom shaders
 					sg_draw(md.vertex_start, md.vertex_count, 1);
-					//sg_draw(0, 12, 1);
 				}
 			}
 		}

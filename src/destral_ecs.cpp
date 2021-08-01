@@ -85,7 +85,20 @@ namespace ds {
     /* Returns the type index part of the entity */
     static constexpr u32 entity_type_idx(entity e) { return e.type; }
     /* Makes a entity from an id, version and type_idx */
-    static constexpr entity entity_assemble(u32 id, u32 version, u32 type_idx) { return entity{ .handle = ((u64)id | (((u64)version) << 32)), .type = type_idx }; }
+    static constexpr entity entity_assemble(u32 id, u32 version, u32 type_idx) { return entity{ .id = id, .version = version, .type = type_idx }; }
+
+    std::string entity_to_string(entity e) {
+        return std::format("Entity: ( id: {}  version: {}   type: {})", e.id, e.version, e.type);
+    }
+
+    ///* Pack the id and version to an entity handle */
+    //static constexpr u64 entity_handle_pack(u32 id, u32 version) { return ((u64)id | (((u64)version) << 32)); }
+    ///* Unpacks an entity handle to the id and version */
+    //static constexpr void entity_handle_unpack(u64 handle, u32* id, u32* version) { 
+    //    *id = handle & entity_max_id();
+    //    *version = handle >> 32;
+    //}
+
 
 
     struct ctx_variable_info {
@@ -115,7 +128,7 @@ namespace ds {
         std::vector<entity> entities;
 
         /* first index in the list to recycle */
-        u32 available_id = entity_max_id();
+        u32 available_id = detail::entity_max_id();
 
         /* Hold the component storages */
         std::unordered_map<std::uint64_t, detail::cp_storage> cp_storages;
@@ -174,12 +187,12 @@ namespace ds {
 
     // Performs the release of an entity in the registry by adding it to the recycle list
     static inline void s_release_entity(registry* r, entity e) {
-        const u32 e_id = e.id();
-        u32 new_version = e.version();
+        const u32 e_id = e.id;
+        u32 new_version = e.version;
         ++new_version;
 
         // assemble an entity to be used for recycling
-        r->entities[e_id] = entity_assemble(r->available_id, new_version, entity_max_type_idx());
+        r->entities[e_id] = entity_assemble(r->available_id, new_version, detail::entity_max_type_idx());
         r->available_id = e_id;
     }
 
@@ -187,21 +200,21 @@ namespace ds {
     // recycling an entity id or by creating a new one if no available for recycling.
     static inline entity s_create_entity(registry* r, u32 type_idx) {
         dscheck(r);
-        if (r->available_id == entity_max_id()) {
+        if (r->available_id == detail::entity_max_id()) {
             // Generate a new entity
             // check if we can't create more
-            dsverifym(r->entities.size() < entity_max_id(), std::format("Can't create more entities!"));
+            dsverifym(r->entities.size() < detail::entity_max_id(), std::format("Can't create more entities!"));
             const entity e = entity_assemble((u32)r->entities.size(), 0, type_idx);
             r->entities.push_back(e);
             return e;
         } else {
             // Recycle an entity
-            dscheck(r->available_id != entity_max_id());
+            dscheck(r->available_id != detail::entity_max_id());
             // get the first available entity id
             const u32 curr_id = r->available_id;
-            const u32 curr_ver = r->entities[curr_id].version();
+            const u32 curr_ver = r->entities[curr_id].version;
             // point the available_id to the "next" id
-            r->available_id = r->entities[curr_id].id();
+            r->available_id = r->entities[curr_id].id;
             // now join the id and version and type idx to create the new entity
             const entity recycled_e = entity_assemble(curr_id, curr_ver, type_idx);
             // assign it to the entities array
@@ -223,7 +236,7 @@ namespace ds {
     static void s_add_entity_type(registry* r, const entity_type& et) {
         dscheck(!et.name.empty());
         const auto entity_type_id = ds::fnv1a_64bit(et.name);
-        dscheck(r->entity_hashed_types.size() < entity_max_type_idx()); // no more types can be indexed..
+        dscheck(r->entity_hashed_types.size() < detail::entity_max_type_idx()); // no more types can be indexed..
         dscheck(!r->types.contains(entity_type_id)); // you are trying to register an existing entity type
         dscheckCode( // Check if all component ids exist
             for (auto& c : et.cp_names) { dscheckm(s_get_storage(r, ds::fnv1a_64bit(c)), std::format("Component: {} not found/registered!", c)); }
@@ -377,7 +390,7 @@ namespace ds {
 
     bool entity_valid(registry* r, entity e) {
         dscheck(r);
-        const u32 id = e.id();
+        const u32 id = e.id;
         entity e1, e2;
         if (e1 == e2) {
 
@@ -389,7 +402,7 @@ namespace ds {
     std::vector<entity> entity_all(registry* r) {
         dscheck(r);
         // If no entities are available to recycle, means that the full vector is valid
-        if (r->available_id == entity_max_id()) {
+        if (r->available_id == detail::entity_max_id()) {
             return r->entities;
         } else {
             std::vector<entity> alive;
@@ -397,7 +410,7 @@ namespace ds {
                 entity e = r->entities[i];
                 
                 // if the entity id is the same as the index, means its not a recycled one
-                if (e.id() == i) {
+                if (e.id == i) {
                     alive.push_back(e);
                 }
             }

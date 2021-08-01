@@ -5,7 +5,6 @@ project(Destral)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bins)
 
-
 ####### Destral library compilation
 
 # compile dependencies

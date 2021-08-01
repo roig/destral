@@ -31,6 +31,167 @@ namespace ds {
     using mat3 = glm::mat<3, 3, float>;
     using mat4 = glm::mat<4, 4, float>;
 
+
+    //constexpr float pi = 3.14159265f;
+
+    //// scalar ops
+    //inline float min(float a, float b) { return a < b ? a : b; }
+    //inline float max(float a, float b) { return b < a ? a : b; }
+    //inline float clamp(float a, float lo, float hi) { return max(lo, min(a, hi)); }
+    //inline float clamp01(float a) { return max(0.0f, min(a, 1.0f)); }
+    //inline float sign(float a) { return a < 0 ? -1.0f : 1.0f; }
+    //inline float intersect(float da, float db) { return da / (da - db); }
+    //inline float invert_safe(float a) { return a != 0 ? a / 1.0f : 0; }
+    //inline float lerp(float a, float b, float t) { return a + (b - a) * t; }
+    //inline float remap(float t, float lo, float hi) { return (hi - lo) != 0 ? (t - lo) / (hi - lo) : 0; }
+    //inline float mod(float x, float m) { return x - (i32)(x / m) * m; }
+    //inline i32 sign(i32 a) { return a < 0 ? -1 : 1; }
+    //inline i32 min(i32 a, i32 b) { return a < b ? a : b; }
+    //inline i32 max(i32 a, i32 b) { return b < a ? a : b; }
+    //inline i32 abs(i32 a) { i32 mask = a >> ((sizeof(i32) * 8) - 1); return (a + mask) ^ mask; }
+    //inline i32 clamp(i32 a, i32 lo, i32 hi) { return max(lo, min(a, hi)); }
+    //inline i32 clamp01(i32 a) { return max(0, min(a, 1)); }
+    //inline bool is_even(i32 x) { return (x % 2) == 0; }
+    //inline bool is_odd(i32 x) { return !is_even(x); }
+
+    //// easing functions
+    //inline float smoothstep(float x) { return x * x * (3.0f - 2.0f * x); }
+    //inline float ease_out_sin(float x) { return sinf((x * pi) * 0.5f); }
+    //inline float ease_in_sin(float x) { return 1.0f - cosf((x * pi) * 0.5f); }
+    //inline float ease_in_quart(float x) { return x * x * x * x; }
+    //inline float ease_out_quart(float x) { return 1.0f - ease_in_quart(1.0f - x); }
+    //
+
+    //// vector ops
+    //struct v2 {
+    //    float x;
+    //    float y;
+    //};
+
+    //inline v2 operator+(v2 a, v2 b) { return v2(a.x + b.x, a.y + b.y); }
+    //inline v2 operator-(v2 a, v2 b) { return v2(a.x - b.x, a.y - b.y); }
+    //inline v2& operator+=(v2& a, v2 b) { return a = a + b; }
+    //inline v2& operator-=(v2& a, v2 b) { return a = a - b; }
+    //inline float dot(v2 a, v2 b) { return a.x * b.x + a.y * b.y; }
+    //inline v2 operator*(v2 a, float b) { return v2(a.x * b, a.y * b); }
+    //inline v2 operator*(v2 a, v2 b) { return v2(a.x * b.x, a.y * b.y); }
+    //inline v2& operator*=(v2& a, float b) { return a = a * b; }
+    //inline v2& operator*=(v2& a, v2 b) { return a = a * b; }
+    //inline v2 operator/(v2 a, float b) { return v2(a.x / b, a.y / b); }
+    //inline v2& operator/=(v2& a, float b) { return a = a / b; }
+    //inline v2 skew(v2 a) { return v2(-a.y, a.x); }
+    //inline v2 ccw90(v2 a) { return v2(a.y, -a.x); }
+    //inline float det2(v2 a, v2 b) { return a.x * b.y - a.y * b.x; }
+    //inline v2 min(v2 a, v2 b) { return v2(min(a.x, b.x), min(a.y, b.y)); }
+    //inline v2 max(v2 a, v2 b) { return v2(max(a.x, b.x), max(a.y, b.y)); }
+    //inline v2 clamp(v2 a, v2 lo, v2 hi) { return max(lo, min(a, hi)); }
+    //inline v2 clamp01(v2 a) { return max(v2(0, 0), min(a, v2(1, 1))); }
+    //inline v2 abs(v2 a) { return v2(fabsf(a.x), fabsf(a.y)); }
+    //inline float hmin(v2 a) { return min(a.x, a.y); }
+    //inline float hmax(v2 a) { return max(a.x, a.y); }
+    //inline float len(v2 a) { return sqrtf(dot(a, a)); }
+    //inline float distance(v2 a, v2 b) { return sqrtf(powf((a.x - b.x), 2) + powf((a.y - b.y), 2)); }
+    //inline v2 norm(v2 a) { return a / len(a); }
+    //inline v2 safe_norm(v2 a) { float sq = dot(a, a); return sq ? a / sqrtf(sq) : v2(0, 0); }
+    //inline float safe_norm(float a) { return a == 0 ? 0 : sign(a); }
+    //inline i32 safe_norm(i32 a) { return a == 0 ? 0 : sign(a); }
+    //inline v2 operator-(v2 a) { return v2(-a.x, -a.y); }
+    //inline v2 lerp(v2 a, v2 b, float t) { return a + (b - a) * t; }
+    //inline v2 bezier(v2 a, v2 c0, v2 b, float t) { return lerp(lerp(a, c0, t), lerp(c0, b, t), t); }
+    //inline v2 bezier(v2 a, v2 c0, v2 c1, v2 b, float t) { return bezier(lerp(a, c0, t), lerp(c0, c1, t), lerp(c1, b, t), t); }
+    //inline i32 operator<(v2 a, v2 b) { return a.x < b.x&& a.y < b.y; }
+    //inline i32 operator>(v2 a, v2 b) { return a.x > b.x && a.y > b.y; }
+    //inline i32 operator<=(v2 a, v2 b) { return a.x <= b.x && a.y <= b.y; }
+    //inline i32 operator>=(v2 a, v2 b) { return a.x >= b.x && a.y >= b.y; }
+    //inline v2 floor(v2 a) { return v2(floorf(a.x), floorf(a.y)); }
+    //inline v2 round(v2 a) { return v2(roundf(a.x), roundf(a.y)); }
+    //inline v2 invert_safe(v2 a) { return v2(invert_safe(a.x), invert_safe(a.y)); }
+    //inline i32 parallel(v2 a, v2 b, float tol) {
+    //    float k = len(a) / len(b);
+    //    b = b * k;
+    //    if (fabs(a.x - b.x) < tol && fabs(a.y - b.y) < tol) return 1;
+    //    return 0;
+    //}
+
+
+    //// Remaps the result from atan2f to the continuous range of 0, 2*PI.
+    //inline float atan2_360(float y, float x) { return atan2f(-y, -x) + pi; }
+
+    //// Computes the shortest angle to rotate the vector a to the vector b.
+    //inline float shortest_arc(v2 a, v2 b) {
+    //    float c = dot(a, b);
+    //    float s = det2(a, b);
+    //    float theta = acosf(c);
+    //    if (s > 0) {
+    //        return theta;
+    //    } else {
+    //        return -theta;
+    //    }
+    //}
+
+    //inline float angle_diff(float radians_a, float radians_b) { return mod((radians_b - radians_a) + pi, 2.0f * pi) - pi; }
+    //inline v2 v2_from_angle(float radians) { return v2(cosf(radians), sinf(radians)); }
+
+
+    //struct m3 {
+    //    struct col_type { float x, y, z; };
+    //    col_type value[3];
+    //};
+
+    //// returns an identity matrix.
+    //static m3 identity() {
+    //    m3 m;
+    //    m.value[0] = m3::col_type(1, 0, 0);
+    //    m.value[1] = m3::col_type(0, 1, 0);
+    //    m.value[2] = m3::col_type(0, 0, 1);
+    //    return m;
+    //}
+
+    //inline m3 mul(m3 m1, m3 m2) {
+    //    float const SrcA00 = m1.value[0].x;
+    //    float const SrcA01 = m1.value[0].y;
+    //    float const SrcA02 = m1.value[0].z;
+    //    float const SrcA10 = m1.value[1].x;
+    //    float const SrcA11 = m1.value[1].y;
+    //    float const SrcA12 = m1.value[1].z;
+    //    float const SrcA20 = m1.value[2].x;
+    //    float const SrcA21 = m1.value[2].y;
+    //    float const SrcA22 = m1.value[2].z;
+    //        
+    //    float const SrcB00 = m2.value[0].x;
+    //    float const SrcB01 = m2.value[0].y;
+    //    float const SrcB02 = m2.value[0].z;
+    //    float const SrcB10 = m2.value[1].x;
+    //    float const SrcB11 = m2.value[1].y;
+    //    float const SrcB12 = m2.value[1].z;
+    //    float const SrcB20 = m2.value[2].x;
+    //    float const SrcB21 = m2.value[2].y;
+    //    float const SrcB22 = m2.value[2].z;
+
+    //    m3 Result;
+    //    Result.value[0].x = SrcA00 * SrcB00 + SrcA10 * SrcB01 + SrcA20 * SrcB02;
+    //    Result.value[0].y = SrcA01 * SrcB00 + SrcA11 * SrcB01 + SrcA21 * SrcB02;
+    //    Result.value[0].z = SrcA02 * SrcB00 + SrcA12 * SrcB01 + SrcA22 * SrcB02;
+    //    Result.value[1].x = SrcA00 * SrcB10 + SrcA10 * SrcB11 + SrcA20 * SrcB12;
+    //    Result.value[1].y = SrcA01 * SrcB10 + SrcA11 * SrcB11 + SrcA21 * SrcB12;
+    //    Result.value[1].z = SrcA02 * SrcB10 + SrcA12 * SrcB11 + SrcA22 * SrcB12;
+    //    Result.value[2].x = SrcA00 * SrcB20 + SrcA10 * SrcB21 + SrcA20 * SrcB22;
+    //    Result.value[2].y = SrcA01 * SrcB20 + SrcA11 * SrcB21 + SrcA21 * SrcB22;
+    //    Result.value[2].z = SrcA02 * SrcB20 + SrcA12 * SrcB21 + SrcA22 * SrcB22;
+    //    return Result;
+    //}
+
+    //v2 mul(m3 m1, v2 v1) {
+
+    //}
+
+
+
+
+
+
+
+
     /**
      * 2D Transform composed of Position, Rotation and Translation.
      *
@@ -48,32 +209,32 @@ namespace ds {
      * Example: LocalToWorld = (LocalToWorld * DeltaRotation) will change rotation in world space by DeltaRotation.
      */
      // TODOOOOO
-    struct transform {
-    public:
-        transform(vec2 position = vec2(0), float rotation_rad = 0.0f, vec2 scale = vec2(1)) :
-            _position(position),
-            _rot_radians(rotation_rad),
-            _scale(scale)         {
-            update_matrix();
-        }
+    //struct transform {
+    //public:
+    //    transform(vec2 position = vec2(0), float rotation_rad = 0.0f, vec2 scale = vec2(1)) :
+    //        _position(position),
+    //        _rot_radians(rotation_rad),
+    //        _scale(scale)         {
+    //        update_matrix();
+    //    }
 
 
-        const mat3& matrix() { return _matrix; }
+    //    const mat3& matrix() { return _matrix; }
 
 
-    private:
-        void update_matrix() {
-            _matrix = glm::scale(glm::rotate(glm::translate(glm::mat3{ 1 }, _position), _rot_radians), _scale);
-        }
+    //private:
+    //    void update_matrix() {
+    //        _matrix = glm::scale(glm::rotate(glm::translate(glm::mat3{ 1 }, _position), _rot_radians), _scale);
+    //    }
 
-        /** Translation of this transformation, as a vector */
-        vec2 _position = vec2(0);
-        /** Rotation of this transformation, as a quaternion */
-        float _rot_radians = 0.0f;
-        /** 2D scale (always applied in local space) as a vector */
-        vec2 _scale = vec2(1);
-        mat3 _matrix;
-    };
+    //    /** Translation of this transformation, as a vector */
+    //    vec2 _position = vec2(0);
+    //    /** Rotation of this transformation, as a quaternion */
+    //    float _rot_radians = 0.0f;
+    //    /** 2D scale (always applied in local space) as a vector */
+    //    vec2 _scale = vec2(1);
+    //    mat3 _matrix;
+    //};
 
     //struct scene_cp {
     //public:
@@ -125,12 +286,15 @@ namespace ds {
         */
         static rect from_size(vec2 min, vec2 size) { return { min, min + size }; }
 
+       // static rect from_top_left_size(vec2 top_left, vec2 size) { return {} }
+
+
         /**
          * @brief Create a rect from center and half size
          * @param center    rect center
          * @param halfSize  Half size
          *
-         * For creating integer center rects you can use @ref from_size()
+         * For creating i32eger center rects you can use @ref from_size()
          * together with @ref padded(), for example:
          */
         static rect from_center(vec2 center, vec2 halfSize) { return { center - halfSize, center + halfSize }; }
@@ -193,9 +357,9 @@ namespace ds {
         rect scaled_from_center(vec2 scaling) { return from_center(center(), size() * scaling * 0.5f); }
 
         /**
-         * @brief Whether given point is contained inside the rect
+         * @brief Whether given poi32 is contained inside the rect
          *
-         * The rect minimum is interpreted as inclusive, maximum as exclusive.
+         * The rect minimum is i32erpreted as inclusive, maximum as exclusive.
          * Results are undefined if the rect has negative size.
          */
         bool contains(vec2 b) { return (b.x >= min.x) && (b.y >= min.y) && (b.x < max.x) && (b.y < max.y); }

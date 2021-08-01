@@ -119,7 +119,7 @@ namespace ds {
 				if (g_cfg.on_render) {
 					g_cfg.on_render();
 				}
-
+				
 				render_after_render();
 				platform_backend::present();
 			}
