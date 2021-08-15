@@ -159,7 +159,13 @@ namespace ds {
 		return value;
 	}
 	constexpr u64 fnv1a_64bit(const std::string& str) {	return fnv1a_64bit(str.c_str());}
-	
+
+	constexpr i32 fnv1a_32bit(const char* curr) {
+		u32 value = 2166136261; while (*curr != 0) { value = (value ^ static_cast<u32>(*(curr++))) * 16777619; }
+		return value;
+	}
+	constexpr i32 fnv1a_32bit(const std::string& str) {	return fnv1a_32bit(str.c_str()); }
+
 	inline namespace literals { constexpr u64 operator""_hs(const char* s, std::size_t) { return ds::fnv1a_64bit(s); } }
 }
 
