@@ -15,6 +15,7 @@ int main() {
     //resource<animation_collection> link_animations;
     cfg.on_init = [&]() {
 
+        
         caches_init();
         cache_images_add_info("ZeldaLink", "content/NES-ZeldaLink.png");
 

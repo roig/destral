@@ -34,7 +34,7 @@ void bullet_update(registry* r, float dt) {
     
 
    
-    view v = view_create(r, { "bullet" });
+    view v = r->view_create({ "bullet" });
     while (v.valid()) {
         bullet* p = v.data<bullet>(v.index("bullet"));
         p->pos.y = p->pos.y + (p->velocity * dt);
@@ -60,11 +60,11 @@ void bullet_update(registry* r, float dt) {
     if (key_is_pressed(key::Delete)) {
         // Here I want to create an entity and set the position of the bullet entity to 
 
-        auto all = entity_all(r);
+        auto all = g_r->entity_all();
         if (!all.empty()) {
-            auto etodestroy = all.at(0);
+            auto etodestroy = all[0];
 
-            entity_destroy(g_r, etodestroy);
+            r->entity_destroy(etodestroy);
         }
 
         //bullet* cp_bullet = (bullet*)ecs::entity_try_get(g_r, ebullet, "bullet");
@@ -84,7 +84,7 @@ void player_init(registry* r, entity e) { DS_LOG("player init call!"); }
 void player_deinit(registry* r, entity e) { DS_LOG("player deinit call!"); }
 void player_update(registry* r, float dt) {
     
-    view vobj = view_create(r, { "player" });
+    view vobj = r->view_create({ "player" });
     view* v = &vobj;
     auto player_cpidx = v->index("player");
     while (v->valid()) {
@@ -92,10 +92,10 @@ void player_update(registry* r, float dt) {
 
         if (key_is_triggered(key::Space)) {
             // Here I want to create an entity and set the position of the bullet entity to 
-            auto ebullet = entity_make_begin(g_r, "BulletEntity");
-            bullet* cp_bullet = (bullet*)entity_try_get(g_r, ebullet, "bullet");
+            auto ebullet = r->entity_make_begin("BulletEntity");
+            bullet* cp_bullet = (bullet*)r->cp_try_get(ebullet, "bullet");
             cp_bullet->pos = p->pos;
-            entity_make_end(r, ebullet);
+            r->entity_make_end(ebullet);
         }
 
         float dir = 0.f;
@@ -113,13 +113,15 @@ void player_update(registry* r, float dt) {
 
 void init() {
     // Register components
-    g_r = registry_create();
+    g_r = new registry();
     DS_ECS_COMPONENT_REGISTER(g_r, player);
     DS_ECS_COMPONENT_REGISTER(g_r, bullet);
 
     // Register the entities
-    entity_register(g_r, "PlayerEntity", { "player" });
-    entity_register(g_r, "BulletEntity", { "bullet" });
+    entity_definition player_def = { .name = "PlayerEntity" , .cp_names = {"player"} };
+    g_r->entity_register(&player_def);
+    entity_definition bullet_def = { .name = "BulletEntity" , .cp_names = {"bullet"} };
+    g_r->entity_register(&bullet_def);
 
     // Register the systems
     g_syspool = syspool_create();
@@ -127,7 +129,7 @@ void init() {
     syspool_add(g_syspool, "UpdateBulletSystem", bullet_update);
     
     // Create one player
-    entity_make(g_r, "PlayerEntity");
+    g_r->entity_make("PlayerEntity");
 }
 
 void tick(float dt) {
@@ -141,7 +143,7 @@ void fixed_tick(float dt) {
 
 void deinit() {
     syspool_destroy(g_syspool);
-    registry_destroy(g_r);
+    delete g_r;
 }
 
 

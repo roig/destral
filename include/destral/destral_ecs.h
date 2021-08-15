@@ -128,115 +128,229 @@
 
 */
 #include <destral/destral_common.h>
-#include <vector>
+#include <destral/destral_containers.h>
+
 
 namespace ds {
+struct registry;
 
-namespace detail {
-    static constexpr u32 entity_max_id() { return 0xFFFFFFFF; }
-    static constexpr u32 entity_max_version() { return 0xFFFFFFFF; }
-    static constexpr u32 entity_max_type_idx() { return 0xFFFFFFFF; }
-}
 //--------------------------------------------------------------------------------------------------
-
-
+// Entity:
 // Entity recicles ids when arriving at max version number.
 // INFO: https://docs.cryengine.com/display/SDKDOC4/EntityID+Explained
-// handle = [ version 32 bits | id 32 bits ]
-// type = [32 bytes]
+// handle = [ idtype 20 bits | version 24 bits | id 20 bits ]
+// type_id = [32 bits]
 struct entity {
-    u32 id = detail::entity_max_id();
-    u32 version = 0;
-    u32 type = detail::entity_max_type_idx();
-    bool operator==(const entity&) const = default;
+    i32 id = max_id();
+    i32 version = 0;
+    i32 type_id = max_type_id();
+
+    // The entity_null is a entity that represents a null entity.
+    static const entity null;
+
+    // Returns true only if the entity is null
+    bool is_null() { return equal(null);  }
+
+    // Returns true only if the entities are equal
+    bool equal(entity o) const { return (id == o.id) && (version == o.version) && (type_id == o.type_id); }
+
+    // Stringyfies an entity
+    std::string to_string();
+
+    // Assemble an entity handle from id, version and type_idx
+    /*static constexpr u64 assemble_handle(i32 id, i32 version, i32 type_id) { return (u64)id | ((u64)version << 20) | ((u64)type_id << 48); }*/
+    static constexpr i32 max_id()       { return std::numeric_limits<i32>::max(); }
+    static constexpr i32 max_version()  { return std::numeric_limits<i32>::max(); }
+    static constexpr i32 max_type_id()  { return std::numeric_limits<i32>::max(); }
 };
 
-/* The entity_null is a entity that represents a null entity. */
-static constexpr entity entity_null = entity();
 
-/* Stringyfies an entity */
-std::string entity_to_string(entity e);
+//--------------------------------------------------------------------------------------------------
+// Views
+// 
+// What is allowed and what is not allowed during views:
+// ALLOWED:
+// - You can create entities during iterations BUT it can invalidate component references. 
+//  The view will not iterate the entities created during the view iteration.
+//  The new entities will be iterated in subsequent view creations.
+//  
+//  Example of component dangling pointer when creating entities:
+//  void example(registry* r) {
+//      ecs::view v = ecs::view::create(r, { "bullet" });
+//      while (v.valid()) {
+//          bullet* p = v.data<bullet>(v.index("bullet"));
+//          p->pos.x += 10;
+// 
+//          // HERE YOU CREATE ANOTHER ENTITY
+//          r->ecs::entity_make("BulletEntity");
+//          // NOW COMPONENT REFERENCES ARE INVALIDATED
+// 
+//          p->pos.x += 10; // p POINTER IS A DANGLING POINTER!!!!
+//          // YOU CAN FETCH AGAIN THE COMPONENT POINTER p by p = v.data<bullet>(v.index("bullet")); IF YOU NEED IT
+//          v.next();
+//      }
+// 
+//  }
+// NOT ALLOWED:
+// - Destroying entities, you must delay the destruction of entities.
+// Implementation details here...
+
+struct view {
+    // returns true if the current iterating entity is valid else false
+    inline bool valid() { return !_impl.cur_entity.is_null();}
+
+    // returns the current iterating entity
+    inline ds::entity entity() { return _impl.cur_entity; }
+
+    // Returns the component index associated with a component id (use data function to retrieve the data)
+    i32 index(const char* cp_name);
+
+    // Returns the raw component data pointer associated with the component index for this view (see index function)
+    void* raw_data(i32 cp_idx);
+
+    // Returns the component data associated with the component index for this view (see index function)
+    template <typename T> inline T* data(i32 cp_idx) { return (T*)raw_data(cp_idx); }
+
+    // Advances the next entity that has all the components for the view
+    void next();
+    
+    // implementation details
+    struct view_impl {
+        struct cp_storage* iterating_storage = nullptr;
+        ds::darray<struct cp_storage*> cp_storages;
+        i32 entity_index = 0;
+        i32 entity_max_index = 0; // it's like _impl.iterating_storage->dense.size() 
+        ds::entity cur_entity = entity::null;
+    };
+    // implementation details
+    view_impl _impl;
+};
 
 //--------------------------------------------------------------------------------------------------
 // Registry 
 // Global context that holds each storage for each component types and the entities.
-struct registry;
-registry* registry_create(); /*  Allocates and initializes a registry context */
-void registry_destroy(registry* r); /*  Deinitializes and frees a registry context */
+
+struct cp_definition {
+    std::string name;
+    i32 cp_sizeof = 0;
+
+    typedef void (placement_new_function)(void* ptr);
+    placement_new_function* placement_new_fn = nullptr;
+
+    typedef void (delete_function)(void* ptr);
+    delete_function* delete_fn = nullptr;
+
+    typedef void (serialize_function)(registry* r, entity e, void* cp); // TODO not used yet
+    serialize_function* serialize_fn = nullptr;
+};
+
+struct entity_definition {
+    std::string name;
+    ds::darray<std::string> cp_names;
+
+    typedef void (entity_init_fn)(registry* r, entity e);
+    entity_init_fn* init_fn = nullptr;
+
+    typedef void (entity_deinit_fn)(registry* r, entity e);
+    entity_deinit_fn* deinit_fn = nullptr;
+};
 
 
-//--------------------------------------------------------------------------------------------------
-// Component Functions
-#define DS_ECS_COMPONENT_REGISTER(r,T) component_register<T>(r, #T) 
+struct registry_impl;
+struct registry {
+    registry();
+    ~registry();
 
-typedef void (cp_serialize_fn)(registry* r, entity e, void* cp); // TODO not used yet
-typedef void (placement_new_fn)(void* ptr);
-typedef void (delete_fn)(void* ptr);
-void component_register(registry* r, const std::string& name_id, size_t cp_sizeof, placement_new_fn* placement_new_fn = nullptr,
-    delete_fn* del_fn = nullptr, cp_serialize_fn* optional_serialize_fn = nullptr);
+    //--------------------------------------------------------------------------------------------------
+    // Component functions
+    #define DS_ECS_COMPONENT_REGISTER(r,T) r->cp_register<T>(#T) 
+    void cp_register(const cp_definition& cp_def);
+    template <typename T> void cp_register(const char* cp_name) {
+        auto placement_new_fn = [](void* mem_cp) { new (mem_cp) T(); }; // placement new
+        auto destructor_fn = [](void* mem_cp) { ((T*)mem_cp)->~T(); }; // destructor
+        //TODO auto serialize_fn = [](registry* r, entity e, void* cp) { ((T*)mem_cp)->serialize(r, e); };
+        cp_definition cd{ .name = cp_name, .cp_sizeof = (i32)sizeof(T), .placement_new_fn = placement_new_fn,
+        .delete_fn = destructor_fn };
+        cp_register(cd);
+    }
 
-template <typename T> void component_register(registry* r, const std::string& name_id) {
-    auto constructor_fn = [](void* mem_cp) { new (mem_cp) T(); }; // placement new
-    auto destructor_fn = [](void* mem_cp) { ((T*)mem_cp)->~T(); }; // destructor
-    //TODO auto serialize_fn = [](registry* r, entity e, void* cp) { ((T*)mem_cp)->serialize(r, e); };
-    component_register(r, name_id, sizeof(T), constructor_fn, destructor_fn, nullptr );
-}
+    // Returns the component cp for the entity e. (faster version) If entity has not the cp, undefined behaviour use entity_try_get instead 
+    void* cp_get(entity e, const char* cp_name);
+    template <typename T> T* cp_get(entity e, const char* cp_name) { return (T*)cp_get(e, cp_name); }
 
-//--------------------------------------------------------------------------------------------------
-// Entity Functions
-typedef void (entity_init_fn)(registry* r, entity e);
-typedef void (entity_deinit_fn)(registry* r, entity e);
-// Registers an entity name with it's components names. 
-void entity_register(registry* r, const std::string& entity_name, const std::vector<std::string>& cp_names, entity_init_fn* init_fn = nullptr, entity_deinit_fn* deinit_fn = nullptr);
+    // Returns the component cp for the entity e if it exists or nullptr. (slower version)
+    void* cp_try_get(entity e, const char* cp_name);
+    template <typename T> T* cp_try_get(entity e, const char* cp_name) { return (T*)cp_try_get(e, cp_name); }
 
-// Instantiates an entity and calls the initialization function on it if it exists
-// This will call internally entity_make_begin and then entity_make_end
-// This will call the init function registered for the entity if any after the creation of all the components
-// You can call this function during view iterations. The new created entity will not be iterated in the current view.
-entity entity_make(registry* r, const std::string& entity_name);
+    //--------------------------------------------------------------------------------------------------
+    // Entity functions
 
-// Instantiates an entity WITHOUT calling the initialization function of the entity
-// This allows you to setup the parameters of the entity components before calling the init function. (like a constructor by params)
-// IMPORTANT:
-// Undefined Behaviour if you don't call entity_make_end on the entity returned by this function in order to have a fully constructed/initialized entity
-entity entity_make_begin(registry* r, const std::string& entity_name);
+    // Registers an entity name with it's components names. 
+    void entity_register(const entity_definition& e_def);
 
-// Finishes the instantiation of an entity created by entity_make_begin
-// IMPORTANT: 
-// Undefined behaviour if used on an entity not created using the entity_make_begin.
-// Undefined behaviour if called multiple times on the same entity
-void entity_make_end(registry* r, entity e);
+    // Instantiates an entity and calls the initialization function on it if it exists
+    // This will call internally entity_make_begin and then entity_make_end
+    // This will call the init function registered for the entity if any after the creation of all the components
+    // You can call this function during view iterations. The new created entity will not be iterated in the current view.
+    entity entity_make(const char* entity_name);
 
-// Returns the component cp for the entity e. If entity has not the cp, undefined behaviour. Use entity_try_get instead (faster)
-void* entity_get(registry* r, entity e, const std::string& cp_name);
-template <typename T> T* entity_get(registry* r, entity e, const std::string& cp_name) { return (T*)entity_get(r, e, cp_name); }
+    // Instantiates an entity WITHOUT calling the initialization function of the entity
+    // This allows you to setup the parameters of the entity components before calling the init function. (like a constructor by params)
+    // IMPORTANT:
+    // Undefined Behaviour if you don't call entity_make_end on the entity returned by this function in order to have a fully constructed/initialized entity
+    entity entity_make_begin(const char* entity_name);
 
-// Returns the component cp for the entity e if it exists or nullptr. (slower)
-void* entity_try_get(registry* r, entity e, const std::string& cp_name);
-template <typename T> T* entity_try_get(registry* r, entity e, const std::string& cp_name) { return (T*)entity_try_get(r, e, cp_name); }
+    // Finishes the instantiation of an entity created by entity_make_begin
+    // IMPORTANT: 
+    // Undefined behaviour if used on an entity not created using the entity_make_begin.
+    // Undefined behaviour if called multiple times on the same entity
+    void entity_make_end(entity e);
 
-// Returns true only if the entity is valid. Valid means that registry has created it. 
-bool entity_valid(registry* r, entity e);
+    // Returns true only if the entity is valid. Valid means that registry has created it. 
+    bool entity_valid(entity e);
 
-// Destroy the entity with the components associated with 
-// IMPORTANT: Undefined Behaviour if you call this function while iterating views.
-void entity_destroy(registry* r, entity e);
+    // Destroy the entity with the components associated with 
+    // IMPORTANT: Undefined Behaviour if you call this function while iterating views.
+    void entity_destroy(entity e);
 
-// Returns a copy of all the entities in the registry (WARNING: this is a slow operation)
-// Remember that after operations this vector will not be update.
-std::vector<entity> entity_all(registry* r);
+    // Returns a copy of all the entities in the registry (WARNING: this is a slow operation)
+    // Remember that after operations this vector will not be update.
+    ds::darray<entity> entity_all();
 
-// Marks this entity to be destroyed (using entity_destroy_flush_delayed)
-// You can use this during view iterations
-void entity_destroy_delayed(registry* r, entity e);
+    // Marks this entity to be destroyed (using entity_destroy_flush_delayed)
+    // You can use this during view iterations
+    void entity_destroy_delayed(entity e);
 
-// Returns true if the entity is marked for delayed destruction using entity_destroy_delayed
-// You can use this function during view iterations
-bool entity_is_destroy_delayed(registry* r, entity e);
+    // Returns true if the entity is marked for delayed destruction using entity_destroy_delayed
+    // You can use this function during view iterations
+    bool entity_is_destroy_delayed(entity e);
 
-// Iterates all the entities marked for delayed destruction (using entity_destroy_delayed)
-// IMPORTANT: Undefined behaviour if this function is called during a view iteration
-void entity_destroy_flush_delayed(registry* r);
+    // Iterates all the entities marked for delayed destruction (using entity_destroy_delayed)
+    // IMPORTANT: Undefined behaviour if this function is called during a view iteration
+    void entity_destroy_flush_delayed();
+
+    //--------------------------------------------------------------------------------------------------
+    // Views 
+    view view_create(const ds::darray<const char*>& cp_names);
+
+    //--------------------------------------------------------------------------------------------------
+    // Context Variables (Globals in the registry)
+    // Context variables are like global instances tied to the registry. You can add and remove them at any time.
+    // When the registry is deleted, the context variables will be deleted in reverse order of addition.
+    void* ctx_set(const char* ctx_name_id, void* instance_ptr, void (*del_fn)(void* ptr));
+    template <typename T> T* ctx_set(const char* ctx_name_id, T* instance_ptr) { return (T*)ctx_set(ctx_name_id, instance_ptr, [](void* ptr) {((T*)ptr)->~T(); }); }
+    template <typename T> T* ctx_set_instantiate(const char* ctx_name_id) { return (T*)ctx_set(ctx_name_id, new T(), [](void* ptr) {((T*)ptr)->~T(); }); }
+    void ctx_unset(const char* ctx_name_id);
+
+    // Returns the pointer to the context variable instance or nullptr
+    void* ctx_get(const char* ctx_name_id);
+    template <typename T> T* ctx_get(const char* ctx_name_id) { return (T*)ctx_get(ctx_name_id); }
+
+
+    //--------------------------------------------------------------------------------------------------
+    // Implementation details
+    registry_impl* _r;
+};
 
 
 //--------------------------------------------------------------------------------------------------
@@ -253,232 +367,9 @@ void syspool_add(syspool* sys, const std::string& sys_name, syspool_update_fn* s
 void syspool_run(syspool* sys, registry* r, float dt);
 
 
-//--------------------------------------------------------------------------------------------------
-// Context Variables (Globals in the registry)
-// Context variables are like global instances tied to the registry. You can add and remove them at any time.
-// When the registry is deleted, the context variables will be deleted in reverse order of addition.
-void* ctx_set(registry* r, const std::string& ctx_name_id, void* instance_ptr, delete_fn* del_fn);
-template <typename T> T* ctx_set(registry* r, const std::string& ctx_name_id, T* instance_ptr) {  return (T*)ctx_set(r, ctx_name_id, instance_ptr,[](void* ptr) {((T*)ptr)->~T();});}
-template <typename T> T* ctx_set_instantiate(registry* r, const std::string& ctx_name_id) { return (T*)ctx_set(r, ctx_name_id, new T(), [](void* ptr) {((T*)ptr)->~T(); }); }
-void ctx_unset(registry* r, const std::string& ctx_name_id);
-
-// Returns the pointer to the context variable instance or nullptr
-void* ctx_get(registry* r, const std::string& ctx_name_id);
-template <typename T> T* ctx_get(registry* r, const std::string& ctx_name_id) { return (T*)ctx_get(r, ctx_name_id); }
-
-
-// Implementation details here...
-namespace detail {
-
-struct cp_storage {
-    std::string name; /* component name */
-    u64 cp_id = 0; /* component id for this storage */
-    size_t cp_sizeof = 0; /* sizeof for each cp_data element */
-
-    /*  packed component elements array. aligned with dense */
-    std::vector<u8> cp_data;
-
-    /*  Dense entities array.
-        - index is linked with the sparse value.
-        - value is the full entity
-    */
-    std::vector<entity> dense;
-
-    /*  sparse entity identifiers indices array.
-        - index is the id of the entity. (without version and type_idx)
-        - value is the index of the dense array (uint32_t)
-        
-        (Note) This can be refactored to an std::unordered_map<uint32_t, uint32_t> 
-        to reduce memory footprint but at the cost of access time.
-    */
-    std::vector<u32> sparse;
-
-    cp_serialize_fn* serialize_fn = nullptr;
-    placement_new_fn* placement_new_fn = nullptr;
-    delete_fn* delete_fn = nullptr;
-
-    inline bool contains(entity e) {
-        dscheck(e != entity_null);
-        const u32 eid = e.id;
-        return (eid < sparse.size()) && (sparse[eid] != entity_max_id());
-    }
-
-    void debug_arrays() {
-        DS_LOG("Sparse:");
-        for (auto i = 0; i < sparse.size(); i++) {
-            DS_LOG(std::format("[{}] => {}", i, sparse[i]));
-        }
-
-        DS_LOG("Dense:");
-        for (auto i = 0; i < dense.size(); i++) {
-            DS_LOG(std::format("[{}] => {}", i, entity_to_string(dense[i])));
-        }
-
-        DS_LOG(std::format("Components vector: (cp_size: {}  bytesize: {}  cp_sizeof: {}", cp_data.size() / (float)cp_sizeof,  cp_data.size(), cp_sizeof));
-    }
-
-    inline void* emplace(entity e) {
-        dscheck(e != entity_null);
-        // now allocate the data for the new component at the end of the array and memset to 0
-        cp_data.resize(cp_data.size() + cp_sizeof, 0);
-
-        // return the component data pointer (last position of the component sizes)
-        void* cp_data_ptr = &cp_data[cp_data.size() - cp_sizeof];
-
-        // Then add the entity to the sparse/dense arrays
-        const u64 eid = e.id;
-        DS_LOG(std::format("Adding {}", entity_to_string(e)) );
-        if (eid >= sparse.size()) { // check if we need to realloc
-            sparse.resize(eid + (u64)1, entity_max_id()); // default to entity_maxid means that is not valid.
-        }
-        
-        sparse[eid] = (u32)dense.size();
-        dense.push_back(e);
-       // debug_arrays();
-        return cp_data_ptr;
-    }
-
-    inline void remove(entity e) {
-        dscheck(contains(e));
-        DS_LOG(std::format("Removing {}", entity_to_string(e)));
-
-        // Remove from sparse/dense arrays
-        const u32 pos_to_remove = sparse[e.id];
-        entity other = dense.back();
-        sparse[other.id] = pos_to_remove;
-        dense[pos_to_remove] = other;
-        sparse[e.id] = entity_max_id();
-        dense.pop_back();
-        // swap to the last position (memmove because if cp_data_size 1 it will overlap dst and source.
-        memmove(
-            &(cp_data)[pos_to_remove * cp_sizeof],
-            &(cp_data)[(cp_data.size() - cp_sizeof)],
-            cp_sizeof);
-
-        // and pop the last one
-        dscheck(cp_data.size() >= cp_sizeof);
-        cp_data.resize(cp_data.size() - cp_sizeof);
-        
-      //  debug_arrays();
-    }
-
-    inline void* get_by_index(size_t index) {
-        dscheck((index * cp_sizeof) < cp_data.size());
-        return &(cp_data)[index * cp_sizeof];
-    }
-
-    inline void* get(entity e) {
-        dscheck(e != entity_null);
-        dscheck(contains(e));
-        return get_by_index(sparse[e.id]);
-    }
-
-    inline void* try_get(entity e) {
-        dscheck(e != entity_null);
-        return contains(e) ? get(e) : nullptr;
-    }
-};
-}
-
-//--------------------------------------------------------------------------------------------------
-// Views
-// 
-// What is allowed and what is not allowed during views:
-// Allowed:
-// - You can create entities during iterations BUT it can invalidate component references. 
-//  The view will not iterate the entities created during the view iteration.
-//  The new entities will be iterated in subsequent view creations.
-//  
-//  Example of component dangling pointer when creating entities:
-//  void example(registry* r) {
-//      ecs::view v = ecs::view::create(r, { "bullet" });
-//      while (v.valid()) {
-//          bullet* p = v.data<bullet>(v.index("bullet"));
-//          p->pos.x += 10;
-// 
-//          // HERE YOU CREATE ANOTHER ENTITY
-//          ecs::entity_make(r, "BulletEntity");
-//          // NOW COMPONENT REFERENCES ARE INVALIDATE
-// 
-//          p->pos.x += 10; // p POINTER IS A DANGLING POINTER!!!!
-//          // YOU CAN FETCH AGAIN THE COMPONENT POINTER p by p = v.data<bullet>(v.index("bullet")); IF YOU NEED IT
-//          v.next();
-//      }
-// 
-//  }
-// Not Allowed:
-// - Destroying entities, you should delay the destruction of entities.
-
-struct view {
-    // returns true if the current iterating entity is valid else false
-    inline bool valid() {
-        return _impl.cur_entity != entity_null;
-    }
-
-    // returns the current iterating entity
-    inline entity entity() {
-        return _impl.cur_entity;
-    }
-
-    // Returns the component index associated with a component id (use data function to retrieve the data)
-    inline i32 index(const std::string& cp_name) {
-        const auto cp_id_hashed = fnv1a_64bit(cp_name);
-        for (i32 i = 0; i < _impl.cp_storages.size(); i++) {
-            if (_impl.cp_storages[i]->cp_id == cp_id_hashed) { return i; }
-        }
-        // error, no component with that cp_id in this view!
-        dscheckm(false, "component id not found in this view!");
-        return 0;
-    }
-
-    // Returns the component data associated with the component index for this view (see index function)
-    template <typename T>  inline T* data(i32 cp_idx) {
-        dscheck(valid());
-        dscheck(cp_idx >= 0);
-        dscheck(cp_idx < _impl.cp_storages.size());
-        return (T*)_impl.cp_storages[cp_idx]->get(_impl.cur_entity);
-    }
 
 
 
-    // Advances the next entity that has all the components for the view
-    inline void next() {
-        dscheck(valid());
-        // find the next contained entity that is inside all pools
-        bool entity_contained = false;
-        do {
-            if (_impl.entity_index < _impl.entity_max_index - 1) {
-                // select next entity from the iterating storage (smaller one..)
-                ++_impl.entity_index;
-                _impl.cur_entity = _impl.iterating_storage->dense[_impl.entity_index];
-                // now check if the entity is contained in ALL other storages:
-                entity_contained = _impl.is_entity_in_all_storages(_impl.cur_entity);
-            } else {
-                _impl.cur_entity = entity_null;
-            }
-        } while ((_impl.cur_entity != entity_null) && !entity_contained);
-    }
 
-    // implementation details
-    struct view_impl {
-        detail::cp_storage* iterating_storage = nullptr;
-        std::vector<detail::cp_storage*> cp_storages;
-        std::size_t entity_index = 0;
-        std::size_t entity_max_index = 0; // it's like _impl.iterating_storage->dense.size() 
-        ::ds::entity cur_entity = entity_null;
-        inline bool is_entity_in_all_storages(::ds::entity e) {
-            for (std::size_t st_id = 0; st_id < cp_storages.size(); ++st_id) {
-                if (!cp_storages[st_id]->contains(e)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-    };
-    // implementation details
-    view_impl _impl;
-};
-
-view view_create(registry* r, const std::vector<std::string>& cp_names);
 
 }

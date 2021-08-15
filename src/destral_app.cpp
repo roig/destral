@@ -39,7 +39,7 @@ namespace ds {
 		// input_backend::init();
 
 
-		g_registry = registry_create();
+		g_registry = new registry();
 		if (g_cfg.on_init) {
 			g_cfg.on_init();
 		}
@@ -133,7 +133,7 @@ namespace ds {
 			}
 
 
-			registry_destroy(g_registry);
+			delete g_registry;
 			//input_backend::shutdown();
 			render_shutdown();
 			platform_backend::shutdown();

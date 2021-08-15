@@ -20,21 +20,21 @@
 */
 
 namespace ds {
+    
+
     using vec2 = glm::vec<2, float>;
     using vec3 = glm::vec<3, float>;
     using vec4 = glm::vec<4, float>;
-
     using ivec2 = glm::vec<2, ds::i32>;
     using ivec3 = glm::vec<3, ds::i32>;
     using ivec4 = glm::vec<4, ds::i32>;
-
     using mat3 = glm::mat<3, 3, float>;
-    using mat4 = glm::mat<4, 4, float>;
+   
 
 
     //constexpr float pi = 3.14159265f;
 
-    //// scalar ops
+    ////// scalar ops
     //inline float min(float a, float b) { return a < b ? a : b; }
     //inline float max(float a, float b) { return b < a ? a : b; }
     //inline float clamp(float a, float lo, float hi) { return max(lo, min(a, hi)); }
@@ -45,79 +45,77 @@ namespace ds {
     //inline float lerp(float a, float b, float t) { return a + (b - a) * t; }
     //inline float remap(float t, float lo, float hi) { return (hi - lo) != 0 ? (t - lo) / (hi - lo) : 0; }
     //inline float mod(float x, float m) { return x - (i32)(x / m) * m; }
-    //inline i32 sign(i32 a) { return a < 0 ? -1 : 1; }
-    //inline i32 min(i32 a, i32 b) { return a < b ? a : b; }
-    //inline i32 max(i32 a, i32 b) { return b < a ? a : b; }
-    //inline i32 abs(i32 a) { i32 mask = a >> ((sizeof(i32) * 8) - 1); return (a + mask) ^ mask; }
-    //inline i32 clamp(i32 a, i32 lo, i32 hi) { return max(lo, min(a, hi)); }
-    //inline i32 clamp01(i32 a) { return max(0, min(a, 1)); }
-    //inline bool is_even(i32 x) { return (x % 2) == 0; }
-    //inline bool is_odd(i32 x) { return !is_even(x); }
+    //inline i64 sign(i64 a) { return a < 0 ? -1 : 1; }
+    //inline i64 min(i64 a, i64 b) { return a < b ? a : b; }
+    //inline i64 max(i64 a, i64 b) { return b < a ? a : b; }
+    //inline i64 abs(i64 a) { i64 mask = a >> ((sizeof(i64) * 8) - 1); return (a + mask) ^ mask; }
+    //inline i64 clamp(i64 a, i64 lo, i64 hi) { return max(lo, min(a, hi)); }
+    //inline i64 clamp01(i64 a) { return max(0, min(a, 1)); }
+    //inline bool is_even(i64 x) { return (x % 2) == 0; }
+    //inline bool is_odd(i64 x) { return !is_even(x); }
 
-    //// easing functions
+    ////// easing functions
     //inline float smoothstep(float x) { return x * x * (3.0f - 2.0f * x); }
     //inline float ease_out_sin(float x) { return sinf((x * pi) * 0.5f); }
     //inline float ease_in_sin(float x) { return 1.0f - cosf((x * pi) * 0.5f); }
     //inline float ease_in_quart(float x) { return x * x * x * x; }
     //inline float ease_out_quart(float x) { return 1.0f - ease_in_quart(1.0f - x); }
     //
+    ////// Remaps the result from atan2f to the continuous range of 0, 2*PI.
+    //inline float atan2_360(float y, float x) { return atan2f(-y, -x) + pi; }
 
-    //// vector ops
-    //struct v2 {
-    //    float x;
-    //    float y;
-    //};
+    ////// vector 2 ops
+    //template <typename T> struct v2t { T x, y; };
+    //using iv2 = v2t<i64>;
+    //using v2 = v2t<float>;
 
-    //inline v2 operator+(v2 a, v2 b) { return v2(a.x + b.x, a.y + b.y); }
-    //inline v2 operator-(v2 a, v2 b) { return v2(a.x - b.x, a.y - b.y); }
-    //inline v2& operator+=(v2& a, v2 b) { return a = a + b; }
-    //inline v2& operator-=(v2& a, v2 b) { return a = a - b; }
-    //inline float dot(v2 a, v2 b) { return a.x * b.x + a.y * b.y; }
-    //inline v2 operator*(v2 a, float b) { return v2(a.x * b, a.y * b); }
-    //inline v2 operator*(v2 a, v2 b) { return v2(a.x * b.x, a.y * b.y); }
-    //inline v2& operator*=(v2& a, float b) { return a = a * b; }
-    //inline v2& operator*=(v2& a, v2 b) { return a = a * b; }
-    //inline v2 operator/(v2 a, float b) { return v2(a.x / b, a.y / b); }
-    //inline v2& operator/=(v2& a, float b) { return a = a / b; }
-    //inline v2 skew(v2 a) { return v2(-a.y, a.x); }
-    //inline v2 ccw90(v2 a) { return v2(a.y, -a.x); }
-    //inline float det2(v2 a, v2 b) { return a.x * b.y - a.y * b.x; }
-    //inline v2 min(v2 a, v2 b) { return v2(min(a.x, b.x), min(a.y, b.y)); }
-    //inline v2 max(v2 a, v2 b) { return v2(max(a.x, b.x), max(a.y, b.y)); }
-    //inline v2 clamp(v2 a, v2 lo, v2 hi) { return max(lo, min(a, hi)); }
-    //inline v2 clamp01(v2 a) { return max(v2(0, 0), min(a, v2(1, 1))); }
-    //inline v2 abs(v2 a) { return v2(fabsf(a.x), fabsf(a.y)); }
-    //inline float hmin(v2 a) { return min(a.x, a.y); }
-    //inline float hmax(v2 a) { return max(a.x, a.y); }
-    //inline float len(v2 a) { return sqrtf(dot(a, a)); }
-    //inline float distance(v2 a, v2 b) { return sqrtf(powf((a.x - b.x), 2) + powf((a.y - b.y), 2)); }
-    //inline v2 norm(v2 a) { return a / len(a); }
-    //inline v2 safe_norm(v2 a) { float sq = dot(a, a); return sq ? a / sqrtf(sq) : v2(0, 0); }
-    //inline float safe_norm(float a) { return a == 0 ? 0 : sign(a); }
-    //inline i32 safe_norm(i32 a) { return a == 0 ? 0 : sign(a); }
-    //inline v2 operator-(v2 a) { return v2(-a.x, -a.y); }
-    //inline v2 lerp(v2 a, v2 b, float t) { return a + (b - a) * t; }
-    //inline v2 bezier(v2 a, v2 c0, v2 b, float t) { return lerp(lerp(a, c0, t), lerp(c0, b, t), t); }
-    //inline v2 bezier(v2 a, v2 c0, v2 c1, v2 b, float t) { return bezier(lerp(a, c0, t), lerp(c0, c1, t), lerp(c1, b, t), t); }
-    //inline i32 operator<(v2 a, v2 b) { return a.x < b.x&& a.y < b.y; }
-    //inline i32 operator>(v2 a, v2 b) { return a.x > b.x && a.y > b.y; }
-    //inline i32 operator<=(v2 a, v2 b) { return a.x <= b.x && a.y <= b.y; }
-    //inline i32 operator>=(v2 a, v2 b) { return a.x >= b.x && a.y >= b.y; }
-    //inline v2 floor(v2 a) { return v2(floorf(a.x), floorf(a.y)); }
-    //inline v2 round(v2 a) { return v2(roundf(a.x), roundf(a.y)); }
-    //inline v2 invert_safe(v2 a) { return v2(invert_safe(a.x), invert_safe(a.y)); }
-    //inline i32 parallel(v2 a, v2 b, float tol) {
+
+    //template <typename T> inline v2t<T> add(v2t<T> a, v2t<T> b) { return v2t<T>(a.x + b.x, a.y + b.y); }
+    //template <typename T> inline v2t<T> sub(v2t<T> a, v2t<T> b) { return v2t<T>(a.x - b.x, a.y - b.y); }
+    ///*inline v2t<T>& operator+=(v2t<T>& a, v2t<T> b) { return a = a + b; }
+    //inline v2t<T>& operator-=(v2t<T>& a, v2t<T> b) { return a = a - b; }*/
+    //template <typename T> inline float dot(v2t<T> a, v2t<T> b) { return a.x * b.x + a.y * b.y; }
+    //template <typename T> inline v2t<T> mul(v2t<T> a, float b) { return v2t<T>(a.x * b, a.y * b); }
+    //template <typename T> inline v2t<T> mul(v2t<T> a, v2t<T> b) { return v2t<T>(a.x * b.x, a.y * b.y); }
+    ///*inline v2t<T>& operator*=(v2t<T>& a, float b) { return a = a * b; }
+    //inline v2t<T>& operator*=(v2t<T>& a, v2t<T> b) { return a = a * b; }*/
+    //template <typename T> inline v2t<T> div(v2t<T> a, float b) { return v2t<T>(a.x / b, a.y / b); }
+    ///*inline v2t<T>& operator/=(v2t<T>& a, float b) { return a = a / b; }*/
+    //template <typename T> inline v2t<T> skew(v2t<T> a) { return v2t<T>(-a.y, a.x); }
+    //template <typename T> inline v2t<T> ccw90(v2t<T> a) { return v2t<T>(a.y, -a.x); }
+    //template <typename T> inline float det2(v2t<T> a, v2t<T> b) { return a.x * b.y - a.y * b.x; }
+    //template <typename T> inline v2t<T> min(v2t<T> a, v2t<T> b) { return v2t<T>(min(a.x, b.x), min(a.y, b.y)); }
+    //template <typename T> inline v2t<T> max(v2t<T> a, v2t<T> b) { return v2t<T>(max(a.x, b.x), max(a.y, b.y)); }
+    //template <typename T> inline v2t<T> clamp(v2t<T> a, v2t<T> lo, v2t<T> hi) { return max(lo, min(a, hi)); }
+    //template <typename T> inline v2t<T> clamp01(v2t<T> a) { return max(v2t<T>(0, 0), min(a, v2t<T>(1, 1))); }
+    //template <typename T> inline v2t<T> abs(v2t<T> a) { return v2t<T>(fabsf(a.x), fabsf(a.y)); }
+    //template <typename T> inline float hmin(v2t<T> a) { return min(a.x, a.y); }
+    //template <typename T> inline float hmax(v2t<T> a) { return max(a.x, a.y); }
+    //template <typename T> inline float len(v2t<T> a) { return sqrtf(dot(a, a)); }
+    //template <typename T> inline float distance(v2t<T> a, v2t<T> b) { return sqrtf(powf((a.x - b.x), 2) + powf((a.y - b.y), 2)); }
+    //template <typename T> inline v2t<T> norm(v2t<T> a) { return a / len(a); }
+    //template <typename T> inline v2t<T> safe_norm(v2t<T> a) { float sq = dot(a, a); return sq ? a / sqrtf(sq) : v2t<T>(0, 0); }
+    //template <typename T> inline float safe_norm(float a) { return a == 0 ? 0 : sign(a); }
+    //template <typename T> inline i64 safe_norm(i64 a) { return a == 0 ? 0 : sign(a); }
+    //template <typename T> inline v2t<T> negate(v2t<T> a) { return v2t<T>(-a.x, -a.y); }
+    //template <typename T> inline v2t<T> lerp(v2t<T> a, v2t<T> b, float t) { return a + (b - a) * t; }
+    //template <typename T> inline v2t<T> bezier(v2t<T> a, v2t<T> c0, v2t<T> b, float t) { return lerp(lerp(a, c0, t), lerp(c0, b, t), t); }
+    //template <typename T> inline v2t<T> bezier(v2t<T> a, v2t<T> c0, v2t<T> c1, v2t<T> b, float t) { return bezier(lerp(a, c0, t), lerp(c0, c1, t), lerp(c1, b, t), t); }               
+    ////inline i64 operator<(v2t<T> a, v2t<T> b) { return a.x < b.x&& a.y < b.y; }
+    ////inline i64 operator>(v2t<T> a, v2t<T> b) { return a.x > b.x && a.y > b.y; }
+    ////inline i64 operator<=(v2t<T> a, v2t<T> b) { return a.x <= b.x && a.y <= b.y; }
+    ////inline i64 operator>=(v2t<T> a, v2t<T> b) { return a.x >= b.x && a.y >= b.y; }
+    //template <typename T> inline v2t<T> floor(v2t<T> a) { return v2t<T>(floorf(a.x), floorf(a.y)); }
+    //template <typename T> inline v2t<T> round(v2t<T> a) { return v2t<T>(roundf(a.x), roundf(a.y)); }
+    //template <typename T> inline v2t<T> invert_safe(v2t<T> a) { return v2t<T>(invert_safe(a.x), invert_safe(a.y)); }
+    //template <typename T> inline i64 parallel(v2t<T> a, v2t<T> b, float tol) {
     //    float k = len(a) / len(b);
     //    b = b * k;
     //    if (fabs(a.x - b.x) < tol && fabs(a.y - b.y) < tol) return 1;
     //    return 0;
     //}
 
-
-    //// Remaps the result from atan2f to the continuous range of 0, 2*PI.
-    //inline float atan2_360(float y, float x) { return atan2f(-y, -x) + pi; }
-
-    //// Computes the shortest angle to rotate the vector a to the vector b.
+    ////// Computes the shortest angle to rotate the vector a to the vector b.
     //inline float shortest_arc(v2 a, v2 b) {
     //    float c = dot(a, b);
     //    float s = det2(a, b);
@@ -129,66 +127,9 @@ namespace ds {
     //    }
     //}
 
+
     //inline float angle_diff(float radians_a, float radians_b) { return mod((radians_b - radians_a) + pi, 2.0f * pi) - pi; }
     //inline v2 v2_from_angle(float radians) { return v2(cosf(radians), sinf(radians)); }
-
-
-    //struct m3 {
-    //    struct col_type { float x, y, z; };
-    //    col_type value[3];
-    //};
-
-    //// returns an identity matrix.
-    //static m3 identity() {
-    //    m3 m;
-    //    m.value[0] = m3::col_type(1, 0, 0);
-    //    m.value[1] = m3::col_type(0, 1, 0);
-    //    m.value[2] = m3::col_type(0, 0, 1);
-    //    return m;
-    //}
-
-    //inline m3 mul(m3 m1, m3 m2) {
-    //    float const SrcA00 = m1.value[0].x;
-    //    float const SrcA01 = m1.value[0].y;
-    //    float const SrcA02 = m1.value[0].z;
-    //    float const SrcA10 = m1.value[1].x;
-    //    float const SrcA11 = m1.value[1].y;
-    //    float const SrcA12 = m1.value[1].z;
-    //    float const SrcA20 = m1.value[2].x;
-    //    float const SrcA21 = m1.value[2].y;
-    //    float const SrcA22 = m1.value[2].z;
-    //        
-    //    float const SrcB00 = m2.value[0].x;
-    //    float const SrcB01 = m2.value[0].y;
-    //    float const SrcB02 = m2.value[0].z;
-    //    float const SrcB10 = m2.value[1].x;
-    //    float const SrcB11 = m2.value[1].y;
-    //    float const SrcB12 = m2.value[1].z;
-    //    float const SrcB20 = m2.value[2].x;
-    //    float const SrcB21 = m2.value[2].y;
-    //    float const SrcB22 = m2.value[2].z;
-
-    //    m3 Result;
-    //    Result.value[0].x = SrcA00 * SrcB00 + SrcA10 * SrcB01 + SrcA20 * SrcB02;
-    //    Result.value[0].y = SrcA01 * SrcB00 + SrcA11 * SrcB01 + SrcA21 * SrcB02;
-    //    Result.value[0].z = SrcA02 * SrcB00 + SrcA12 * SrcB01 + SrcA22 * SrcB02;
-    //    Result.value[1].x = SrcA00 * SrcB10 + SrcA10 * SrcB11 + SrcA20 * SrcB12;
-    //    Result.value[1].y = SrcA01 * SrcB10 + SrcA11 * SrcB11 + SrcA21 * SrcB12;
-    //    Result.value[1].z = SrcA02 * SrcB10 + SrcA12 * SrcB11 + SrcA22 * SrcB12;
-    //    Result.value[2].x = SrcA00 * SrcB20 + SrcA10 * SrcB21 + SrcA20 * SrcB22;
-    //    Result.value[2].y = SrcA01 * SrcB20 + SrcA11 * SrcB21 + SrcA21 * SrcB22;
-    //    Result.value[2].z = SrcA02 * SrcB20 + SrcA12 * SrcB21 + SrcA22 * SrcB22;
-    //    return Result;
-    //}
-
-    //v2 mul(m3 m1, v2 v1) {
-
-    //}
-
-
-
-
-
 
 
 

@@ -646,11 +646,13 @@ namespace ds::platform_backend {
 		SDL_GL_DeleteContext(context);
 	}
 
-	void get_drawable_size(int* width, int* height) {
+	void get_drawable_size(i32* width, i32* height) {
 		dscheck(width);
 		dscheck(height);
 		// IMPORTANT This is only GL
-		SDL_GL_GetDrawableSize(sdl::g_sdl.window, width, height);
+		int x, y;
+		SDL_GL_GetDrawableSize(sdl::g_sdl.window, &x, &y);
+		*width = x; *height = y;
 		// If not GL use: SDL_GetWindowSize(window, width, height);
 	}
 

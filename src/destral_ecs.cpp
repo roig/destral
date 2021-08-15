@@ -79,33 +79,138 @@
 
 #include <destral/destral_ecs.h>
 #include <destral/destral_base64.h>
+
+
 #include <unordered_map>
 
 namespace ds {
-    /* Returns the type index part of the entity */
-    static constexpr u32 entity_type_idx(entity e) { return e.type; }
-    /* Makes a entity from an id, version and type_idx */
-    static constexpr entity entity_assemble(u32 id, u32 version, u32 type_idx) { return entity{ .id = id, .version = version, .type = type_idx }; }
 
-    std::string entity_to_string(entity e) {
-        return std::format("Entity: ( id: {}  version: {}   type: {})", e.id, e.version, e.type);
+
+    
+
+    struct cp_storage {
+        cp_definition cd;
+        u64 cp_id = 0; /* component id for this storage */
+
+        //std::string name; /* component name */
+        //size_t cp_sizeof = 0; /* sizeof for each cp_data element */
+        //cp_serialize_fn* serialize_fn = nullptr;
+        //placement_new_fn* placement_new_fn = nullptr;
+        //delete_fn* delete_fn = nullptr;
+
+        /*  packed component elements array. aligned with dense */
+        //std::vector<u8> cp_data;
+        ds::darray<u8> cp_data;
+        /*  Dense entities array.
+            - index is linked with the sparse value.
+            - value is the full entity
+        */
+        //std::vector<entity> dense;
+        ds::darray<entity> dense;
+
+        /*  sparse entity identifiers indices array.
+            - index is the id of the entity. (without version and type_idx)
+            - value is the index of the dense array (uint32_t)
+
+            (Note) This can be refactored to an std::unordered_map<uint32_t, uint32_t>
+            to reduce memory footprint but at the cost of access time.
+        */
+        ds::darray<i32> sparse;
+
+        inline bool contains(entity e) {
+            dscheck(!e.is_null());
+            const i32 eid = e.id;
+            return (eid < sparse.size()) && (sparse[eid] != entity::max_id());
+        }
+
+        void debug_arrays() {
+            DS_LOG("Sparse:");
+            for (auto i = 0; i < sparse.size(); i++) {
+                DS_LOG(std::format("[{}] => {}", i, sparse[i]));
+            }
+
+            DS_LOG("Dense:");
+            for (auto i = 0; i < dense.size(); i++) {
+                DS_LOG(std::format("[{}] => {}", i, dense[i].to_string()));
+            }
+
+            DS_LOG(std::format("Components vector: (cp_size: {}  bytesize: {}  cp_sizeof: {}",
+                cp_data.size() / (float)cd.cp_sizeof, cp_data.size(), cd.cp_sizeof));
+        }
+
+        inline void* emplace(entity e) {
+            dscheck(!e.is_null());
+            // now allocate the data for the new component at the end of the array and memset to 0
+            cp_data.resize(cp_data.size() + cd.cp_sizeof, 0);
+
+            // return the component data pointer (last position of the component sizes)
+            void* cp_data_ptr = &cp_data[cp_data.size() - cd.cp_sizeof];
+
+            // Then add the entity to the sparse/dense arrays
+            const i32 eid = e.id;
+            DS_LOG(std::format("Adding {}", e.to_string()));
+            if (eid >= sparse.size()) { // check if we need to realloc
+                sparse.resize(eid + (i32)1, entity::max_id()); // default to entity_maxid means that is not valid.
+            }
+
+            sparse[eid] = dense.size();
+            dense.push_back(e);
+            // debug_arrays();
+            return cp_data_ptr;
+        }
+
+        inline void remove(entity e) {
+            dscheck(contains(e));
+            DS_LOG(std::format("Removing {}", e.to_string()));
+
+            // Remove from sparse/dense arrays
+            const i32 pos_to_remove = sparse[e.id];
+            entity other = dense.back();
+            sparse[other.id] = pos_to_remove;
+            dense[pos_to_remove] = other;
+            sparse[e.id] = entity::max_id();
+            dense.pop_back();
+            // swap to the last position (memmove because if cp_data_size 1 it will overlap dst and source.
+            memmove(
+                &(cp_data)[pos_to_remove * cd.cp_sizeof],
+                &(cp_data)[(cp_data.size() - cd.cp_sizeof)],
+                cd.cp_sizeof);
+
+            // and pop the last one
+            dscheck(cp_data.size() >= cd.cp_sizeof);
+            cp_data.resize(cp_data.size() - cd.cp_sizeof, 0);
+
+            //  debug_arrays();
+        }
+
+        inline void* get_by_index(i32 index) {
+            dscheck((index * cd.cp_sizeof) < cp_data.size());
+            return &(cp_data)[index * cd.cp_sizeof];
+        }
+
+        inline void* get(entity e) {
+            dscheck(!e.is_null());
+            dscheck(contains(e));
+            return get_by_index(sparse[e.id]);
+        }
+
+        inline void* try_get(entity e) {
+            dscheck(!e.is_null());
+            return contains(e) ? get(e) : nullptr;
+        }
+    };
+    
+    const entity entity::null = entity();
+
+    std::string entity::to_string() {
+        return std::format("Entity: ( id: {}  version: {}   type: {})", id, version, type_id);
     }
-
-    ///* Pack the id and version to an entity handle */
-    //static constexpr u64 entity_handle_pack(u32 id, u32 version) { return ((u64)id | (((u64)version) << 32)); }
-    ///* Unpacks an entity handle to the id and version */
-    //static constexpr void entity_handle_unpack(u64 handle, u32* id, u32* version) { 
-    //    *id = handle & entity_max_id();
-    //    *version = handle >> 32;
-    //}
-
-
 
     struct ctx_variable_info {
         std::string name;
         u64 hashed_name = 0;
         void* instance_ptr = nullptr;
-        delete_fn* deleter_fn = nullptr;
+        void (*deleter_fn)(void*) = nullptr;
     };
 
     struct entity_type {
@@ -113,48 +218,49 @@ namespace ds {
         std::string name;
         
         // Holds the component ids hashed using
-        std::vector<u64> cp_ids;
+        ds::darray<u64> cp_ids;
 
         // Holds the component names ids (non hashed)
-        std::vector<std::string> cp_names;
+        ds::darray<std::string> cp_names;
 
         // Entity init and deinit callbacks
-        entity_init_fn* init_fn = nullptr;
-        entity_deinit_fn* deinit_fn = nullptr;
+        
+        entity_definition::entity_init_fn* init_fn = nullptr;
+        entity_definition::entity_deinit_fn* deinit_fn = nullptr;
     };
 
-    struct registry {
+    struct registry_impl {
         /* contains all the created entities */
-        std::vector<entity> entities;
+        ds::darray<entity> entities;
 
         /* first index in the list to recycle */
-        u32 available_id = detail::entity_max_id();
+        i32 available_id = entity::max_id();
 
         /* Hold the component storages */
-        std::unordered_map<std::uint64_t, detail::cp_storage> cp_storages;
+        std::unordered_map<std::uint64_t, cp_storage> cp_storages;
 
         /* Hold the registered entity types the key is the hashed string using fnv1a_64bit */
         std::unordered_map<std::uint64_t, entity_type> types;
 
         /* Holds the hashed key for the types map in a vector.
            Used to retrieve the hashed key from an the type index part of the entity */
-        std::vector<std::uint64_t> entity_hashed_types;
+        ds::darray<std::uint64_t> entity_hashed_types;
 
         // hold the entities to be destroyed (delayed)
-        std::vector<entity> entities_to_destroy;
+        ds::darray<entity> entities_to_destroy;
         
 
         // Context variables maps/arrays (both have the same pointer) only vector makes calls the delete
         std::unordered_map<u64, ctx_variable_info*> ctx_vars;
-        std::vector<ctx_variable_info*> ctx_vars_ordered;
+        ds::darray<ctx_variable_info*> ctx_vars_ordered;
     };
 
     /* Calls the deleter for each ctx variable set in inverse order of context variables registration. Then clears the maps/arrays of ctx vars */
     static void ctx_unset_all(registry* r) {
         dscheck(r);
         // call the deleter function first
-        for (size_t i = 0; i < r->ctx_vars_ordered.size(); ++i) {
-            auto ctx_var_info_ptr = r->ctx_vars_ordered[r->ctx_vars_ordered.size() - 1 - i];
+        for (i32 i = 0; i < r->_r->ctx_vars_ordered.size(); ++i) {
+            auto ctx_var_info_ptr = r->_r->ctx_vars_ordered[r->_r->ctx_vars_ordered.size() - 1 - i];
             if (ctx_var_info_ptr->deleter_fn) {
                 // delete the context variable instance!
                 ctx_var_info_ptr->deleter_fn(ctx_var_info_ptr->instance_ptr);
@@ -162,96 +268,100 @@ namespace ds {
             // deletes the pointer to the context var information
             delete ctx_var_info_ptr;
         }
-        r->ctx_vars.clear();
-        r->ctx_vars_ordered.clear();
+        r->_r->ctx_vars.clear();
+        r->_r->ctx_vars_ordered.clear();
     }
 
-    registry* registry_create() {
-        registry* r = new registry();
-        return r;
-    }
-
-    void registry_destroy(registry* r) {
-        dscheck(r);
+    registry::registry() { _r = new registry_impl(); }
+    registry::~registry() { 
+       
         // delete all the entities...
-        auto all = entity_all(r);
+        auto all = entity_all();
         for (auto i = 0; i < all.size(); i++) {
-            entity_destroy(r, all[i]);
+            entity_destroy(all[i]);
         }
 
         // delete all the context variables
-        ctx_unset_all(r);
-        delete r;
-        r = nullptr;
+        ctx_unset_all(this);
+        delete _r;
+        _r = nullptr;
     }
 
     // Performs the release of an entity in the registry by adding it to the recycle list
-    static inline void s_release_entity(registry* r, entity e) {
-        const u32 e_id = e.id;
-        u32 new_version = e.version;
-        ++new_version;
+    static inline void s_release_entity(registry_impl* r, entity e) {
+        i32 new_version = e.version;
+
+        // Wrap around the version
+        if (new_version == (i32)e.max_version()) {
+            new_version = 0;
+        } else {
+            ++new_version;
+        }
 
         // assemble an entity to be used for recycling
-        r->entities[e_id] = entity_assemble(r->available_id, new_version, detail::entity_max_type_idx());
+        const i32 e_id = e.id;
+        r->entities[e_id] = { .id = r->available_id, .version = new_version, .type_id = entity::max_type_id() };
         r->available_id = e_id;
     }
 
     // Performs the creation process of a new entity of type_idx either by
     // recycling an entity id or by creating a new one if no available for recycling.
-    static inline entity s_create_entity(registry* r, u32 type_idx) {
+    static inline entity s_create_entity(registry* r, i32 type_idx) {
         dscheck(r);
-        if (r->available_id == detail::entity_max_id()) {
+        if (r->_r->available_id == entity::max_id()) {
             // Generate a new entity
             // check if we can't create more
-            dsverifym(r->entities.size() < detail::entity_max_id(), std::format("Can't create more entities!"));
-            const entity e = entity_assemble((u32)r->entities.size(), 0, type_idx);
-            r->entities.push_back(e);
+            dsverifym(r->_r->entities.size() < entity::max_id(), std::format("Can't create more entities!"));
+            const entity e = { .id = r->_r->entities.size(), .version = 0, .type_id = type_idx };
+            r->_r->entities.push_back(e);
             return e;
         } else {
             // Recycle an entity
-            dscheck(r->available_id != detail::entity_max_id());
+            dscheck(r->_r->available_id != entity::max_id());
             // get the first available entity id
-            const u32 curr_id = r->available_id;
-            const u32 curr_ver = r->entities[curr_id].version;
+            const i32 curr_id = r->_r->available_id;
+            const i32 curr_ver = r->_r->entities[curr_id].version;
             // point the available_id to the "next" id
-            r->available_id = r->entities[curr_id].id;
+            r->_r->available_id = r->_r->entities[curr_id].id;
             // now join the id and version and type idx to create the new entity
-            const entity recycled_e = entity_assemble(curr_id, curr_ver, type_idx);
+            const entity recycled_e = { .id = curr_id, .version = curr_ver, .type_id = type_idx };
             // assign it to the entities array
-            r->entities[curr_id] = recycled_e;
+            r->_r->entities[curr_id] = recycled_e;
             return recycled_e;
         }
     }
 
     /* Returns the storage pointer for the given cp id or nullptr if not exists */
-    static detail::cp_storage* s_get_storage(registry* r, u64 cp_id) {
+    static cp_storage* s_get_storage(registry* r, u64 cp_id) {
         dscheck(r);
-        if (!r->cp_storages.contains(cp_id)) {
+        if (!r->_r->cp_storages.contains(cp_id)) {
             return nullptr;
         }
-        return &r->cp_storages[cp_id];
+        return &r->_r->cp_storages[cp_id];
     }
 
     // Adds an entity type to the registry
     static void s_add_entity_type(registry* r, const entity_type& et) {
-        dscheck(!et.name.empty());
+        dsverify(!et.name.empty());
         const auto entity_type_id = ds::fnv1a_64bit(et.name);
-        dscheck(r->entity_hashed_types.size() < detail::entity_max_type_idx()); // no more types can be indexed..
-        dscheck(!r->types.contains(entity_type_id)); // you are trying to register an existing entity type
+        dsverify(r->_r->entity_hashed_types.size() < entity::max_type_id()); // no more types can be indexed..
+        dsverify(!r->_r->types.contains(entity_type_id)); // you are trying to register an existing entity type
         dscheckCode( // Check if all component ids exist
-            for (auto& c : et.cp_names) { dscheckm(s_get_storage(r, ds::fnv1a_64bit(c)), std::format("Component: {} not found/registered!", c)); }
+            for (i32 i = 0; i < et.cp_names.size(); i++) {
+                dscheckm(s_get_storage(r, ds::fnv1a_64bit(et.cp_names[i])), std::format("Component: {} not found/registered!", et.cp_names[i])); 
+            }
         );
 
         
-        r->types.insert({ entity_type_id, et });
-        r->entity_hashed_types.push_back(entity_type_id);
+        r->_r->types.insert({ entity_type_id, et });
+        r->_r->entity_hashed_types.push_back(entity_type_id);
     }
 
     // Returns the type index (the one that goes in the entity) from a type_id (hashed from entity_name).
-    static u32 s_get_entity_type_idx(registry* r, u64 type_id) {
+    static i32 s_get_entity_type_idx(registry* r, u64 type_id) {
         // Find the type index for that entity type id
-        for (u32 i = 0; r->types.size(); i++) {
-            if (r->entity_hashed_types[i] == type_id) {
+        for (i32 i = 0; r->_r->types.size(); i++) {
+            if (r->_r->entity_hashed_types[i] == type_id) {
                 return i;
                 break;
             }
@@ -262,48 +372,48 @@ namespace ds {
     // Returns the entity_type pointer from a valid entity
     static entity_type* s_get_entity_type(registry* r, entity e) {
         dscheck(r);
-        dsverify(entity_valid(r, e));
+        dsverify(r->entity_valid(e));
         // first get the entity type index from entity e
-        const auto etype_idx = entity_type_idx(e);
-        dsverify(etype_idx < r->entity_hashed_types.size());
-        const auto etype_hashed_id = r->entity_hashed_types[etype_idx];
-        dsverifym(r->types.contains(etype_hashed_id), std::format("Entity type id: {} not found.", etype_hashed_id));
-        entity_type* type = &r->types[etype_hashed_id];
+        const auto etype_idx = e.type_id;
+        dsverify(etype_idx < r->_r->entity_hashed_types.size());
+        const auto etype_hashed_id = r->_r->entity_hashed_types[etype_idx];
+        dsverifym(r->_r->types.contains(etype_hashed_id), std::format("Entity type id: {} not found.", etype_hashed_id));
+        entity_type* type = &r->_r->types[etype_hashed_id];
         return type;
     }
 
-    void entity_register(registry* r, const std::string& entity_name, const std::vector<std::string>& cp_names,
-        entity_init_fn* init_fn, entity_deinit_fn* deinit_fn) {
-        dscheck(r);
+    void registry::entity_register(const entity_definition& edef) {
 
         entity_type et;
-        et.name = entity_name;
-        et.cp_names = cp_names;
-        et.init_fn = init_fn;
-        et.deinit_fn = deinit_fn;
-        for (auto& c : cp_names) { et.cp_ids.push_back(fnv1a_64bit(c)); }
 
-        s_add_entity_type(r, et);
+        et.name = edef.name;
+        et.cp_names = edef.cp_names;
+        et.init_fn = edef.init_fn;
+        et.deinit_fn = edef.deinit_fn;
+        for (i32 i = 0; i < et.cp_names.size(); i++) {
+             et.cp_ids.push_back(fnv1a_64bit(et.cp_names[i])); 
+        }
+
+        s_add_entity_type(this, et);
     }
 
-    entity entity_make_begin(registry* r, const std::string& entity_name) {
-        dscheck(r);
-        dscheck(!entity_name.empty());
+    entity registry::entity_make_begin(const char* entity_name) {
+        dscheck(entity_name != nullptr);
         const u64 entity_type_id = ds::fnv1a_64bit(entity_name);
-        dscheckm(r->types.contains(entity_type_id), std::format("Entity name: {} is not a registered one!", entity_name));
+        dscheckm(_r->types.contains(entity_type_id), std::format("Entity name: {} is not a registered one!", entity_name));
 
 
         // Find the type index for that entity name
-        u32 type_idx = s_get_entity_type_idx(r, entity_type_id);
+        i32 type_idx = s_get_entity_type_idx(this, entity_type_id);
         
         // Create the entity
-        entity e = s_create_entity(r, type_idx);
+        entity e = s_create_entity(this, type_idx);
 
         // Emplace all the components
-        entity_type* type = &r->types[entity_type_id];
-        for (std::size_t i = 0; i < type->cp_ids.size(); ++i) {
+        entity_type* type = &_r->types[entity_type_id];
+        for (i32 i = 0; i < type->cp_ids.size(); ++i) {
             const u64 cp_id = type->cp_ids[i];
-            auto st = s_get_storage(r, cp_id);
+            auto st = s_get_storage(this, cp_id);
             dscheck(st);
 
             // 0 -> Emplace the component to the storage (only reserves memory) like a malloc
@@ -311,103 +421,93 @@ namespace ds {
 
             // 1 -> Placement new (defalut construct) on that memory
             // this will call default constructors for all the variables in the struct component
-            if (st->placement_new_fn) {
-                st->placement_new_fn(cp_data);
+            if (st->cd.placement_new_fn) {
+                st->cd.placement_new_fn(cp_data);
             }
         }
         return e;
     }
 
-    void entity_make_end(registry* r, entity e) {
-        entity_type* et = s_get_entity_type(r, e);
+    void registry::entity_make_end(entity e) {
+        entity_type* et = s_get_entity_type(this, e);
         // Call init function for the entity if available
         if (et->init_fn) {
-            et->init_fn(r, e);
+            et->init_fn(this, e);
         }
     }
 
 
     // Process the full creation of an entity type id.
     // This includes the creation of all the components and their initialization in order
-    entity entity_make(registry* r, const std::string& entity_name) {
-        entity e = entity_make_begin(r, entity_name);
-        entity_make_end(r, e);
+    entity registry::entity_make(const char* entity_name) {
+        entity e = entity_make_begin(entity_name);
+        entity_make_end(e);
         return e;
     }
 
     // Process the full destruction of an entity.
     // This includes the cleanup of all the components and their destruction in reverse order
-    void entity_destroy(registry* r, entity e) {
-        dscheck(r);
+    void registry::entity_destroy(entity e) {
         // retrieve the entity type from entity
-        const std::uint32_t type_idx = entity_type_idx(e);
-        dscheck(type_idx < r->entity_hashed_types.size());
-        const std::uint64_t hashed_type_id = r->entity_hashed_types[type_idx];
-        dscheck(r->types.contains(hashed_type_id));
-        entity_type* type = &r->types[hashed_type_id];
+        const i32 type_idx = e.type_id;
+        dscheck(type_idx < _r->entity_hashed_types.size());
+        const i64 hashed_type_id = _r->entity_hashed_types[type_idx];
+        dscheck(_r->types.contains(hashed_type_id));
+        entity_type* type = &_r->types[hashed_type_id];
 
         // call deinit function for the entity before removing components
         if (type->deinit_fn) {
-            type->deinit_fn(r, e);
+            type->deinit_fn(this, e);
         }
 
         // cleanup the cps in reverse order
-        std::vector<std::uint64_t>& cps = type->cp_ids;
-        for (size_t i = 0; i < cps.size(); ++i) {
-            const size_t cp_id = cps[cps.size() - 1 - i];
-            auto st = s_get_storage(r, cp_id);
+        ds::darray<u64>& cps = type->cp_ids;
+        for (i32 i = 0; i < cps.size(); ++i) {
+            const u64 cp_id = cps[cps.size() - 1 - i];
+            auto st = s_get_storage(this, cp_id);
             dscheck(st);
 
             void* cp_data = st->get(e);
 
             // 1 -> call destructor cp function
-            if (st->delete_fn) {
-                st->delete_fn(cp_data);
+            if (st->cd.delete_fn) {
+                st->cd.delete_fn(cp_data);
             }
 
             // 2 -> remove the cp from the cp storage
             st->remove(e);
         }
         // 3 -> release_entity with a desired new version
-        s_release_entity(r, e);
+        s_release_entity(_r, e);
     }
 
-    void* entity_get(registry* r, entity e, const std::string& cp_name) {
-        dscheck(r);
-        dscheck(entity_valid(r, e));
+    void* registry::cp_get(entity e, const char* cp_name) {
+        
+        dscheck(entity_valid(e));
         const auto cp_id = ds::fnv1a_64bit(cp_name);
-        dscheck(s_get_storage(r, cp_id));
-        return s_get_storage(r, cp_id)->get(e);
+        dscheck(s_get_storage(this, cp_id));
+        return s_get_storage(this, cp_id)->get(e);
     }
 
-    void* entity_try_get(registry* r, entity e, const std::string& cp_name) {
-        dscheck(r);
-        dscheck(entity_valid(r, e));
+    void* registry::cp_try_get( entity e, const char* cp_name) {
+        dscheck(entity_valid(e));
         const auto cp_id = ds::fnv1a_64bit(cp_name);
-        dscheck(s_get_storage(r, cp_id));
-        return s_get_storage(r, cp_id)->try_get(e);
+        dscheck(s_get_storage(this, cp_id));
+        return s_get_storage(this, cp_id)->try_get(e);
     }
 
-    bool entity_valid(registry* r, entity e) {
-        dscheck(r);
-        const u32 id = e.id;
-        entity e1, e2;
-        if (e1 == e2) {
-
-        }
-
-        return (id < r->entities.size()) && (r->entities[id] == e);
+    bool registry::entity_valid(entity e) {
+        return (e.id < _r->entities.size() ) && ( _r->entities[e.id].equal(e) );
     }
 
-    std::vector<entity> entity_all(registry* r) {
-        dscheck(r);
+    ds::darray<entity> registry::entity_all() {
         // If no entities are available to recycle, means that the full vector is valid
-        if (r->available_id == detail::entity_max_id()) {
-            return r->entities;
+        if (_r->available_id == entity::max_id()) {
+            return _r->entities;
         } else {
-            std::vector<entity> alive;
-            for (u32 i = 0; i < r->entities.size(); ++i) {
-                entity e = r->entities[i];
+            ds::darray<entity> alive;
+            for (i32 i = 0; i < _r->entities.size(); ++i) {
+                entity e = _r->entities[i];
                 
                 // if the entity id is the same as the index, means its not a recycled one
                 if (e.id == i) {
@@ -418,46 +518,36 @@ namespace ds {
         }
     }
 
-    void component_register(registry* r, const std::string& name_id, size_t cp_sizeof, placement_new_fn* placement_new_fn,
-        delete_fn* del_fn, cp_serialize_fn* optional_serialize_fn) {
-        dscheck(r);
-        dscheck(!name_id.empty());
-        const auto cp_id = ds::fnv1a_64bit(name_id);
-        dscheckm(!r->cp_storages.contains(cp_id), "Trying to register a new component with a registered name."); 
-        detail::cp_storage cp_storage;
-        cp_storage.name = name_id;
-        cp_storage.cp_id = cp_id;
-        cp_storage.cp_sizeof = cp_sizeof;
-        cp_storage.serialize_fn = optional_serialize_fn;
-        cp_storage.placement_new_fn = placement_new_fn;
-        cp_storage.delete_fn = del_fn;
-        r->cp_storages.insert({ cp_id, cp_storage });
+    void registry::cp_register(const cp_definition& cd) {
+        dscheck(!cd.name.empty());
+        const auto cp_id = ds::fnv1a_64bit(cd.name);
+        dsverifym(!_r->cp_storages.contains(cp_id), "Trying to register a new component with a registered name."); 
+        cp_storage cp_st;
+        cp_st.cd = cd;
+        cp_st.cp_id = cp_id;
+        _r->cp_storages.insert({ cp_id, cp_st });
     }
 
-    void entity_destroy_delayed(registry* r, entity e) {
-        dscheck(r);
-        r->entities_to_destroy.push_back(e);
+    void registry::entity_destroy_delayed(entity e) {
+        _r->entities_to_destroy.push_back(e);
     }
 
-    bool entity_is_destroy_delayed(registry* r, entity e) {
-        dscheck(r);
-        for (auto i = 0; i < r->entities_to_destroy.size(); i++) {
-            if (r->entities_to_destroy[i] == e) {
+    bool registry::entity_is_destroy_delayed(entity e) {
+        for (auto i = 0; i < _r->entities_to_destroy.size(); i++) {
+            if (_r->entities_to_destroy[i].equal(e)) {
                 return true;
             }
         }
         return false;
     }
 
-    void entity_destroy_flush_delayed(registry* r) {
-        dscheck(r);
-        for (auto entity_to_destroy : r->entities_to_destroy) {
-            if (entity_valid(r, entity_to_destroy)) 
-            {
-                entity_destroy(r, entity_to_destroy);
+    void registry::entity_destroy_flush_delayed() {
+        for (i32 i = 0; i < _r->entities_to_destroy.size(); i++) {
+            if (entity_valid(_r->entities_to_destroy[i])) {
+                entity_destroy(_r->entities_to_destroy[i]);
             }
         }
-        r->entities_to_destroy.clear();
+        _r->entities_to_destroy.clear();
     }
 
     struct system {
@@ -494,78 +584,91 @@ namespace ds {
         for (auto i = 0; i < s->systems.size(); i++) {
             if (s->systems[i].update_fn) {
                 s->systems[i].update_fn(r, dt);
-                entity_destroy_flush_delayed(r);
+                r->entity_destroy_flush_delayed();
             }
         }
     }
 
-    void* ctx_set(registry* r, const std::string& ctx_name_id, void* instance_ptr, delete_fn* del_fn) {
-        dscheck(r);
-        dscheck(!ctx_name_id.empty());
+    void* registry::ctx_set(const char* ctx_name_id, void* instance_ptr, void (*del_fn)(void* ptr)) {
+        dscheck(ctx_name_id != nullptr);
         dscheck(instance_ptr);
         const auto id = ds::fnv1a_64bit(ctx_name_id);
-        dscheck(!r->ctx_vars.contains(id));
+        dscheck(!_r->ctx_vars.contains(id));
 
         ctx_variable_info* ctx_var = new ctx_variable_info();
         ctx_var->name = ctx_name_id;
         ctx_var->deleter_fn = del_fn;
         ctx_var->instance_ptr = instance_ptr;
-        r->ctx_vars[id] = ctx_var;
-        r->ctx_vars_ordered.push_back(ctx_var);
+        _r->ctx_vars[id] = ctx_var;
+        _r->ctx_vars_ordered.push_back(ctx_var);
         return instance_ptr;
     }
 
-    void ctx_unset(registry* r, const std::string& ctx_name_id) {
-        dscheck(r);
-        dscheck(!ctx_name_id.empty());
+    void registry::ctx_unset(const char* ctx_name_id) {
+        dscheck(ctx_name_id != nullptr);
         const auto id = ds::fnv1a_64bit(ctx_name_id);
         
         // Find the element in the ordered variables vector
         bool found = false;
-        std::size_t i;
-        for (i = 0; i < r->ctx_vars_ordered.size(); i++) {
-            if (r->ctx_vars_ordered[i]->hashed_name = id) {
+        i32 i;
+        for (i = 0; i < _r->ctx_vars_ordered.size(); i++) {
+            if (_r->ctx_vars_ordered[i]->hashed_name = id) {
                 found = true;
             }
         }
 
         if (found) {
             // delete the ctx var instance
-            auto var_info_ptr = r->ctx_vars_ordered[i];
+            auto var_info_ptr = _r->ctx_vars_ordered[i];
             if (var_info_ptr->deleter_fn) {
                 var_info_ptr->deleter_fn(var_info_ptr->instance_ptr);
             }
             // delete the info pointer
             delete var_info_ptr;
             // erase from the map
-            r->ctx_vars.erase(id);
+            _r->ctx_vars.erase(id);
             
             // erase the element from the vector (this will mantain the order)
-            r->ctx_vars_ordered.erase(r->ctx_vars_ordered.begin() + i);
+            _r->ctx_vars_ordered.remove_at(i);
         } else {
             DS_WARNING(std::format("Context variable name id: {} not found! When trying to delete it.", ctx_name_id));
         }
     }
 
-    void* ctx_get(registry* r, const std::string& ctx_name_id) {
-        dscheck(r);
-        dscheck(!ctx_name_id.empty());
+    void* registry::ctx_get(const char* ctx_name_id) {
+        dscheck(ctx_name_id != nullptr);
         auto id = ds::fnv1a_64bit(ctx_name_id);
-        if (r->ctx_vars.contains(id)) {
-            return r->ctx_vars[id]->instance_ptr;
+        if (_r->ctx_vars.contains(id)) {
+            return _r->ctx_vars[id]->instance_ptr;
         } else {
             return nullptr;
         }
     }
 
-    view view_create(registry* r, const std::vector<std::string>& cp_ids) {
+
+
+
+    //--------------------------------------------------------------------------------------------------
+    // Views 
+
+    // Returns true if the entity e is in all storages
+    static bool s_view_is_entity_in_all_storages(view* v, ds::entity e) {
+        for (i32 st_id = 0; st_id < v->_impl.cp_storages.size(); ++st_id) {
+            if (!v->_impl.cp_storages[st_id]->contains(e)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    view registry::view_create(const ds::darray<const char*>& cp_ids) {
         view view;
         // Retrieve all the system storages for component ids for this system
         // and find the shorter storage (the one with less entities to iterate)
-        view._impl.cp_storages.reserve(cp_ids.size());
-        for (size_t cp_id_idx = 0; cp_id_idx < cp_ids.size(); ++cp_id_idx) {
-            const auto cp_id = cp_ids[cp_id_idx];
-            auto* cp_storage = s_get_storage(r, ds::fnv1a_64bit(cp_id));
+        view._impl.cp_storages.resize(cp_ids.size(), nullptr); // TODO i32
+        for (i32 cp_id_idx = 0; cp_id_idx < cp_ids.size(); ++cp_id_idx) {
+            auto cp_id = cp_ids[cp_id_idx];
+            auto* cp_storage = s_get_storage(this, ds::fnv1a_64bit(cp_id));
             dscheckm(cp_storage, std::format("Component '{}' id not registered!", cp_id));
 
             // find the shorter storage to iterate it
@@ -581,14 +684,14 @@ namespace ds {
         // Set view to initial state
         view._impl.entity_index = 0;
         view._impl.entity_max_index = view._impl.iterating_storage->dense.size();
-        view._impl.cur_entity = entity_null;
+        view._impl.cur_entity = entity::null;
 
         // Now find the first valid entity in the iterating dense array that is contained in all the storages
-        for (size_t i = 0; i < view._impl.iterating_storage->dense.size(); ++i) {
+        for (i32 i = 0; i < view._impl.iterating_storage->dense.size(); ++i) {
             view._impl.entity_index = i;
-            const auto e = view._impl.iterating_storage->dense[i];
-            if (e != entity_null) {
-                if (view._impl.is_entity_in_all_storages(e)) {
+            auto e = view._impl.iterating_storage->dense[i];
+            if (!e.is_null()) {
+                if (s_view_is_entity_in_all_storages(&view, e)) {
                     view._impl.cur_entity = view._impl.iterating_storage->dense[i];
                     break;
                 }
@@ -597,6 +700,47 @@ namespace ds {
 
         return view;
     }
+
+    // Returns the component index associated with a component id (use data function to retrieve the data)
+    i32 view::index(const char* cp_name) {
+        const i32 cp_id_hashed = fnv1a_32bit(cp_name);
+        for (i32 i = 0; i < _impl.cp_storages.size(); i++) {
+            if (_impl.cp_storages[i]->cp_id == cp_id_hashed) { return i; }
+        }
+        // error, no component with that cp_id in this view!
+        dscheckm(false, "component id not found in this view!");
+        return 0;
+    }
+
+    // Returns the raw component data pointer associated with the component index for this view (see index function)
+    void* view::raw_data(i32 cp_idx) {
+        dscheck(valid());
+        dscheck(cp_idx >= 0);
+        dscheck(cp_idx < _impl.cp_storages.size());
+        return _impl.cp_storages[cp_idx]->get(_impl.cur_entity);
+    }
+
+    // Advances the next entity that has all the components for the view
+    void view::next() {
+        dscheck(valid());
+        // find the next contained entity that is inside all pools
+        bool entity_contained = false;
+        do {
+            if (_impl.entity_index < _impl.entity_max_index - 1) {
+                // select next entity from the iterating storage (smaller one..)
+                ++_impl.entity_index;
+                _impl.cur_entity = _impl.iterating_storage->dense[_impl.entity_index];
+                // now check if the entity is contained in ALL other storages:
+                entity_contained = s_view_is_entity_in_all_storages(this, _impl.cur_entity);
+            } else {
+                _impl.cur_entity = entity::null;
+            }
+        } while ((!_impl.cur_entity.is_null()) && !entity_contained);
+    }
+
+   
+
+
 }
 
 
