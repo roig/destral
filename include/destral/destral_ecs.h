@@ -138,8 +138,7 @@ struct registry;
 // Entity:
 // Entity recicles ids when arriving at max version number.
 // INFO: https://docs.cryengine.com/display/SDKDOC4/EntityID+Explained
-// handle = [ idtype 20 bits | version 24 bits | id 20 bits ]
-// type_id = [32 bits]
+// id and version = only positive part of i32
 struct entity {
     i32 id = max_id();
     i32 version = 0;
@@ -333,6 +332,17 @@ struct registry {
     // Views 
     view view_create(const ds::darray<const char*>& cp_names);
 
+
+
+    //--------------------------------------------------------------------------------------------------
+    // Systems
+    // Adds a system function to the list of systems in a queue
+    typedef void (system_update_fn)(registry* r, float dt);
+    void system_queue_add(const char* queue_name, const char* sys_name, system_update_fn* sys_update_fn);
+
+    // This runs all the registered systems in the queue name.
+    void system_queue_run(const char* queue_name, float dt);
+
     //--------------------------------------------------------------------------------------------------
     // Context Variables (Globals in the registry)
     // Context variables are like global instances tied to the registry. You can add and remove them at any time.
@@ -351,25 +361,6 @@ struct registry {
     // Implementation details
     registry_impl* _r;
 };
-
-
-//--------------------------------------------------------------------------------------------------
-// System pool functions
-struct syspool;
-syspool* syspool_create();
-void syspool_destroy(syspool* s);
-
-// Adds a system function to the syspool
-typedef void (syspool_update_fn)(registry* r, float dt);
-void syspool_add(syspool* sys, const std::string& sys_name, syspool_update_fn* sys_update_fn);
-
-// This runs all the registered systems in the systempool with a registry and a delta
-void syspool_run(syspool* sys, registry* r, float dt);
-
-
-
-
-
 
 
 }

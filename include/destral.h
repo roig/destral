@@ -1,6 +1,7 @@
 #pragma once
 
 #include <destral/destral_common.h>
+#include <destral/destral_containers.h>
 #include <destral/destral_app.h>
 #include <destral/destral_base64.h>
 

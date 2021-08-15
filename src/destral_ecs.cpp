@@ -92,20 +92,12 @@ namespace ds {
         cp_definition cd;
         u64 cp_id = 0; /* component id for this storage */
 
-        //std::string name; /* component name */
-        //size_t cp_sizeof = 0; /* sizeof for each cp_data element */
-        //cp_serialize_fn* serialize_fn = nullptr;
-        //placement_new_fn* placement_new_fn = nullptr;
-        //delete_fn* delete_fn = nullptr;
-
         /*  packed component elements array. aligned with dense */
-        //std::vector<u8> cp_data;
         ds::darray<u8> cp_data;
         /*  Dense entities array.
             - index is linked with the sparse value.
             - value is the full entity
         */
-        //std::vector<entity> dense;
         ds::darray<entity> dense;
 
         /*  sparse entity identifiers indices array.
@@ -229,6 +221,11 @@ namespace ds {
         entity_definition::entity_deinit_fn* deinit_fn = nullptr;
     };
 
+    struct system_type {
+        std::string name;
+        registry::system_update_fn* update_fn = nullptr;
+    };
+
     struct registry_impl {
         /* contains all the created entities */
         ds::darray<entity> entities;
@@ -253,6 +250,10 @@ namespace ds {
         // Context variables maps/arrays (both have the same pointer) only vector makes calls the delete
         std::unordered_map<u64, ctx_variable_info*> ctx_vars;
         ds::darray<ctx_variable_info*> ctx_vars_ordered;
+
+
+        // Systems
+        std::unordered_map<std::string, ds::darray<system_type>> system_queues;
     };
 
     /* Calls the deleter for each ctx variable set in inverse order of context variables registration. Then clears the maps/arrays of ctx vars */
@@ -292,7 +293,7 @@ namespace ds {
         i32 new_version = e.version;
 
         // Wrap around the version
-        if (new_version == (i32)e.max_version()) {
+        if (new_version == e.max_version()) {
             new_version = 0;
         } else {
             ++new_version;
@@ -550,41 +551,22 @@ namespace ds {
         _r->entities_to_destroy.clear();
     }
 
-    struct system {
-        std::string name;
-        syspool_update_fn* update_fn = nullptr;
-    };
-
-    struct syspool {
-        std::vector<system> systems;
-    };
-
-    syspool* syspool_create() {
-        return new syspool();
-    }
-
-    void syspool_destroy(syspool* s) {
-        dscheck(s);
-        delete s;
+    void registry::system_queue_add(const char* queue_name, const char* sys_name, system_update_fn* sys_update_fn) {
+        dscheck(queue_name);
+        dscheck(sys_name);
+        _r->system_queues[queue_name].push_back(system_type(sys_name, sys_update_fn));
     }
 
     
-    void syspool_add(syspool* s, const std::string& sys_name, syspool_update_fn* sys_update_fn) {
-        dscheck(s);
-        system sys;
-        sys.name = sys_name;
-        sys.update_fn = sys_update_fn;
-        s->systems.push_back(sys);
-    }
-
-    // This runs all the registered systems with a registry and a delta
-    void syspool_run(syspool* s, registry* r, float dt) {
-        dscheck(s);
-        dscheck(r);
-        for (auto i = 0; i < s->systems.size(); i++) {
-            if (s->systems[i].update_fn) {
-                s->systems[i].update_fn(r, dt);
-                r->entity_destroy_flush_delayed();
+    void registry::system_queue_run(const char* queue_name, float dt) {
+        dscheck(queue_name);
+        if (_r->system_queues.contains(queue_name)) {
+            auto& sys_list = _r->system_queues[queue_name];
+            for (i32 i = 0; i < sys_list.size(); i++) {
+                if (sys_list[i].update_fn) {
+                    sys_list[i].update_fn(this, dt);
+                    entity_destroy_flush_delayed();
+                }
             }
         }
     }
@@ -665,7 +647,6 @@ namespace ds {
         view view;
         // Retrieve all the system storages for component ids for this system
         // and find the shorter storage (the one with less entities to iterate)
-        view._impl.cp_storages.resize(cp_ids.size(), nullptr); // TODO i32
         for (i32 cp_id_idx = 0; cp_id_idx < cp_ids.size(); ++cp_id_idx) {
             auto cp_id = cp_ids[cp_id_idx];
             auto* cp_storage = s_get_storage(this, ds::fnv1a_64bit(cp_id));
@@ -703,7 +684,7 @@ namespace ds {
 
     // Returns the component index associated with a component id (use data function to retrieve the data)
     i32 view::index(const char* cp_name) {
-        const i32 cp_id_hashed = fnv1a_32bit(cp_name);
+        const u64 cp_id_hashed = fnv1a_64bit(cp_name);
         for (i32 i = 0; i < _impl.cp_storages.size(); i++) {
             if (_impl.cp_storages[i]->cp_id == cp_id_hashed) { return i; }
         }

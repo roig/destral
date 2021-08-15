@@ -16,13 +16,13 @@ namespace ds {
 			u8 r, g, b, a;
 		};
 		pixel* pix = (pixel*)img.pixels.data();
-		int w = img.size.x;
-		int h = img.size.y;
-		int flips = h / 2;
-		for (int i = 0; i < flips; ++i) {
-			pixel* a = (pixel*)pix + w * i;
-			pixel* b = (pixel*)pix + w * (h - i - 1);
-			for (int j = 0; j < w; ++j) {
+		i32 w = img.size.x;
+		i32 h = img.size.y;
+		i32 flips = h / 2;
+		for (i32 i = 0; i < flips; ++i) {
+			pixel* a = (pixel*)pix + (w * i);
+			pixel* b = (pixel*)pix + (w * (h - i - 1));
+			for (i32 j = 0; j < w; ++j) {
 				pixel t = *a;
 				*a = *b;
 				*b = t;

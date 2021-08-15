@@ -1,22 +1,8 @@
+#pragma once
 #include <destral/destral_common.h>
 #include <vector>
 
 namespace ds {
-
-
-	//namespace vector {
-	//	// Fills an array with count elements with the element passed by parameter
-	//	template <typename T> void init(i32 count, const T& elem) {
-	//		for (i32 i = 0; i < count; i++) { push_back(elem); }
-	//	}
-
-	//	// Adds the element at the end of the array
-	//	void push_back(const T& Elem) { vec.push_back(Elem); }
-
-	//	// Removes the last element of the array
-	//	void pop_back() { dsverify(is_valid_index(size() - 1)); vec.pop_back(); }
-
-	//}
 	// Dynamic array
 	// Now it uses the std::vector implementation for now
 	template <typename T> struct darray {
@@ -44,13 +30,18 @@ namespace ds {
 		// If the count number is greater that the current size, it adds copies of elem
 		// If the count number is lower that the current size, it pops elements from the array.
 		void resize(i32 count, const T& elem) { 
-			if (size() == count) {
+			const auto last_size = size();
+			if (last_size == count) {
 				return;
 			} else {
-				if (count > size()) {
-					for (i32 i = 0; i < (count - size()); i++) push_back(elem);
+				if (count > last_size) {
+					for (i32 i = 0; i < (count - last_size); i++) {
+						push_back(elem);
+					}
 				} else {
-					for (i32 i = 0; i < (size() - count); i++) pop_back();
+					for (i32 i = 0; i < (last_size - count); i++) {
+						pop_back();
+					}
 				}
 			}
 		}

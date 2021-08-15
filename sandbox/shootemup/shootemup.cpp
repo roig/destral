@@ -1,26 +1,7 @@
 #include <destral.h>
 
 using namespace ds;
-void resources_test() {
 
-    cache_images_add_info("Zelda", "content/zelda.png");
-    cache_images_add_info("Zelda", "content/zelda.png");
-    cache_images_add_info("Zelda", "content/zelda.png");
-    cache_images_add_info("Zelda", "content/zelda.png");
-
-    resource<image> t = cache_images()->get("Zelda");
-    resource<int> it;
-
-}
-
-
-
-
-using namespace ds;
-
-
-static registry* g_r = nullptr;
-static syspool* g_syspool = nullptr;
 
 struct bullet {
     vec2 pos;
@@ -30,10 +11,6 @@ struct bullet {
 void bullet_init(registry* r, entity e) { DS_LOG("bullet init call!"); }
 void bullet_deinit(registry* r, entity e) { DS_LOG("bullet deinit call!"); }
 void bullet_update(registry* r, float dt) {
-   // DS_LOG("Start Bullet Update ---------");
-    
-
-   
     view v = r->view_create({ "bullet" });
     while (v.valid()) {
         bullet* p = v.data<bullet>(v.index("bullet"));
@@ -57,10 +34,10 @@ void bullet_update(registry* r, float dt) {
 
 
 
-    if (key_is_pressed(key::Delete)) {
+    if (key_is_triggered(key::Delete)) {
         // Here I want to create an entity and set the position of the bullet entity to 
 
-        auto all = g_r->entity_all();
+        auto all = app_registry()->entity_all();
         if (!all.empty()) {
             auto etodestroy = all[0];
 
@@ -80,16 +57,15 @@ struct player {
     float velocity = 2;
     std::string name = "awesome player";
 };
+
 void player_init(registry* r, entity e) { DS_LOG("player init call!"); }
 void player_deinit(registry* r, entity e) { DS_LOG("player deinit call!"); }
 void player_update(registry* r, float dt) {
-    
     view vobj = r->view_create({ "player" });
     view* v = &vobj;
     auto player_cpidx = v->index("player");
     while (v->valid()) {
         player* p = v->data<player>(player_cpidx);
-
         if (key_is_triggered(key::Space)) {
             // Here I want to create an entity and set the position of the bullet entity to 
             auto ebullet = r->entity_make_begin("BulletEntity");
@@ -113,37 +89,33 @@ void player_update(registry* r, float dt) {
 
 void init() {
     // Register components
-    g_r = new registry();
+    auto g_r = app_registry();
     DS_ECS_COMPONENT_REGISTER(g_r, player);
     DS_ECS_COMPONENT_REGISTER(g_r, bullet);
 
     // Register the entities
-    entity_definition player_def = { .name = "PlayerEntity" , .cp_names = {"player"} };
-    g_r->entity_register(&player_def);
-    entity_definition bullet_def = { .name = "BulletEntity" , .cp_names = {"bullet"} };
-    g_r->entity_register(&bullet_def);
+    g_r->entity_register({ .name = "PlayerEntity" , .cp_names = {"player"}, .init_fn = player_init, .deinit_fn = player_deinit });
+    g_r->entity_register({ .name = "BulletEntity" , .cp_names = {"bullet"}, .init_fn = bullet_init, .deinit_fn = bullet_deinit });
 
     // Register the systems
-    g_syspool = syspool_create();
-    syspool_add(g_syspool, "UpdatePlayerSystem", player_update);
-    syspool_add(g_syspool, "UpdateBulletSystem", bullet_update);
-    
+    g_r->system_queue_add("FixedTickQueue", "UpdatePlayerSystem", player_update);
+    g_r->system_queue_add("FixedTickQueue", "UpdateBulletSystem", bullet_update);
+   
     // Create one player
     g_r->entity_make("PlayerEntity");
 }
 
 void tick(float dt) {
-    syspool_run(g_syspool, g_r, dt);
+    app_registry()->system_queue_run("NormalTickQueue", dt);
 }
 
 void fixed_tick(float dt) {
-
+    app_registry()->system_queue_run("FixedTickQueue", dt);
 }
 
 
 void deinit() {
-    syspool_destroy(g_syspool);
-    delete g_r;
+
 }
 
 
@@ -153,6 +125,7 @@ int main() {
     cfg.height = 800;
     cfg.on_init = init;
     cfg.on_tick = tick;
+    cfg.on_fixed_tick = fixed_tick;
     cfg.on_shutdown = deinit;
     app_run(cfg);
 }
