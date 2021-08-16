@@ -23,16 +23,7 @@ namespace ds {
 	void render_init();
 
 	// Shuts down the graphics renderer
-	void render_shutdown();
-
-	// Called once per frame (does nothing for now)
-	void render_tick();
-
-	// Called once per frame (does nothing for now)
-	void render_before_render();
-
-	// Called once per frame, calls render_present internally to draw all submitted primitives.
-	void render_after_render();
+	void render_deinit();
 
 	// This draws all the render primitives previously submitted
 	void render_present();

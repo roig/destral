@@ -27,10 +27,10 @@ int main() {
 
     };
     
-    cfg.on_shutdown = [&]() {
-        
-        caches_deinit();
-    };
+    //cfg.on_shutdown = [&]() {
+    //    
+    //    caches_deinit();
+    //};
 
     static float rot = 0.01f;
     static i32 mode = 0;
@@ -39,7 +39,7 @@ int main() {
     static float y = 0;
 
 
-    cfg.on_tick = [&](float dt) {
+   /* cfg.on_tick = [&](float dt) {
         rot += 0.001f;
 
 
@@ -92,11 +92,11 @@ int main() {
         }
         
 
-    };
+    };*/
 
-    cfg.on_render = []() {
-        //gfx::draw_quad({}, {});
-    };
+    //cfg.on_render = []() {
+    //    //gfx::draw_quad({}, {});
+    //};
 
 	app_run(cfg);
     

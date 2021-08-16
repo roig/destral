@@ -226,18 +226,9 @@ namespace ds {
 		create_shaders_and_pipelines();
 	}
 
-	void render_shutdown() {
+	void render_deinit() {
 		sg_shutdown();
 	}
-
-	void render_before_render() {
-
-	}
-
-	void render_tick() {
-
-	}
-
 
 
 	void render_after_render() {

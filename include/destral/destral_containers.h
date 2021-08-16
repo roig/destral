@@ -24,7 +24,10 @@ namespace ds {
 		// Removes the last element of the array
 		void pop_back() { dsverify(is_valid_index(size()-1)); vec.pop_back(); }
 
-
+		// Inserts the other array to the end of this one
+		void insert(const darray<T>& other) {
+			vec.insert(std::end(vec), std::begin(other.vec), std::end(other.vec));
+		}
 
 		// Set the number of array elements,
 		// If the count number is greater that the current size, it adds copies of elem

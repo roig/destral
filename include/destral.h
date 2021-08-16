@@ -5,6 +5,8 @@
 #include <destral/destral_app.h>
 #include <destral/destral_base64.h>
 
+#include <destral/gfw/destral_gfw.h>
+
 #include <destral/destral_ecs.h>
 #include <destral/destral_math.h>
 

@@ -7,16 +7,16 @@
 namespace ds::platform_backend {
 
 	// Called to initialize the platform backend
-	void init(const app_config& config);
+	void init();
 
 	// Called during shutdown
-	void shutdown();
+	void deinit();
 
 	// Called every frame, will poll system events
-	void tick();
+	void poll_events();
 
 	// Called to present the window contents
-	void present();
+	void swap_buffers();
 
 	// Sets the Window Fullscreen if enabled is not 0
 	void set_fullscreen(bool enabled);

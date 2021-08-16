@@ -256,12 +256,33 @@ namespace ds {
         std::unordered_map<std::string, ds::darray<system_type>> system_queues;
     };
 
+
+
+    registry::registry() { _r = new registry_impl(); }
+    registry::~registry() { 
+       
+        // delete all the entities...
+        entity_destroy_all();
+
+        // delete all the context variables
+        ctx_unset_all();
+
+        delete _r;
+        _r = nullptr;
+    }
+
+    void registry::entity_destroy_all() {
+        auto all = entity_all();
+        for (i32 i = 0; i < all.size(); i++) {
+            entity_destroy(all[i]);
+        }
+    }
+
     /* Calls the deleter for each ctx variable set in inverse order of context variables registration. Then clears the maps/arrays of ctx vars */
-    static void ctx_unset_all(registry* r) {
-        dscheck(r);
+    void registry::ctx_unset_all() {
         // call the deleter function first
-        for (i32 i = 0; i < r->_r->ctx_vars_ordered.size(); ++i) {
-            auto ctx_var_info_ptr = r->_r->ctx_vars_ordered[r->_r->ctx_vars_ordered.size() - 1 - i];
+        for (i32 i = 0; i < _r->ctx_vars_ordered.size(); ++i) {
+            auto ctx_var_info_ptr = _r->ctx_vars_ordered[_r->ctx_vars_ordered.size() - 1 - i];
             if (ctx_var_info_ptr->deleter_fn) {
                 // delete the context variable instance!
                 ctx_var_info_ptr->deleter_fn(ctx_var_info_ptr->instance_ptr);
@@ -269,23 +290,8 @@ namespace ds {
             // deletes the pointer to the context var information
             delete ctx_var_info_ptr;
         }
-        r->_r->ctx_vars.clear();
-        r->_r->ctx_vars_ordered.clear();
-    }
-
-    registry::registry() { _r = new registry_impl(); }
-    registry::~registry() { 
-       
-        // delete all the entities...
-        auto all = entity_all();
-        for (auto i = 0; i < all.size(); i++) {
-            entity_destroy(all[i]);
-        }
-
-        // delete all the context variables
-        ctx_unset_all(this);
-        delete _r;
-        _r = nullptr;
+        _r->ctx_vars.clear();
+        _r->ctx_vars_ordered.clear();
     }
 
     // Performs the release of an entity in the registry by adding it to the recycle list
@@ -420,10 +426,15 @@ namespace ds {
             // 0 -> Emplace the component to the storage (only reserves memory) like a malloc
             void* cp_data = st->emplace(e);
 
-            // 1 -> Placement new (defalut construct) on that memory
+            // 1 -> Placement new (default construct) on that memory
             // this will call default constructors for all the variables in the struct component
             if (st->cd.placement_new_fn) {
                 st->cd.placement_new_fn(cp_data);
+            }
+
+            // 2 -> Call serialize function for that component
+            if (st->cd.serialize_fn) {
+                st->cd.serialize_fn(this, e, cp_data);
             }
         }
         return e;
@@ -498,7 +509,7 @@ namespace ds {
     }
 
     bool registry::entity_valid(entity e) {
-        return (e.id < _r->entities.size() ) && ( _r->entities[e.id].equal(e) );
+        return (e.id < _r->entities.size() ) && ( _r->entities[e.id] == (e) );
     }
 
     ds::darray<entity> registry::entity_all() {
@@ -535,7 +546,7 @@ namespace ds {
 
     bool registry::entity_is_destroy_delayed(entity e) {
         for (auto i = 0; i < _r->entities_to_destroy.size(); i++) {
-            if (_r->entities_to_destroy[i].equal(e)) {
+            if (_r->entities_to_destroy[i] == (e)) {
                 return true;
             }
         }
@@ -554,17 +565,20 @@ namespace ds {
     void registry::system_queue_add(const char* queue_name, const char* sys_name, system_update_fn* sys_update_fn) {
         dscheck(queue_name);
         dscheck(sys_name);
+        for (i32 i = 0; i < _r->system_queues[queue_name].size(); i++) {
+            dsverifym(_r->system_queues[queue_name][i].name != sys_name, std::format("System name: {} is duplicated.", sys_name));
+        }
         _r->system_queues[queue_name].push_back(system_type(sys_name, sys_update_fn));
     }
 
     
-    void registry::system_queue_run(const char* queue_name, float dt) {
+    void registry::system_queue_run(const char* queue_name) {
         dscheck(queue_name);
         if (_r->system_queues.contains(queue_name)) {
             auto& sys_list = _r->system_queues[queue_name];
             for (i32 i = 0; i < sys_list.size(); i++) {
                 if (sys_list[i].update_fn) {
-                    sys_list[i].update_fn(this, dt);
+                    sys_list[i].update_fn(this);
                     entity_destroy_flush_delayed();
                 }
             }

@@ -35,17 +35,17 @@ int main() {
         ////16x16 frames  1,11 frame top left one
     };
     
-    cfg.on_shutdown = [&]() {
-        caches_deinit();
-    };
+    //cfg.on_shutdown = [&]() {
+    //    caches_deinit();
+    //};
 
-    cfg.on_tick = [&](float dt) {
+    //cfg.on_tick = [&](float dt) {
 
-    };
+    //};
 
-    cfg.on_render = []() {
-        draw_texture(math::build_matrix({ 0,0 }), cache_images()->get("ZeldaLink"));
-    };
+    //cfg.on_render = []() {
+    //    draw_texture(math::build_matrix({ 0,0 }), cache_images()->get("ZeldaLink"));
+    //};
 
 	app_run(cfg);
     

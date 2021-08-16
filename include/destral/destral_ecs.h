@@ -16,7 +16,7 @@
     
 
     ////////// Components
-
+    //TODO TODO
     Components are structs that you can register into the registry and assign them a type name to acces them later.
     
     The registry provides an special template to ease the registration process:   ecs::cp_register<T>
@@ -51,7 +51,7 @@
     that owns this component is passed in the init and deinit second argument.
 
 
-    ////////// Entities
+    ////////// Registering Entities
 
     Entities are type identifiers that are composed by components.
     The registry allows the registration of entities with a number of components using the ecs::entity_register() function.
@@ -66,66 +66,76 @@
     
 
     ////////// Construction of an entity:
-    0 -> create the entity in the registry
+    There are two ways of constructing an entity:
+        * using entity_make()
+            Instantiates an entity and calls the initialization function on it if it exists.
+            This will call internally entity_make_begin and then entity_make_end.
+            This will call the entity init function registered for the entity type if any after the creation of all the components.
+            IMPORTANT: You can call this function during view iterations. The new created entity will NOT be iterated in the current view.
 
-    for each component (order specified on registration) {
-        1 -> construct (placement new) the component 
-        2 -> serialize/initialize component (default initialize) (This function should not rely on other components!)
-    }
-
-    
-    --- now all the components are constructed and default initialized for that entity ---
-    3 (TODO) -> call user initialize function (this should be a callback provided in entity_make)
-        The purpose of this function is to allow to initialize some variables on a per instance or to be used in the step 4. 
-        It´s like a custom constructor before the real entity constructor in step 4.
-    
-    4 (TODO) -> call initialize entity function. (begin_play) (this should be a callback set when registering a new entity type)
-        this is like a constructor by parameter for that entity, because it can read the config variables set by step 3
-        and configure all the components needed based on those configuration variables. It can be null of course.
-        (This function can call other entity instantiation functions!) BUT! if you do it it will probably invalidate component
-        pointers you saved, so retrieve them again after instantiation.
+        * using entity_make_begin() and entity_make_end();
+            entity_make_begin() Will instantiate an entity with all the components WITHOUT calling the init function of the entity type.
+            This allows you to setup the parameters of the entity components before calling the init function. (like a constructor by params)
+            entity_make_end() Finishes the instantiation of an entity created by entity_make_begin
+            IMPORTANT: UB if you don't call entity_make_end on the entity returned by this function in order to have a fully constructed/initialized entity
+            IMPORTANT: UB if used on an entity not created using the entity_make_begin.
+            IMPORTANT: UB if called multiple times on the same entity.
 
     
-    Example:
+    The creation of an entity internally looks like this:
 
-    struct pos2d {
-        int x = 1;
-        int y = 2;
-        static void placement_new() {placement_new()...}
-        static void serialize() { read from key value pairs..  }
-        // no initialize needed here
-    };
-
-    struct player {
-        std::string name = "Unknown";
-        int startingx = 0;
-        static void placement_new() {placement_new()...}
-        static void serialize() { read from key value pairs..  }
-
-        // this function is not from the component... its for the entity..
-        static void initialize() {
-            get_cp(pos2d)->x = startingx;
+    Step 1: create the entity in the registry.
+    Step 2: 
+        for each component (order specified on registration) {
+            1 -> construct (placement new) the component (calls the constructor of the component)
+            2 -> call cp_serialize component function if any is set for that component 
+            (You can retrieve inside this function ONLY components that were constructed/serialized before the current one)
         }
-
-        
-    };
-
-    register_cp(pos2d, pos2d::serialize);
-    register_cp(player, player::serialize);
+    --- now all the components are constructed and default initialized (cp_serialize function) for that entity ---
+    Step 3: Call the init function for that entity of the entity type if any.
 
 
-    register_entity_type("Text2D", {{"pos2d", "text_rd"}}, player::initialize );
 
-    ///////// Destruction of an entity:
-    0 -> Call (TODO) (end_play) function registered for the entity. (
-    for each component (inverse order specified on registration) {
-        1 -> call on_cleanup function component if any. (This function MUST not rely on other components!, CAN'T)
-        2 -> call destructor of the component if any.
-        3 ->
-    }
-    3 -> Destroy the entity from the registry.
     
+    ***** TODO NOT IMPLEMENTED AND EXPLAIN THIS CORRECTLY *****
+    ***** (TODO) -> call user initialize function (this should be a callback provided in entity_make)
+    *****     The purpose of this function is to allow to initialize some variables on a per instance or to be used in the step 4. 
+    *****     It´s like a custom constructor before the real entity constructor in step 4.
+    ***** Step 4: Call the initialize entity function. (begin_play) (this should be a callback set when registering a new entity type)
+    *****     this is like a constructor by parameter for that entity, because it can read the config variables set by step 3
+    *****     and configure all the components needed based on those configuration variables. It can be null of course.
+    *****     (This function can call other entity instantiation functions!) BUT! if you do it it will probably invalidate component
+    *****     pointers you saved, so retrieve them again after instantiation.
+    ***** 
 
+    ////////// Destruction of an entity:
+    There is two ways of destroying an entity:
+        * using entity_destroy (Non delayed): 
+            This will destroy all the entity type components and the entity from the registry.
+            IMPORTANT: Undefined Behaviour if you call this function during a view iteration. 
+            IMPORTANT: Use the delayed mode if you need to destroy an entity during a view iteration.
+
+        * using entity_destroy_delayed (Delayed):
+            This marks entity to be destroyed.
+            IMPORTANT: You MUST use this to destroy entities during iterations.
+            
+            - The function entity_destroy_flush_delayed will iterate and call entity_destroy on all
+            entities that are marked to be destroyed.
+            IMPORTANT: You MUST NOT call entity_destroy_flush_delayed during a view iteration.
+            IMPORTANT: This function is called after every system update.
+              
+            - Use the function entity_is_destroy_delayed to retrieve if the entity is marked for destroy or not
+     
+    
+    Entity destruction internal steps when calling entity_destroy :
+
+    Step 1: First calls deinit function registered for that entity type if any is set.
+    Step 2: 
+        for each component (inverse order specified on registration) {
+            1 -> call destructor of the component if any.
+            2 -> remove the component memory from the storage.
+        }
+    Step 3: Destroy the entity from the registry.
 */
 #include <destral/destral_common.h>
 #include <destral/destral_containers.h>
@@ -144,14 +154,14 @@ struct entity {
     i32 version = 0;
     i32 type_id = max_type_id();
 
-    // The entity_null is a entity that represents a null entity.
-    static const entity null;
+    // Returns true only if the entities are equal
+    bool operator== (const entity& o) const { return (id == o.id) && (version == o.version) && (type_id == o.type_id); }
 
     // Returns true only if the entity is null
-    bool is_null() { return equal(null);  }
+    bool is_null() { return *this == null;  }
 
-    // Returns true only if the entities are equal
-    bool equal(entity o) const { return (id == o.id) && (version == o.version) && (type_id == o.type_id); }
+    // The entity_null is a entity that represents a null entity.
+    static const entity null;
 
     // Stringyfies an entity
     std::string to_string();
@@ -263,11 +273,21 @@ struct registry {
     //--------------------------------------------------------------------------------------------------
     // Component functions
     #define DS_ECS_COMPONENT_REGISTER(r,T) r->cp_register<T>(#T) 
+    #define DS_ECS_COMPONENT_REGISTER_WITH_SERIALIZE(r,T) r->cp_register_serialize<T>(#T)
     void cp_register(const cp_definition& cp_def);
+
+    template <typename T> void cp_register_serialize(const char* cp_name) {
+        auto placement_new_fn = [](void* mem_cp) { new (mem_cp) T(); }; // placement new
+        auto destructor_fn = [](void* mem_cp) { ((T*)mem_cp)->~T(); }; // destructor
+        auto srlz_fn = [](registry* r, entity e, void* mem_cp) { ((T*)mem_cp)->cp_serialize(r, e); }; // serialize
+        cp_definition cd{ .name = cp_name, .cp_sizeof = (i32)sizeof(T), .placement_new_fn = placement_new_fn,
+        .delete_fn = destructor_fn, .serialize_fn = srlz_fn };
+        cp_register(cd);
+    }
+
     template <typename T> void cp_register(const char* cp_name) {
         auto placement_new_fn = [](void* mem_cp) { new (mem_cp) T(); }; // placement new
         auto destructor_fn = [](void* mem_cp) { ((T*)mem_cp)->~T(); }; // destructor
-        //TODO auto serialize_fn = [](registry* r, entity e, void* cp) { ((T*)mem_cp)->serialize(r, e); };
         cp_definition cd{ .name = cp_name, .cp_sizeof = (i32)sizeof(T), .placement_new_fn = placement_new_fn,
         .delete_fn = destructor_fn };
         cp_register(cd);
@@ -308,13 +328,13 @@ struct registry {
     // Returns true only if the entity is valid. Valid means that registry has created it. 
     bool entity_valid(entity e);
 
-    // Destroy the entity with the components associated with 
-    // IMPORTANT: Undefined Behaviour if you call this function while iterating views.
-    void entity_destroy(entity e);
-
     // Returns a copy of all the entities in the registry (WARNING: this is a slow operation)
     // Remember that after operations this vector will not be update.
     ds::darray<entity> entity_all();
+
+    // Destroy the entity with the components associated with 
+    // IMPORTANT: Undefined Behaviour if you call this function while iterating views.
+    void entity_destroy(entity e);
 
     // Marks this entity to be destroyed (using entity_destroy_flush_delayed)
     // You can use this during view iterations
@@ -328,6 +348,10 @@ struct registry {
     // IMPORTANT: Undefined behaviour if this function is called during a view iteration
     void entity_destroy_flush_delayed();
 
+    // Destroys ALL the entities with the components associated with
+    // IMPORTANT: Undefined Behaviour if you call this function while iterating views.
+    void entity_destroy_all();
+
     //--------------------------------------------------------------------------------------------------
     // Views 
     view view_create(const ds::darray<const char*>& cp_names);
@@ -337,11 +361,11 @@ struct registry {
     //--------------------------------------------------------------------------------------------------
     // Systems
     // Adds a system function to the list of systems in a queue
-    typedef void (system_update_fn)(registry* r, float dt);
+    typedef void (system_update_fn)(registry* r);
     void system_queue_add(const char* queue_name, const char* sys_name, system_update_fn* sys_update_fn);
 
     // This runs all the registered systems in the queue name.
-    void system_queue_run(const char* queue_name, float dt);
+    void system_queue_run(const char* queue_name);
 
     //--------------------------------------------------------------------------------------------------
     // Context Variables (Globals in the registry)
@@ -350,7 +374,10 @@ struct registry {
     void* ctx_set(const char* ctx_name_id, void* instance_ptr, void (*del_fn)(void* ptr));
     template <typename T> T* ctx_set(const char* ctx_name_id, T* instance_ptr) { return (T*)ctx_set(ctx_name_id, instance_ptr, [](void* ptr) {((T*)ptr)->~T(); }); }
     template <typename T> T* ctx_set_instantiate(const char* ctx_name_id) { return (T*)ctx_set(ctx_name_id, new T(), [](void* ptr) {((T*)ptr)->~T(); }); }
+
     void ctx_unset(const char* ctx_name_id);
+    // Calls the deleter for each ctx variable set in inverse order of context variables registration. Then clears the maps/arrays of ctx vars
+    void ctx_unset_all();
 
     // Returns the pointer to the context variable instance or nullptr
     void* ctx_get(const char* ctx_name_id);

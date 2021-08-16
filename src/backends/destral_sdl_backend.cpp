@@ -4,6 +4,7 @@
 #include <destral/destral_input.h>
 #include <SDL.h>
 #include <array>
+#include <unordered_map>
 
 // #include <SDL_syswm.h>
 
@@ -380,7 +381,7 @@ namespace ds {
 // platform_backend implementation for SDL
 namespace ds::platform_backend {
 	// Called to initialize the platform backend
-	void init(const app_config& config) {
+	void init() {
 
 		// TODO: Redirect the sdl logs to our own function
 		// control this via some kind of config flag
@@ -394,9 +395,7 @@ namespace ds::platform_backend {
 
 
 		// initialize SDL
-		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) != 0) {
-			DS_FATAL("Failed to initialize SDL2");
-		}
+		dsverifym(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) == 0, "Failed to initialize SDL2");
 
 		int flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
 
@@ -418,12 +417,9 @@ namespace ds::platform_backend {
 
 
 		// create the window
-		sdl::g_sdl.window = SDL_CreateWindow(config.name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config.width, config.height, flags);
-		if (sdl::g_sdl.window == nullptr) {
-			DS_FATAL("Failed to create a Window");
-
-
-		}
+		sdl::g_sdl.window = SDL_CreateWindow(app_get_config().name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
+			app_get_config().width, app_get_config().height, flags);
+		dsverifym(sdl::g_sdl.window, "Failed to create a Window");
 
 		// set window properties
 		SDL_SetWindowResizable(sdl::g_sdl.window, SDL_TRUE);
@@ -433,7 +429,7 @@ namespace ds::platform_backend {
 	}
 
 	// Called during shutdown
-	void shutdown() {
+	void deinit() {
 		if (sdl::g_sdl.window != nullptr) {
 			SDL_DestroyWindow(sdl::g_sdl.window);
 		}
@@ -450,7 +446,7 @@ namespace ds::platform_backend {
 	}
 
 	// Called every frame
-	void tick() {
+	void poll_events() {
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {
 			switch (e.type) {
@@ -615,7 +611,7 @@ namespace ds::platform_backend {
 	}
 
 	// Called to present the window contents
-	void present() {
+	void swap_buffers() {
 		SDL_GL_SwapWindow(sdl::g_sdl.window);
 	}
 
