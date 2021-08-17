@@ -623,6 +623,10 @@ namespace ds::platform_backend {
 			SDL_SetWindowFullscreen(sdl::g_sdl.window, 0);
 	}
 
+	double get_performance_counter_miliseconds() {
+		return (double)(SDL_GetPerformanceCounter() * 1000) / SDL_GetPerformanceFrequency();
+	}
+
 	void* gl_get_func(const char* name) {
 		return SDL_GL_GetProcAddress(name);
 	}

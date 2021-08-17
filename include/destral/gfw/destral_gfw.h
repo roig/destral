@@ -10,10 +10,11 @@ namespace ds {
 	// This is the struct that handles the hierarchy of entities.
 	struct hierarchy {
 	public:
+		static constexpr const char* cp_name = "hierarchy";
 		~hierarchy() {
 			// dettach all children from this entity
 			for (i32 i = 0; i < _children.size(); i++) {
-				auto child_hr = _registry->cp_try_get<hierarchy>(_children[i], "hierarchy");
+				auto child_hr = _registry->cp_try_get<hierarchy>(_children[i], cp_name);
 				dsverify(child_hr);
 				child_hr->set_parent(entity::null);
 			}
@@ -26,6 +27,8 @@ namespace ds {
 		float rot() { return _rot_degrees; }
 		entity parent() { return _parent; }
 		const darray<entity>& children() { return _children; }
+		const mat3& ltw() { return _ltw; }
+		const mat3& ltp() { return _ltp; }
 
 		// Sets a new position. This will update children. Remember that this will not use colliders.
 		void set_pos(const vec2& new_pos) { 
@@ -58,7 +61,7 @@ namespace ds {
 			if (!oldParent.is_null()) {
 				// If we are parented, dettach from it
 				// remove to entity from oldParent children list
-				auto oldParent_tr = _registry->cp_try_get<hierarchy>(oldParent, "hierarchy");
+				auto oldParent_tr = _registry->cp_try_get<hierarchy>(oldParent, cp_name);
 				dsverify(oldParent_tr);
 
 				oldParent_tr->_children.remove_single(to);
@@ -72,7 +75,7 @@ namespace ds {
 			}
 
 			if (!new_parent.is_null()) {
-				auto newParentTr = _registry->cp_try_get<hierarchy>(new_parent, "hierarchy");
+				auto newParentTr = _registry->cp_try_get<hierarchy>(new_parent, cp_name);
 				dsverify(newParentTr);
 
 				// Attach to the new parent, add to in the new parent children list
@@ -86,7 +89,7 @@ namespace ds {
 		};
 
 		void add_child(entity new_child) {
-			auto child_hr = _registry->cp_try_get<hierarchy>(new_child, "hierarchy");
+			auto child_hr = _registry->cp_try_get<hierarchy>(new_child, cp_name);
 			dsverify(child_hr);
 			child_hr->set_parent(_entity);
 		}
@@ -96,7 +99,7 @@ namespace ds {
 		}
 
 		void remove_child(entity child_to_remove) {
-			auto child_hr = _registry->cp_try_get<hierarchy>(child_to_remove, "hierarchy");
+			auto child_hr = _registry->cp_try_get<hierarchy>(child_to_remove, cp_name);
 			dsverify(child_hr);
 			child_hr->set_parent(entity::null);
 		}
@@ -110,7 +113,7 @@ namespace ds {
 			darray<entity> children_hierarchy;
 			children_hierarchy.insert(_children);
 			for (i32 i = 0; i < _children.size(); i++) {
-				auto child_hr = _registry->cp_try_get<hierarchy>(_children[i], "hierarchy");
+				auto child_hr = _registry->cp_try_get<hierarchy>(_children[i], cp_name);
 				dsverify(child_hr);
 				children_hierarchy.insert(child_hr->get_children_hierarchy());
 			}
@@ -123,7 +126,7 @@ namespace ds {
 			hierarchy* hr = this;
 			while (hr && !hr->_parent.is_null()) {
 				parents.push_back(hr->_parent);
-				hr = _registry->cp_try_get<hierarchy>(hr->_parent, "hierarchy");
+				hr = _registry->cp_try_get<hierarchy>(hr->_parent, cp_name);
 			}
 			return parents;
 		}
@@ -148,7 +151,7 @@ namespace ds {
 		inline void update_matrices() {
 			glm::mat3 parent_ltw(1.0f);
 			if (!_parent.is_null()) {
-				auto parent_tr = _registry->cp_try_get<hierarchy>(_parent, "hierarchy");
+				auto parent_tr = _registry->cp_try_get<hierarchy>(_parent, cp_name);
 				dsverify(parent_tr);
 				parent_ltw = parent_tr->_ltw;
 			}
@@ -167,7 +170,7 @@ namespace ds {
 			const auto& parent_children = parent_tr.children();
 			for (i32 i = 0; i < parent_children.size(); i++) {
 				auto child = parent_children[i];
-				auto child_tr = _registry->cp_try_get<hierarchy>(child, "hierarchy");
+				auto child_tr = _registry->cp_try_get<hierarchy>(child, cp_name);
 				dsverify(child_tr);
 
 				// update the new local_to_parent and local_to_world for that child
@@ -187,6 +190,8 @@ namespace ds {
 	
 	// Orthographic camera.
 	struct camera {
+		static constexpr const char* cp_name = "camera";
+
 		// The viewport is the rectangle into which the contents of the
 		// camera will be displayed, expressed as a factor (between 0 and 1)
 		// of the size of the screen window to which the camera is applied.
@@ -203,20 +208,21 @@ namespace ds {
 		/** @brief color used when the camera clears their viewport */
 		glm::vec4 clear_color = glm::vec4{ 0.5f, 0.5f, 0.5f, 1.0f };
 
-		// half vertical size in world units
-		float half_vsize = 360.0f;
+		// orhto width size in world units
+		float ortho_width = 1.0f;
 
-		// aspect ratio of the camera, used to calculate the width, based on half_vsize
+		// aspect ratio of the camera, used to calculate the height, based on ortho_width
 		float aspect = 16.0f / 9.0f;
 
 		void cp_serialize(registry* r, entity e) {}
 
-		// Renders the camera
-		static void update_camera_system(registry* r);
+		// Renders all the camera entities
+		static constexpr const char* e_name = "ds_camera_entity";
+		static void render_cameras_system(registry* r);
 	};
 
 
-	void game_framework_init(registry* r);
+	void game_framework_register_entities(registry* r);
 
 
 	void game_framework_deinit();

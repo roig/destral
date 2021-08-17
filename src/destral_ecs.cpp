@@ -79,7 +79,7 @@
 
 #include <destral/destral_ecs.h>
 #include <destral/destral_base64.h>
-
+#include "backends/destral_platform_backend.h"
 
 #include <unordered_map>
 
@@ -533,7 +533,7 @@ namespace ds {
     void registry::cp_register(const cp_definition& cd) {
         dscheck(!cd.name.empty());
         const auto cp_id = ds::fnv1a_64bit(cd.name);
-        dsverifym(!_r->cp_storages.contains(cp_id), "Trying to register a new component with a registered name."); 
+        dsverifym(!_r->cp_storages.contains(cp_id), std::format("Trying to register a new component with a registered name. {}", cd.name)); 
         cp_storage cp_st;
         cp_st.cd = cd;
         cp_st.cp_id = cp_id;
@@ -572,17 +572,24 @@ namespace ds {
     }
 
     
-    void registry::system_queue_run(const char* queue_name) {
+    registry::sys_queue_run_stats registry::system_queue_run(const char* queue_name) {
         dscheck(queue_name);
+        sys_queue_run_stats queue_stats;
+        queue_stats.queue_name = queue_name;
         if (_r->system_queues.contains(queue_name)) {
             auto& sys_list = _r->system_queues[queue_name];
             for (i32 i = 0; i < sys_list.size(); i++) {
+                auto last = platform_backend::get_performance_counter_miliseconds();
                 if (sys_list[i].update_fn) {
                     sys_list[i].update_fn(this);
                     entity_destroy_flush_delayed();
                 }
+                auto now = platform_backend::get_performance_counter_miliseconds();
+                queue_stats.sys_stats.push_back(
+                    { .sys_name = sys_list[i].name, .miliseconds = std::max(0.0, now - last) });
             }
         }
+        return queue_stats;
     }
 
     void* registry::ctx_set(const char* ctx_name_id, void* instance_ptr, void (*del_fn)(void* ptr)) {

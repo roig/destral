@@ -21,6 +21,9 @@ namespace ds::platform_backend {
 	// Sets the Window Fullscreen if enabled is not 0
 	void set_fullscreen(bool enabled);
 
+	// Returns the performance counter in miliseconds
+	double get_performance_counter_miliseconds();
+
 	// OpenGL Methods
 	void* gl_get_func(const char* name);
 	void* gl_context_create();

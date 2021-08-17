@@ -272,7 +272,7 @@ struct registry {
 
     //--------------------------------------------------------------------------------------------------
     // Component functions
-    #define DS_ECS_COMPONENT_REGISTER(r,T) r->cp_register<T>(#T) 
+    #define DS_ECS_COMPONENT_REGISTER(r,T,cp_name) r->cp_register<T>(cp_name) 
     #define DS_ECS_COMPONENT_REGISTER_WITH_SERIALIZE(r,T) r->cp_register_serialize<T>(#T)
     void cp_register(const cp_definition& cp_def);
 
@@ -361,11 +361,23 @@ struct registry {
     //--------------------------------------------------------------------------------------------------
     // Systems
     // Adds a system function to the list of systems in a queue
+    #define DS_ECS_QUEUE_ADD_SYSTEM(r, queue_name, fun) r->system_queue_add(queue_name, #fun , fun )
     typedef void (system_update_fn)(registry* r);
     void system_queue_add(const char* queue_name, const char* sys_name, system_update_fn* sys_update_fn);
 
-    // This runs all the registered systems in the queue name.
-    void system_queue_run(const char* queue_name);
+
+    struct sys_queue_run_stats {
+        std::string queue_name;
+        struct sys_run_stats {
+            std::string sys_name;
+            double miliseconds;
+        };
+        darray<sys_run_stats> sys_stats;
+    };
+    // This runs all the registered systems in the queue name and returns system statistics.
+    sys_queue_run_stats system_queue_run(const char* queue_name);
+
+    
 
     //--------------------------------------------------------------------------------------------------
     // Context Variables (Globals in the registry)

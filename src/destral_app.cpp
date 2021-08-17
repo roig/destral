@@ -29,6 +29,19 @@ namespace ds {
 	static time g_time;
 	static registry* g_registry = nullptr;
 
+	void s_run_queue(registry* r, const char* queue_name, bool log_run = false) {
+		if (!log_run) {
+			r->system_queue_run(queue_name);
+		} else {
+			auto stats = r->system_queue_run(queue_name);
+			std::string s = std::format("\nSystems queue {}:\n", stats.queue_name);
+			for (i32 i = 0; i < stats.sys_stats.size(); i++) {
+				s += std::format("\t sys: {}   milis: {}\n", stats.sys_stats[i].sys_name, stats.sys_stats[i].miliseconds);
+			}
+			DS_LOG(s);
+		}
+	}
+
 	app_config app_get_config() {
 		return g_cfg;
 	}
@@ -56,8 +69,8 @@ namespace ds {
 		if (g_cfg.on_ecs_config) { g_cfg.on_ecs_config(g_registry); }
 
 		// run init systems
-		g_registry->system_queue_run(queue::engine_init);
-		g_registry->system_queue_run(queue::game_init);
+		s_run_queue(g_registry,queue::engine_init);
+		s_run_queue(g_registry,queue::game_init);
 
 		typedef std::chrono::high_resolution_clock hrclock;
 		hrclock::time_point last = hrclock::now();
@@ -101,13 +114,13 @@ namespace ds {
 
 			// 1) Begin Frame
 			{
-				g_registry->system_queue_run(queue::pre_update);
+				s_run_queue(g_registry,queue::pre_update);
 			}
 
 			// 2) Full tick perform
 			{
 				// 2) Tick for the full frame dt (independent timestep)
-				g_registry->system_queue_run(queue::update);
+				s_run_queue(g_registry,queue::update);
 			}
 
 
@@ -115,7 +128,7 @@ namespace ds {
 			{
 				g_app.doing_fixed_update = true;
 				while (g_time.dt_fixed_acc >= g_time.current_fixed_dt) {
-					g_registry->system_queue_run(queue::fixed_update);
+					s_run_queue(g_registry,queue::fixed_update);
 					g_time.dt_fixed_acc -= g_time.current_fixed_dt;
 				}
 				g_app.doing_fixed_update = false;
@@ -123,9 +136,9 @@ namespace ds {
 
 			// 4) render
 			{
-				g_registry->system_queue_run(queue::pre_render);
-				g_registry->system_queue_run(queue::render);
-				g_registry->system_queue_run(queue::post_render);
+				s_run_queue(g_registry,queue::pre_render);
+				s_run_queue(g_registry,queue::render);
+				s_run_queue(g_registry,queue::post_render);
 			}
 		}
 
@@ -133,8 +146,8 @@ namespace ds {
 		// Cleanup process
 		{
 
-			g_registry->system_queue_run(queue::game_deinit);
-			g_registry->system_queue_run(queue::engine_deinit);
+			s_run_queue(g_registry,queue::game_deinit);
+			s_run_queue(g_registry,queue::engine_deinit);
 			
 			delete g_registry;
 		}

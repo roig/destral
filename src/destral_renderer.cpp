@@ -7,7 +7,10 @@
 #include <unordered_map>
 #include <map>
 
-
+// Current limitations
+// * There can be only one camera, check render_set_camera, 
+//		Why? because sg_update_buffer can't be updated inside the same frame.
+//		Whe should use sg_append_buffer but it's not implemented now.
 
 namespace ds {
 	
@@ -74,10 +77,37 @@ namespace ds {
 		sg_destroy_image(texture);
 	}
 
+
+
+
+
 	struct mesh_data {
 		sg_bindings bind = { 0 };
 		int vertex_start = 0;
 		int vertex_count = 0;
+	};
+
+	struct camera_data {
+		camera_data(const vec4& camera_vp, const mat3& camera_ltw, float aspect, float ortho_width) {
+			dsverify(aspect >= 0);
+			const float half_vsize = ortho_width / aspect;
+			ivec2 vp_size;
+			platform_backend::get_drawable_size(&vp_size.x, &vp_size.y);
+			projection_matrix = glm::ortho(-aspect * half_vsize, aspect * half_vsize, -half_vsize, half_vsize);
+			view_matrix = glm::inverse(camera_ltw);
+			scis = { (i32)(camera_vp.x * vp_size.x),
+				(i32)(camera_vp.y * vp_size.y),
+				(i32)((camera_vp.z * vp_size.x) - (camera_vp.x * vp_size.x)),
+				(i32)((camera_vp.w * vp_size.y) - (camera_vp.y * vp_size.y)) };
+			vp = { (i32)(camera_vp.x * vp_size.x),
+				(i32)(camera_vp.y * vp_size.y),
+				(i32)((camera_vp.z * vp_size.x) - (camera_vp.x * vp_size.x)),
+				(i32)((camera_vp.w * vp_size.y) - (camera_vp.y * vp_size.y)) };
+		}
+		ivec4 vp;
+		ivec4 scis;
+		mat3 projection_matrix;
+		mat3 view_matrix;
 	};
 
 	struct renderer_state {
@@ -99,6 +129,8 @@ namespace ds {
 		// Per frame vertex buffer object
 		static constexpr std::size_t MAX_VERTEX_DATA_BYTES_SIZE = 250000 * 4; // Maximum vertex data in the VBO
 		sg_buffer vbo = { 0 };
+		
+		std::vector< camera_data > cameras;
 	};
 
 	static renderer_state g_rs; // renderer state
@@ -230,128 +262,41 @@ namespace ds {
 		sg_shutdown();
 	}
 
-
-	void render_after_render() {
-		render_present();
+	// Returns the vertex data transformed by a projection and a view matrix
+	std::vector<float> s_transform_vertex_data(const mat3& projection, const mat3& view) {
+		const mat3 vp_mat = projection * view;
+		std::vector<float> transformed_vertex_data = g_rs.vertex_data;
+		for (i32 i = 0; i < transformed_vertex_data.size(); i = i + 8 /* vertex stride */) {
+			const vec3 vpos = vp_mat * vec3(transformed_vertex_data[i], transformed_vertex_data[i + 1], 1);
+			transformed_vertex_data[i] = vpos.x;
+			transformed_vertex_data[i + 1] = vpos.y;
+		}
+		return transformed_vertex_data;
 	}
 
-
-	// This draws all primitives using the projection and view passed by parameters
-	void draw_all_primitives(const mat3& projection, const mat3& view) {
-		// TODO check frustrum culling
-
-	}
-	
-	//void draw_present_all(const mat3& projection, const mat3& view) {
-
-	//	g_rs.vertex_data_transformed = g_rs.vertex_data;
-
-	//	const mat3 VP = projection * view;
-
-	//	// Transforms all the vertex data with the View projection matrix
-	//	for (auto vertex_idx = 0; vertex_idx < g_rs.vertex_data.size(); vertex_idx = vertex_idx + 8) {
-	//		vec3 point = VP * vec3(g_rs.vertex_data_transformed[vertex_idx], g_rs.vertex_data_transformed[vertex_idx + 1], 1);
-	//		g_rs.vertex_data_transformed[vertex_idx] = point.x;
-	//		g_rs.vertex_data_transformed[vertex_idx+1] = point.y;
-	//	}
-
-	//	// If no vertex data, return!
-	//	// upload all the vertex data to the gpu
-	//	sg_range vbo_range;
-	//	vbo_range.ptr = g_rs.vertex_data_transformed.data();
-	//	vbo_range.size = g_rs.vertex_data_transformed.size() * sizeof(float) <= g_rs.MAX_VERTEX_DATA_BYTES_SIZE ? g_rs.vertex_data_transformed.size() * sizeof(float) : g_rs.MAX_VERTEX_DATA_BYTES_SIZE;
-	//	if (g_rs.vertex_data_transformed.size() * sizeof(float) > g_rs.MAX_VERTEX_DATA_BYTES_SIZE) {
-	//		DS_WARNING("Vertex data exceds the maximum VBO size, probably some primitives will be not rendered.");
-	//	}
-
-	//	// only update the buffer if it has data
-	//	if (g_rs.vertex_data_transformed.size() != 0) {
-	//		sg_update_buffer(g_rs.vbo, vbo_range);
-	//	}
-
-	//	ivec2 draw_sz;
-	//	platform_backend::get_drawable_size(&draw_sz.x, &draw_sz.y);
-	//	/* default pass action (clear to grey) */
-	//	sg_pass_action pass_action = { 0 };
-	//	pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .value = {0.5f, 0.5f, 0.5f, 1.0f } };
-
-	//	sg_begin_default_pass(&pass_action, draw_sz.x, draw_sz.y);
-
-	//	for (auto& z : g_rs.render_list) {
-	//		//DS_LOG(std::format("Z : {}", z.first));
-	//		for (auto& pip : z.second) {
-
-	//			sg_apply_pipeline(sg_pipeline(pip.first));
-	//			for (auto& md : pip.second) {
-	//				sg_apply_bindings(md.bind);
-	//				//	sg_apply_uniforms(..) // this is optinal to update uniform data when using custom shaders
-	//				sg_draw(md.vertex_start, md.vertex_count, 1);
-	//			}
-	//		}
-	//	}
-	//	sg_end_pass();
-	//	sg_commit();
-
-	//	
-
-
-	//}
-
-	void draw_camera(ivec2 vp_size, vec4 /* un rect potser? */camera_vp, const mat3& camera_ltw, float aspect, float half_vsize, vec4 clear_color)
-	{
-		sg_apply_viewport((i32)(camera_vp.x * vp_size.x), (i32)(camera_vp.y * vp_size.y),
-			(i32)((camera_vp.z * vp_size.x) - (camera_vp.x * vp_size.x)), (i32)((camera_vp.w * vp_size.y) - (camera_vp.y * vp_size.y)), false);
-		sg_apply_scissor_rect((i32)(camera_vp.x * vp_size.x), (i32)(camera_vp.y * vp_size.y),
-			(i32)((camera_vp.z * vp_size.x) - (camera_vp.x * vp_size.x)), (i32)((camera_vp.w * vp_size.y) - (camera_vp.y * vp_size.y)), false);
-
-		glClearColor(clear_color.r, clear_color.g, clear_color.b, clear_color.a);
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		// Set up projection
-		mat3 projection_mat(glm::ortho(-aspect * half_vsize, aspect * half_vsize, -half_vsize, half_vsize));
-
-		// Setup view matrix from inverse camera
-		glm::mat3 view_mat = glm::inverse(camera_ltw);
-
-		draw_all_primitives(projection_mat, view_mat);
-	}
-
-	
-
-
-	
-
-	void render_present() {
-
-		/*g_rs.vertex_data.clear();
-		g_rs.render_list.clear();*/
-
-		// If no vertex data, return!
+	void s_gpu_upload_vertex_data(const std::vector<float>& vdata) {
 		// upload all the vertex data to the gpu
 		sg_range vbo_range;
-		vbo_range.ptr = g_rs.vertex_data.data();
-		vbo_range.size = g_rs.vertex_data.size() * sizeof(float) <= g_rs.MAX_VERTEX_DATA_BYTES_SIZE ? g_rs.vertex_data.size() * sizeof(float) : g_rs.MAX_VERTEX_DATA_BYTES_SIZE;
-		if (g_rs.vertex_data.size() * sizeof(float) > g_rs.MAX_VERTEX_DATA_BYTES_SIZE) {
+		vbo_range.ptr = vdata.data();
+		vbo_range.size = vdata.size() * sizeof(float) <= g_rs.MAX_VERTEX_DATA_BYTES_SIZE ? vdata.size() * sizeof(float) : g_rs.MAX_VERTEX_DATA_BYTES_SIZE;
+		if (vdata.size() * sizeof(float) > g_rs.MAX_VERTEX_DATA_BYTES_SIZE) {
 			DS_WARNING("Vertex data exceds the maximum VBO size, probably some primitives will be not rendered.");
 		}
 
 		// only update the buffer if it has data
-		if (g_rs.vertex_data.size() != 0) {
+		if (vdata.size() != 0) {
+			//sg_append_buffer(g_rs.vbo, vbo_range);
 			sg_update_buffer(g_rs.vbo, vbo_range);
 		}
+	}
 
-		ivec2 draw_sz;
-		platform_backend::get_drawable_size(&draw_sz.x, &draw_sz.y);
-		/* default pass action (clear to grey) */
-		sg_pass_action pass_action = { 0 };
-		pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .value = {0.5f, 0.5f, 0.5f, 1.0f } };
+	void s_draw_all_primitives(const mat3& projection, const mat3& view) {
+		auto vdata = s_transform_vertex_data(projection, view);
+		s_gpu_upload_vertex_data(vdata);
 		
-		sg_begin_default_pass(&pass_action, draw_sz.x, draw_sz.y);
-
-		for (auto &z : g_rs.render_list) {
+		for (auto& z : g_rs.render_list) {
 			//DS_LOG(std::format("Z : {}", z.first));
 			for (auto& pip : z.second) {
-				
 				sg_apply_pipeline(sg_pipeline(pip.first));
 				for (auto& md : pip.second) {
 					sg_apply_bindings(md.bind);
@@ -360,14 +305,87 @@ namespace ds {
 				}
 			}
 		}
-		sg_end_pass();
-		sg_commit();
-
-		g_rs.vertex_data.clear();
-		g_rs.render_list.clear();
-	
 	}
 
+	// Clears the entire screen
+	void s_render_clear_screen() {
+
+		ivec2 vp_size;
+		platform_backend::get_drawable_size(&vp_size.x, &vp_size.y);
+		sg_pass_action pass_action = { 0 };
+		pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .value = {0.3f, 0.3f, 0.3f, 1.0f } };
+		sg_begin_default_pass(&pass_action, vp_size.x, vp_size.y);
+		//sg_apply_viewport(0, 0, vp_size.x, vp_size.y, false);
+		//sg_apply_scissor_rect(0, 0, vp_size.x, vp_size.y, false);
+		sg_end_pass();
+
+		
+	}
+
+	void s_draw_camera(const camera_data& cam) {
+		// This sets a default pass (don't care = don't clear the screen)
+		ivec2 vp_size;
+		platform_backend::get_drawable_size(&vp_size.x, &vp_size.y);
+		sg_pass_action pass_action = {0};
+		pass_action.colors[0] = { .action = SG_ACTION_DONTCARE };
+		sg_begin_default_pass(&pass_action, vp_size.x, vp_size.y);
+
+		// Setup viewport and scissors for this camera
+		sg_apply_viewport(cam.vp.x, cam.vp.y, cam.vp.z, cam.vp.w, false);
+		sg_apply_scissor_rect(cam.scis.x, cam.scis.y, cam.scis.z, cam.scis.w, false);
+
+		// Draw all the primitives with this projection and view matrices
+		s_draw_all_primitives(cam.projection_matrix, cam.view_matrix);
+		sg_end_pass();
+	}
+
+
+
+	void s_render_all_cameras() {
+		if (g_rs.cameras.size() == 0) {
+			// If no camera added found, use a default camera with a ortho_width of 1 world unit
+			// and center it at 0,0
+			ivec2 vp_size;
+			platform_backend::get_drawable_size(&vp_size.x, &vp_size.y);
+			const float aspect = vp_size.x / (float)vp_size.y;
+			const float ortho_width = 1.0f;
+			camera_data default_cam({0.f, 0.f, 1.f, 1.f }, mat3(1.0f), aspect, 1.0f);
+			s_draw_camera(default_cam);
+		} else {
+			for (i32 i = 0; i < g_rs.cameras.size(); i++) {
+				s_draw_camera(g_rs.cameras[i]);
+			}
+		}
+	}
+
+	void render_add_camera(const mat3& camera_ltw, vec4 camera_vp, float aspect, float ortho_width)	{
+		// TODO: we only support one camera for now
+		camera_data cd(camera_vp, camera_ltw, aspect, ortho_width);
+		if (g_rs.cameras.empty()) {
+			g_rs.cameras.push_back(cd);
+		} else {
+			// TODO: here we always use ONE camera..
+			g_rs.cameras[0] = cd;
+		}
+	}
+
+	// This flushes all the primitives and cameras
+	void s_render_clear() {
+		g_rs.vertex_data.clear();
+		g_rs.render_list.clear();
+		g_rs.cameras.clear();
+	}
+
+	// This draws all the cameras 
+	void render_present() {
+		// start the frame by clearing the full screen
+		s_render_clear_screen();
+		// render all the primitives in all the cameras
+		s_render_all_cameras();
+		// ends the frame
+		sg_commit();
+		s_render_clear();
+	}
 
 	void draw_line(const std::vector<vec2>& points, vec4 color, i32 depth) {
 		mesh_data md;

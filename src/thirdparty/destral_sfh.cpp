@@ -22,3 +22,10 @@
 #include "../thirdparty/stb_image.h"
 
 
+#pragma warning( push )
+#pragma warning(disable : 4244) // disable conversion possible loss of data
+#pragma warning(disable : 4018) // disable signed/unsigned mismatch
+#include "SDL_ttf.c"
+#pragma warning( pop )
+
+
