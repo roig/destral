@@ -148,11 +148,14 @@ struct registry;
 // Entity:
 // Entity recicles ids when arriving at max version number.
 // INFO: https://docs.cryengine.com/display/SDKDOC4/EntityID+Explained
-// id and version = only positive part of i32
+// id range (0 to max_INT32)  (this is because we can use an i32 to index all the entities in an array that retuns i32 indexes)
+// version range (0 to max_UINT32)
+// type_id (0 to max_INT32) (this allows to fit all the types in a i32 indexed array)
+// 
 struct entity {
-    i32 id = max_id();
-    i32 version = 0;
-    i32 type_id = max_type_id();
+    i32 id = max_id(); 
+    u32 version = 0; // id will go from 0 to max_UINT32
+    i32 type_id = max_type_id(); 
 
     // Returns true only if the entities are equal
     bool operator== (const entity& o) const { return (id == o.id) && (version == o.version) && (type_id == o.type_id); }
@@ -165,12 +168,10 @@ struct entity {
 
     // Stringyfies an entity
     std::string to_string();
+    static constexpr i32 max_id() { return std::numeric_limits<i32>::max(); }
+    static constexpr u32 max_version() { return std::numeric_limits<u32>::max(); }
+    static constexpr i32 max_type_id() { return std::numeric_limits<i32>::max(); }
 
-    // Assemble an entity handle from id, version and type_idx
-    /*static constexpr u64 assemble_handle(i32 id, i32 version, i32 type_id) { return (u64)id | ((u64)version << 20) | ((u64)type_id << 48); }*/
-    static constexpr i32 max_id()       { return std::numeric_limits<i32>::max(); }
-    static constexpr i32 max_version()  { return std::numeric_limits<i32>::max(); }
-    static constexpr i32 max_type_id()  { return std::numeric_limits<i32>::max(); }
 };
 
 

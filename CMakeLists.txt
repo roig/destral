@@ -20,11 +20,11 @@ add_library(Destral ${DESTRAL_PUBLIC_HEADER_FILES} ${DESTRAL_SOURCE_FILES} )
 
 
 target_link_libraries(Destral PRIVATE
-	SDL2
 	Opengl32
-	freetype
 
 	PUBLIC
+	SDL2
+	freetype
 	#LuaLib54
 )
 

@@ -85,6 +85,7 @@
 
 namespace ds {
 
+    // Assemble an entity handle from id, version and type_idx
 
     
 
@@ -296,7 +297,7 @@ namespace ds {
 
     // Performs the release of an entity in the registry by adding it to the recycle list
     static inline void s_release_entity(registry_impl* r, entity e) {
-        i32 new_version = e.version;
+        u32 new_version = e.version;
 
         // Wrap around the version
         if (new_version == e.max_version()) {
@@ -318,7 +319,7 @@ namespace ds {
         if (r->_r->available_id == entity::max_id()) {
             // Generate a new entity
             // check if we can't create more
-            dsverifym(r->_r->entities.size() < entity::max_id(), std::format("Can't create more entities!"));
+            dsverifym(r->_r->entities.size() < entity::max_id(), "Can't create more entities!");
             const entity e = { .id = r->_r->entities.size(), .version = 0, .type_id = type_idx };
             r->_r->entities.push_back(e);
             return e;
@@ -327,7 +328,7 @@ namespace ds {
             dscheck(r->_r->available_id != entity::max_id());
             // get the first available entity id
             const i32 curr_id = r->_r->available_id;
-            const i32 curr_ver = r->_r->entities[curr_id].version;
+            const u32 curr_ver = r->_r->entities[curr_id].version;
             // point the available_id to the "next" id
             r->_r->available_id = r->_r->entities[curr_id].id;
             // now join the id and version and type idx to create the new entity

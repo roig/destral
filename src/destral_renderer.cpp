@@ -3,9 +3,35 @@
 #include <destral/destral_ecs.h>
 #include <destral/thirdparty/ap_gl33core.h>
 #include "thirdparty/stb_image.h"
-
 #include <unordered_map>
 #include <map>
+
+#include "thirdparty/SDL_ttf.h"
+
+
+namespace ds::ttf {
+
+
+
+	void ttf_init() {
+		dsverifym(TTF_Init() == 0, std::format("{}", TTF_GetError())    );
+	}
+
+	void ttf_deinit() {
+		TTF_Quit();
+	}
+
+	////ptsize: Point size(based on 72DPI) to load font as.This basically translates to pixel height.
+	//void ttf_load_fond(const char* file_path, i32 ptsize) {
+	//	TTF_Font* f = TTF_OpenFont(file_path, ptsize);
+	//	dsverifym(f != nullptr, std::format("{}", TTF_GetError()));
+	//}
+
+	//void ttf_render_text_fast(const char* utf8_text, vec2 position, TTF_Font* font, SDL_Color fg) {
+
+	//}
+}
+
 
 // Current limitations
 // * There can be only one camera, check render_set_camera, 
@@ -256,9 +282,13 @@ namespace ds {
 
 		// setup default pipelines
 		create_shaders_and_pipelines();
+
+		// initialized ttf
+		ttf::ttf_init();
 	}
 
 	void render_deinit() {
+		ttf::ttf_deinit();
 		sg_shutdown();
 	}
 
