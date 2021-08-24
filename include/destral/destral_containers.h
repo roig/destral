@@ -33,6 +33,7 @@ namespace ds {
 		// If the count number is greater that the current size, it adds copies of elem
 		// If the count number is lower that the current size, it pops elements from the array.
 		void resize(i32 count, const T& elem) { 
+			//vec.resize(count, elem);
 			const auto last_size = size();
 			if (last_size == count) {
 				return;

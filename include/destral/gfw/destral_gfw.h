@@ -11,16 +11,6 @@ namespace ds {
 	struct hierarchy {
 	public:
 		static constexpr const char* cp_name = "hierarchy";
-		~hierarchy() {
-			// dettach all children from this entity
-			for (i32 i = 0; i < _children.size(); i++) {
-				auto child_hr = _registry->cp_try_get<hierarchy>(_children[i], cp_name);
-				dsverify(child_hr);
-				child_hr->set_parent(entity::null);
-			}
-			// dettach us from the parent of this entity
-			set_parent(entity::null);
-		}
 
 		const vec2& pos() { return _pos; }
 		const vec2& scale() { return _scale; }
@@ -58,24 +48,24 @@ namespace ds {
 
 			// check if we have a parent
 			auto oldParent = _parent;
-			if (!oldParent.is_null()) {
+			if (oldParent != entity_null) {
 				// If we are parented, dettach from it
 				// remove to entity from oldParent children list
-				auto oldParent_tr = _registry->cp_try_get<hierarchy>(oldParent, cp_name);
+				auto oldParent_tr = _registry->component_try_get<hierarchy>(oldParent, cp_name);
 				dsverify(oldParent_tr);
 
 				oldParent_tr->_children.remove_single(to);
 
 				// set current parent to entt::null
-				_parent = entity::null;
+				_parent = entity_null;
 
 				// update Matrices and Children
 				update_matrices();
 				update_children(*this);
 			}
 
-			if (!new_parent.is_null()) {
-				auto newParentTr = _registry->cp_try_get<hierarchy>(new_parent, cp_name);
+			if (new_parent != entity_null) {
+				auto newParentTr = _registry->component_try_get<hierarchy>(new_parent, cp_name);
 				dsverify(newParentTr);
 
 				// Attach to the new parent, add to in the new parent children list
@@ -89,7 +79,7 @@ namespace ds {
 		};
 
 		void add_child(entity new_child) {
-			auto child_hr = _registry->cp_try_get<hierarchy>(new_child, cp_name);
+			auto child_hr = _registry->component_try_get<hierarchy>(new_child, cp_name);
 			dsverify(child_hr);
 			child_hr->set_parent(_entity);
 		}
@@ -99,9 +89,9 @@ namespace ds {
 		}
 
 		void remove_child(entity child_to_remove) {
-			auto child_hr = _registry->cp_try_get<hierarchy>(child_to_remove, cp_name);
+			auto child_hr = _registry->component_try_get<hierarchy>(child_to_remove, cp_name);
 			dsverify(child_hr);
-			child_hr->set_parent(entity::null);
+			child_hr->set_parent(entity_null);
 		}
 
 		void remove_children(const ds::darray<entity>& children_to_remove) {
@@ -113,7 +103,7 @@ namespace ds {
 			darray<entity> children_hierarchy;
 			children_hierarchy.insert(_children);
 			for (i32 i = 0; i < _children.size(); i++) {
-				auto child_hr = _registry->cp_try_get<hierarchy>(_children[i], cp_name);
+				auto child_hr = _registry->component_try_get<hierarchy>(_children[i], cp_name);
 				dsverify(child_hr);
 				children_hierarchy.insert(child_hr->get_children_hierarchy());
 			}
@@ -124,17 +114,32 @@ namespace ds {
 		darray<entity> get_parents_hierarchy() {
 			darray<entity> parents;
 			hierarchy* hr = this;
-			while (hr && !hr->_parent.is_null()) {
+			while (hr && (hr->_parent != entity_null)) {
 				parents.push_back(hr->_parent);
-				hr = _registry->cp_try_get<hierarchy>(hr->_parent, cp_name);
+				hr = _registry->component_try_get<hierarchy>(hr->_parent, cp_name);
 			}
 			return parents;
 		}
 
+		// Component serialize and cleanup
+		static void serialize(registry* r, entity e, void* cp, bool reading) {
+			if (reading) {
+				hierarchy* h = (hierarchy*)cp;
+				h->_registry = r;
+				h->_entity = e;
+			}
+		}
 
-		void cp_serialize(registry* r, entity e) {
-			_registry = r; // save the registry for later operations
-			_entity = e;
+		static void cleanup(registry* r, entity e, void* cp) {
+			hierarchy* h = (hierarchy*)cp;
+			// dettach all children from this entity
+			for (i32 i = 0; i < h->_children.size(); i++) {
+				auto child_hr = h->_registry->component_try_get<hierarchy>(h->_children[i], cp_name);
+				dsverify(child_hr);
+				child_hr->set_parent(entity_null);
+			}
+			// dettach us from the parent of this entity
+			h->set_parent(entity_null);
 		}
 
 	private:
@@ -143,15 +148,15 @@ namespace ds {
 		float _rot_degrees = 0;
 		mat3 _ltp = glm::mat3(1);
 		mat3 _ltw = glm::mat3(1);
-		entity _parent = entity::null;
+		entity _parent = entity_null;
 		darray<entity> _children;
 		registry* _registry = nullptr;
-		entity _entity = entity::null; // Entity that holds this hierarchy component
+		entity _entity = entity_null; // Entity that holds this hierarchy component
 		
 		inline void update_matrices() {
 			glm::mat3 parent_ltw(1.0f);
-			if (!_parent.is_null()) {
-				auto parent_tr = _registry->cp_try_get<hierarchy>(_parent, cp_name);
+			if (_parent != entity_null) {
+				auto parent_tr = _registry->component_try_get<hierarchy>(_parent, cp_name);
 				dsverify(parent_tr);
 				parent_ltw = parent_tr->_ltw;
 			}
@@ -170,7 +175,7 @@ namespace ds {
 			const auto& parent_children = parent_tr.children();
 			for (i32 i = 0; i < parent_children.size(); i++) {
 				auto child = parent_children[i];
-				auto child_tr = _registry->cp_try_get<hierarchy>(child, cp_name);
+				auto child_tr = _registry->component_try_get<hierarchy>(child, cp_name);
 				dsverify(child_tr);
 
 				// update the new local_to_parent and local_to_world for that child
@@ -213,8 +218,6 @@ namespace ds {
 
 		// aspect ratio of the camera, used to calculate the height, based on ortho_width
 		float aspect = 16.0f / 9.0f;
-
-		void cp_serialize(registry* r, entity e) {}
 
 		// Renders all the camera entities
 		static constexpr const char* e_name = "ds_camera_entity";

@@ -140,74 +140,88 @@
 #include <destral/destral_common.h>
 #include <destral/destral_containers.h>
 
-
 namespace ds {
 struct registry;
 
 //--------------------------------------------------------------------------------------------------
-// Entity:
+// Entity
+// 
+// The entities are just pure identifiers used to reference a concrete entity type with a group of components associated with it.
+// 
 // Entity recicles ids when arriving at max version number.
 // INFO: https://docs.cryengine.com/display/SDKDOC4/EntityID+Explained
 // id range (0 to max_INT32)  (this is because we can use an i32 to index all the entities in an array that retuns i32 indexes)
 // version range (0 to max_UINT32)
-// type_id (0 to max_INT32) (this allows to fit all the types in a i32 indexed array)
+// type_id ( INT32_MIN to INT32_MAX) (this allows to fit all the types in a i32 indexed array)
 // 
 struct entity {
-    i32 id = max_id(); 
-    u32 version = 0; // id will go from 0 to max_UINT32
-    i32 type_id = max_type_id(); 
+    i32 id = 0;
+    u32 version = 0; 
+    i32 type_id = 0;
 
     // Returns true only if the entities are equal
     bool operator== (const entity& o) const { return (id == o.id) && (version == o.version) && (type_id == o.type_id); }
 
-    // Returns true only if the entity is null
-    bool is_null() { return *this == null;  }
-
-    // The entity_null is a entity that represents a null entity.
-    static const entity null;
-
     // Stringyfies an entity
     std::string to_string();
-    static constexpr i32 max_id() { return std::numeric_limits<i32>::max(); }
-    static constexpr u32 max_version() { return std::numeric_limits<u32>::max(); }
-    static constexpr i32 max_type_id() { return std::numeric_limits<i32>::max(); }
-
 };
+
+// The entity_null is a entity that represents a null entity.
+static const entity entity_null = entity{ .id = 0, .version = 0, .type_id = 0 };
 
 
 //--------------------------------------------------------------------------------------------------
 // Views
 // 
-// What is allowed and what is not allowed during views:
-// ALLOWED:
-// - You can create entities during iterations BUT it can invalidate component references. 
-//  The view will not iterate the entities created during the view iteration.
-//  The new entities will be iterated in subsequent view creations.
+// Views are used to traverse the entities that have a given group of components.
+// To create a view use the registry function view_create and pass an ordered array of components ids.
+// 
+// After the view is created you can start iterating the entities. Example:
+// 
+//  view v = r->view_create({"ComponentA", "ComponentB"});
+//  const i32 cpiA = v.index("ComponentA"); // This retrieves the component index in the view for ComponentA
+//  const i32 cpiB = v.index("ComponentB"); // This retrieves the component index in the view for ComponentB
+//  while (v.valid()) {
+//          componentA* a = v.data<componentA>(cpiA);
+//          componentB* b = v.data<componentB>(cpiB);
+//          ...Do what you want with a and b
+//          v.next(); // this advances to the next entity in the view.
+//  }
 //  
-//  Example of component dangling pointer when creating entities:
+//  OPTIMIZATION NOTE: The components indexs are ordered as the order you passed them to create the view.
+//  Then you can avoid retrieving the index and do this directly in the while: 
+//      componentA* a = v.data<componentA>(0);
+//      componentB* b = v.data<componentB>(1);
+//  
+// 
+// What is allowed during iteration:
+//  You can create entities during iterations BUT IT WILL INVALIDATE COMPONENT POINTERS.
+//  The view will not iterate the entities created during the view iteration.
+//  The new created entities will be iterated in subsequent view creations/iterations.
+//  
+//  IMPORTANT: Example of component pointer invalidation when creating entities:
 //  void example(registry* r) {
-//      ecs::view v = ecs::view::create(r, { "bullet" });
+//      ecs::view v = r->view_create({ "bullet" });
 //      while (v.valid()) {
 //          bullet* p = v.data<bullet>(v.index("bullet"));
 //          p->pos.x += 10;
 // 
 //          // HERE YOU CREATE ANOTHER ENTITY
 //          r->ecs::entity_make("BulletEntity");
-//          // NOW COMPONENT REFERENCES ARE INVALIDATED
+//          // NOW COMPONENT POINTERS ARE INVALIDATED
 // 
 //          p->pos.x += 10; // p POINTER IS A DANGLING POINTER!!!!
 //          // YOU CAN FETCH AGAIN THE COMPONENT POINTER p by p = v.data<bullet>(v.index("bullet")); IF YOU NEED IT
 //          v.next();
 //      }
-// 
 //  }
-// NOT ALLOWED:
-// - Destroying entities, you must delay the destruction of entities.
-// Implementation details here...
-
+// 
+// What is not allowed:
+//  Destroying entities, you must delay the destruction of entities using the registry entity_destroy_delayed function
+//
 struct view {
     // returns true if the current iterating entity is valid else false
-    inline bool valid() { return !_impl.cur_entity.is_null();}
+    inline bool valid() { return !(_impl.cur_entity == entity_null);}
 
     // returns the current iterating entity
     inline ds::entity entity() { return _impl.cur_entity; }
@@ -230,83 +244,51 @@ struct view {
         ds::darray<struct cp_storage*> cp_storages;
         i32 entity_index = 0;
         i32 entity_max_index = 0; // it's like _impl.iterating_storage->dense.size() 
-        ds::entity cur_entity = entity::null;
+        ds::entity cur_entity = entity_null;
     };
     // implementation details
     view_impl _impl;
 };
 
+
 //--------------------------------------------------------------------------------------------------
 // Registry 
 // Global context that holds each storage for each component types and the entities.
-
-struct cp_definition {
-    std::string name;
-    i32 cp_sizeof = 0;
-
-    typedef void (placement_new_function)(void* ptr);
-    placement_new_function* placement_new_fn = nullptr;
-
-    typedef void (delete_function)(void* ptr);
-    delete_function* delete_fn = nullptr;
-
-    typedef void (serialize_function)(registry* r, entity e, void* cp); // TODO not used yet
-    serialize_function* serialize_fn = nullptr;
-};
-
-struct entity_definition {
-    std::string name;
-    ds::darray<std::string> cp_names;
-
-    typedef void (entity_init_fn)(registry* r, entity e);
-    entity_init_fn* init_fn = nullptr;
-
-    typedef void (entity_deinit_fn)(registry* r, entity e);
-    entity_deinit_fn* deinit_fn = nullptr;
-};
-
-
 struct registry_impl;
 struct registry {
     registry();
     ~registry();
 
     //--------------------------------------------------------------------------------------------------
-    // Component functions
-    #define DS_ECS_COMPONENT_REGISTER(r,T,cp_name) r->cp_register<T>(cp_name) 
-    #define DS_ECS_COMPONENT_REGISTER_WITH_SERIALIZE(r,T) r->cp_register_serialize<T>(#T)
-    void cp_register(const cp_definition& cp_def);
+    // Component
+    typedef void (component_serialize_fn)(registry* r, entity e, void* cp, bool reading /*, kv*/); // TODO not used yet
+    typedef void (component_cleanup_fn)(registry* r, entity e, void* cp);
+    typedef void (component_placementnew_fn)(void* cp);
+    typedef void (component_delete_fn)(void* cp);
+    void component_register(const char* cp_name, i32 cp_sizeof,
+        component_serialize_fn* srlz_fn = nullptr, component_cleanup_fn* cleanup_fn = nullptr,
+        component_placementnew_fn* placementnew_fn = nullptr, component_delete_fn* delete_fn = nullptr);
 
-    template <typename T> void cp_register_serialize(const char* cp_name) {
-        auto placement_new_fn = [](void* mem_cp) { new (mem_cp) T(); }; // placement new
-        auto destructor_fn = [](void* mem_cp) { ((T*)mem_cp)->~T(); }; // destructor
-        auto srlz_fn = [](registry* r, entity e, void* mem_cp) { ((T*)mem_cp)->cp_serialize(r, e); }; // serialize
-        cp_definition cd{ .name = cp_name, .cp_sizeof = (i32)sizeof(T), .placement_new_fn = placement_new_fn,
-        .delete_fn = destructor_fn, .serialize_fn = srlz_fn };
-        cp_register(cd);
-    }
-
-    template <typename T> void cp_register(const char* cp_name) {
-        auto placement_new_fn = [](void* mem_cp) { new (mem_cp) T(); }; // placement new
-        auto destructor_fn = [](void* mem_cp) { ((T*)mem_cp)->~T(); }; // destructor
-        cp_definition cd{ .name = cp_name, .cp_sizeof = (i32)sizeof(T), .placement_new_fn = placement_new_fn,
-        .delete_fn = destructor_fn };
-        cp_register(cd);
+    template <typename T> 
+    void component_register(const char* cp_name, component_serialize_fn* cp_srlz_fn = nullptr, component_cleanup_fn* cp_cleanup_fn = nullptr) {
+        component_placementnew_fn* cp_placementnew_fn = [](void* cp) { new (cp) T(); }; // Calls T constructor.
+        component_delete_fn* cp_delete_fn = [](void* cp) { ((T*)cp)->~T(); }; // Calls T destructor
+        component_register(cp_name, (i32)sizeof(T), cp_srlz_fn, cp_cleanup_fn, cp_placementnew_fn, cp_delete_fn);
     }
 
     // Returns the component cp for the entity e. (faster version) If entity has not the cp, undefined behaviour use entity_try_get instead 
-    void* cp_get(entity e, const char* cp_name);
-    template <typename T> T* cp_get(entity e, const char* cp_name) { return (T*)cp_get(e, cp_name); }
+    void* component_get(entity e, const char* cp_name);
+    template <typename T> T* component_get(entity e, const char* cp_name) { return (T*)component_get(e, cp_name); }
 
     // Returns the component cp for the entity e if it exists or nullptr. (slower version)
-    void* cp_try_get(entity e, const char* cp_name);
-    template <typename T> T* cp_try_get(entity e, const char* cp_name) { return (T*)cp_try_get(e, cp_name); }
+    void* component_try_get(entity e, const char* cp_name);
+    template <typename T> T* component_try_get(entity e, const char* cp_name) { return (T*)component_try_get(e, cp_name); }
 
     //--------------------------------------------------------------------------------------------------
     // Entity functions
-
-    // Registers an entity name with it's components names. 
-    void entity_register(const entity_definition& e_def);
+    typedef void (entity_init_fn)(registry* r, entity e);
+    typedef void (entity_deinit_fn)(registry* r, entity e);
+    void entity_register(const char* ename, const ds::darray<std::string>& cp_names, entity_init_fn* init_fn = nullptr, entity_deinit_fn* deinit_fn = nullptr);
 
     // Instantiates an entity and calls the initialization function on it if it exists
     // This will call internally entity_make_begin and then entity_make_end
@@ -326,7 +308,7 @@ struct registry {
     // Undefined behaviour if called multiple times on the same entity
     void entity_make_end(entity e);
 
-    // Returns true only if the entity is valid. Valid means that registry has created it. 
+    // Returns true only if the entity is valid. Valid means that registry has created it and it's not null. 
     bool entity_valid(entity e);
 
     // Returns a copy of all the entities in the registry (WARNING: this is a slow operation)
@@ -357,16 +339,9 @@ struct registry {
     // Views 
     view view_create(const ds::darray<const char*>& cp_names);
 
-
-
     //--------------------------------------------------------------------------------------------------
     // Systems
     // Adds a system function to the list of systems in a queue
-    #define DS_ECS_QUEUE_ADD_SYSTEM(r, queue_name, fun) r->system_queue_add(queue_name, #fun , fun )
-    typedef void (system_update_fn)(registry* r);
-    void system_queue_add(const char* queue_name, const char* sys_name, system_update_fn* sys_update_fn);
-
-
     struct sys_queue_run_stats {
         std::string queue_name;
         struct sys_run_stats {
@@ -375,8 +350,10 @@ struct registry {
         };
         darray<sys_run_stats> sys_stats;
     };
-    // This runs all the registered systems in the queue name and returns system statistics.
-    sys_queue_run_stats system_queue_run(const char* queue_name);
+    #define DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue_name, fun) r->system_queue_add(queue_name, #fun , fun )
+    typedef void (system_update_fn)(registry* r);
+    void system_queue_add(const char* queue_name, const char* sys_name, system_update_fn* sys_update_fn);
+    sys_queue_run_stats system_queue_run(const char* queue_name);// This runs all the registered systems in the queue name and returns system statistics.
 
     
 
@@ -384,17 +361,15 @@ struct registry {
     // Context Variables (Globals in the registry)
     // Context variables are like global instances tied to the registry. You can add and remove them at any time.
     // When the registry is deleted, the context variables will be deleted in reverse order of addition.
-    void* ctx_set(const char* ctx_name_id, void* instance_ptr, void (*del_fn)(void* ptr));
-    template <typename T> T* ctx_set(const char* ctx_name_id, T* instance_ptr) { return (T*)ctx_set(ctx_name_id, instance_ptr, [](void* ptr) {((T*)ptr)->~T(); }); }
-    template <typename T> T* ctx_set_instantiate(const char* ctx_name_id) { return (T*)ctx_set(ctx_name_id, new T(), [](void* ptr) {((T*)ptr)->~T(); }); }
-
+    typedef void (ctx_delete_fn)(void* ptr);
+    void* ctx_set(const char* ctx_name_id, void* instance_ptr, ctx_delete_fn* delete_fn);
     void ctx_unset(const char* ctx_name_id);
-    // Calls the deleter for each ctx variable set in inverse order of context variables registration. Then clears the maps/arrays of ctx vars
-    void ctx_unset_all();
+    void* ctx_get(const char* ctx_name_id); // Returns the pointer to the context variable instance or nullptr
+    void ctx_unset_all(); // Calls the deleter for each ctx variable set in inverse order of context variables registration. Then clears the maps/arrays of ctx vars
 
-    // Returns the pointer to the context variable instance or nullptr
-    void* ctx_get(const char* ctx_name_id);
+    // C++ templates for Context variables
     template <typename T> T* ctx_get(const char* ctx_name_id) { return (T*)ctx_get(ctx_name_id); }
+    template <typename T> T* ctx_set(const char* ctx_name_id, T* instance_ptr) { return (T*)ctx_set(ctx_name_id, instance_ptr, [](void* ptr) {((T*)ptr)->~T();}); }
 
 
     //--------------------------------------------------------------------------------------------------

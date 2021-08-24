@@ -2,6 +2,9 @@
 Astral Pixel Game Development Framework
 
 
+# Registry
+La idea es que el registre es el que es va passant arreu i es la (truth) de tot els sistemes del
+
 # Files, paths and extensions naming the function parameters char* 
 
 These names will be used in parameters of functions that deal with files/paths/extensions etc..:

@@ -9,11 +9,11 @@ namespace ds {
 
 	void game_framework_register_entities(registry* r) {
         // Register the components
-        r->cp_register_serialize<hierarchy>(hierarchy::cp_name);
-        r->cp_register_serialize<camera>(camera::cp_name);
+        r->component_register<hierarchy>(hierarchy::cp_name, hierarchy::serialize, hierarchy::cleanup);
+        r->component_register<camera>(camera::cp_name);
 
         // Register the entities
-        r->entity_register({ .name = camera::e_name, .cp_names = {hierarchy::cp_name, camera::cp_name}});
+        r->entity_register(camera::e_name, {hierarchy::cp_name, camera::cp_name});
 	}
 
     void camera::render_cameras_system(registry* r) {
