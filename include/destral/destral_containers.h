@@ -153,7 +153,7 @@ namespace ds {
 
 	private:
 		i32 checked_size() const {
-			dsverify(vec.size() < std::numeric_limits<i32>::max());
+			dsverify(vec.size() < (size_t)std::numeric_limits<i32>::max());
 			return (i32)vec.size();
 		}
 		std::vector<T> vec;

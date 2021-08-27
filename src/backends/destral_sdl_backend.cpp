@@ -102,7 +102,7 @@ namespace sdl {
 		// Finds a free array index and returns it. If no free gamepad index found will return -1
 		ds::i32 find_free_gamepad_index() {
 			ds::i32 free_index = -1;
-			for (auto i = 0; i < gamepads.size(); i++) {
+			for (size_t i = 0; i < gamepads.size(); i++) {
 				if (gamepads[i].joy_id == -1) {
 					free_index = i;
 					break;
@@ -113,7 +113,7 @@ namespace sdl {
 
 		ds::i32 find_gamepad_index_by_joy_id(ds::i32 joy_id) {
 			ds::i32 index = -1;
-			for (auto i = 0; i < gamepads.size(); i++) {
+			for (size_t i = 0; i < gamepads.size(); i++) {
 				if (gamepads[i].joy_id == joy_id) {
 					index = i;
 					break;

@@ -103,7 +103,7 @@ namespace ds {
         assert(len);
         assert(encoded);
 
-        int i;
+        size_t i;
         char* p;
 
         p = encoded;

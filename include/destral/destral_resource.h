@@ -586,8 +586,8 @@ template<class T> struct resource_cache<T>::Data {
 namespace std {
     /** @brief `std::hash` specialization for @ref ds::resource_key */
     template<> struct hash<ds::resource_key> {
-        std::size_t operator()(const ds::resource_key& key) const {
-            return key.hashed_key;
+        size_t operator()(const ds::resource_key& key) const {
+            return (size_t)key.hashed_key;
         }
     };
 }

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.16)
 project(Destral)
 
 #set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/modules/" ${CMAKE_MODULE_PATH})
@@ -47,12 +47,15 @@ if (MSVC)
 	/WX
 	#/wd4251 #dll interface shit
 	/wd4100 #unused variables
-	#/wd4101 #unused local variables
+	/wd4101 #unused local variables
 	#/wd6011
-	/wd4204 #non-constant aggregate initializer
-	/wd5054
-	
+	#/wd4204 #non-constant aggregate initializer
+	#/wd5054
 	/MP)
+
+	#Trick to avoid: "Replacing /W3 to "/W4"
+	string(REGEX REPLACE "/W[1-3]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
 else()
     # lots of warnings and all warnings as errors
     target_compile_options(Destral PUBLIC -Wall -Wextra -pedantic -Werror)

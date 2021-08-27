@@ -153,7 +153,7 @@ namespace ds {
 
 /** Hash strings functions and literals */
 namespace ds {
-	// Fowler–Noll–Vo hash function v. 1a - the good
+	// Fowler-Noll-Vo hash function v. 1a - the good
 	constexpr u64 fnv1a_64bit(const char* curr) { 
 		auto value = 14695981039346656037ull; while (*curr != 0) { value = (value ^ static_cast<u64>(*(curr++))) * 1099511628211ull; }
 		return value;
