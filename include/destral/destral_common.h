@@ -140,14 +140,15 @@ namespace ds {
 	using u64 = uint64_t;
 }
 
-/** Error Structure */
+
+/** Result Structure */
 namespace ds {
-	struct error {
-		static inline error failure(const std::string& str) { error e; e.is_error = true; e.details = str; return e; }
-		static inline error success() { return {}; }
-		bool is_error = false;
-		std::string details;
-	};
+    struct result {
+        static inline result failure(const std::string& str) { result r; r.is_error = true; r.details = str; return r; }
+        static inline result success() { return {}; }
+        bool is_error = false;
+        std::string details;
+    };
 }
 
 

@@ -23,7 +23,7 @@ namespace ds {
 
 		// variables
 		op_mode mode = op_mode::UNITIALIZED;
-		error err;
+		result err;
 		///////
 
 		/**
@@ -34,7 +34,7 @@ namespace ds {
 		/**
 		 * Parses the text at `data` in a single-pass. Sets the kv to mode READ.
 		 */
-		error reset_parse(const void* data, std::size_t size);
+		result reset_parse(const void* data, std::size_t size);
 
 		/**
 		 * Sets the `kv` to write mode `WRITE`, ready to serialize data to `buffer`.
@@ -48,35 +48,35 @@ namespace ds {
 		// new implementation
 		void key(const char* key);
 
-		error value(std::uint64_t& val);
-		error value(std::int64_t& val);
-		error value(std::uint32_t& val);
-		error value(std::int32_t& val);
-		error value(std::uint16_t& val);
-		error value(std::int16_t& val);
-		error value(std::uint8_t& val);
-		error value(std::int8_t& val);
-		error value(float& val);
-		error value(double& val);
-		error value(bool& val);
-		error value(std::string& val);
+		result value(std::uint64_t& val);
+		result value(std::int64_t& val);
+		result value(std::uint32_t& val);
+		result value(std::int32_t& val);
+		result value(std::uint16_t& val);
+		result value(std::int16_t& val);
+		result value(std::uint8_t& val);
+		result value(std::int8_t& val);
+		result value(float& val);
+		result value(double& val);
+		result value(bool& val);
+		result value(std::string& val);
 
 
 		
 		
 
 		// Helper templates
-		template <typename T> error key_value(const char* key, T& val) { this->key(key); return value(val); };
-		template <typename> error key_value(const char* key, bool& val) { this->key(key); return value(val); };
+		template <typename T> result key_value(const char* key, T& val) { this->key(key); return value(val); };
+		template <typename> result key_value(const char* key, bool& val) { this->key(key); return value(val); };
 
 
-		error object_begin(const char* key);
-		error object_end();
+		result object_begin(const char* key);
+		result object_end();
 
-		error array_begin(const char* key, std::size_t& count);
-		error array_end();
+		result array_begin(const char* key, std::size_t& count);
+		result array_end();
 
-		error blob(const char* key, std::vector<char>& blob);
+		result blob(const char* key, std::vector<char>& blob);
 
 	};
 }

@@ -33,7 +33,7 @@ namespace ds {
 			delete k->impl;
 		}
 		k->impl = new detail::kv_impl();
-		k->err = error::success();
+		k->err = result::success();
 	}
 
 	kv::~kv() {
@@ -46,14 +46,14 @@ namespace ds {
 		return mode;
 	}
 
-	error kv::reset_parse(const void* data, std::size_t size) {
+	result kv::reset_parse(const void* data, std::size_t size) {
 		s_reset(this);
 		mode = op_mode::READ;
 
 		// no exceptions
 		impl->base = json::parse((char*)data, ((char*)data) + size, nullptr, false);
 		if (impl->base.is_discarded()) {
-			err = error::failure("Unable to parse 'kv' json data");
+			err = result::failure("Unable to parse 'kv' json data");
 		}
 		return err;
 	}
@@ -69,7 +69,7 @@ namespace ds {
 	}
 
 	template <typename T>
-	static inline error s_rw_number_value(kv* k, T& val) {
+	static inline result s_rw_number_value(kv* k, T& val) {
 		if (k->err.is_error) return k->err;
 		auto j = k->impl->current_json;
 
@@ -83,10 +83,10 @@ namespace ds {
 					if (it->is_number()) {
 						it->get_to(val);
 					} else {
-						return error::failure("Key found but it's not a number (Read)");
+						return result::failure("Key found but it's not a number (Read)");
 					}
 				} else {
-					return error::failure("Unable to find key.");
+					return result::failure("Unable to find key.");
 				}
 			}
 		} else if (k->mode == kv::op_mode::WRITE) {
@@ -97,9 +97,9 @@ namespace ds {
 				(*j)[k->impl->curr_key] = val;
 			}
 		} else {
-			return error::failure("Read or write mode not set.");
+			return result::failure("Read or write mode not set.");
 		}
-		return error::success();
+		return result::success();
 	}
 
 	void kv::key(const char* key) {
@@ -107,37 +107,37 @@ namespace ds {
 		impl->curr_key = key;
 	}
 
-	error kv::value(std::uint64_t& val) {
+	result kv::value(std::uint64_t& val) {
 		return s_rw_number_value(this, val);
 	}
-	error kv::value(std::int64_t& val) {
+	result kv::value(std::int64_t& val) {
 		return s_rw_number_value(this, val);
 	}
-	error kv::value(std::uint32_t& val) {
+	result kv::value(std::uint32_t& val) {
 		return s_rw_number_value(this, val);
 	}
-	error kv::value(std::int32_t& val) {
+	result kv::value(std::int32_t& val) {
 		return s_rw_number_value(this, val);
 	}
-	error kv::value(std::uint16_t& val) {
+	result kv::value(std::uint16_t& val) {
 		return s_rw_number_value(this, val);
 	}
-	error kv::value(std::int16_t& val) {
+	result kv::value(std::int16_t& val) {
 		return s_rw_number_value(this, val);
 	}
-	error kv::value(std::uint8_t& val) {
+	result kv::value(std::uint8_t& val) {
 		return s_rw_number_value(this, val);
 	}
-	error kv::value(std::int8_t& val) {
+	result kv::value(std::int8_t& val) {
 		return s_rw_number_value(this, val);
 	}
-	error kv::value(float& val) {
+	result kv::value(float& val) {
 		return s_rw_number_value(this, val);
 	}
-	error kv::value(double& val) {
+	result kv::value(double& val) {
 		return s_rw_number_value(this, val);
 	}
-	error kv::value(bool& val) {
+	result kv::value(bool& val) {
 		if (err.is_error) return err;
 		auto j = impl->current_json;
 		if (mode == kv::op_mode::READ) {
@@ -146,20 +146,20 @@ namespace ds {
 				if (it->is_boolean()) {
 					it->get_to(val);
 				} else {
-					return error::failure("Key found but it's not a bool (Read)");
+					return result::failure("Key found but it's not a bool (Read)");
 				}
 			} else {
-				return error::failure("Unable to find key.");
+				return result::failure("Unable to find key.");
 			}
 		} else if (mode == kv::op_mode::WRITE) {
 			(*j)[impl->curr_key] = val;
 		} else {
-			return error::failure("Read or write mode not set.");
+			return result::failure("Read or write mode not set.");
 		}
-		return error::success();
+		return result::success();
 	}
 
-	error kv::value(std::string& val) {
+	result kv::value(std::string& val) {
 		if (err.is_error) return err;
 		auto j = impl->current_json;
 		if (mode == kv::op_mode::READ) {
@@ -168,22 +168,22 @@ namespace ds {
 				if (it->is_string()) {
 					it->get_to(val);
 				} else {
-					return error::failure("Key found but it's not a std::string (Read)");
+					return result::failure("Key found but it's not a std::string (Read)");
 				}
 			} else {
-				return error::failure("Unable to find key.");
+				return result::failure("Unable to find key.");
 			}
 		} else if (mode == kv::op_mode::WRITE) {
 			(*j)[impl->curr_key] = val;
 		} else {
-			return error::failure("Read or write mode not set.");
+			return result::failure("Read or write mode not set.");
 		}
-		return error::success();
+		return result::success();
 	}
 
 
 
-	error kv::blob(const char* key, std::vector<char>& blob) {
+	result kv::blob(const char* key, std::vector<char>& blob) {
 		this->key(key);
 		if (err.is_error) return err;
 		auto j = impl->current_json;
@@ -196,10 +196,10 @@ namespace ds {
 					const auto decoded = ds::base64_decode(encoded_from_json.data());
 					blob.assign(decoded.begin(), decoded.end());
 				} else {
-					return error::failure("Key found but it's not a blob string (Read)");
+					return result::failure("Key found but it's not a blob string (Read)");
 				}
 			} else {
-				return error::failure("Unable to find key.");
+				return result::failure("Unable to find key.");
 			}
 		} else if (mode == kv::op_mode::WRITE) {
 			std::string encoded = ds::base64_encode(blob.data(), blob.size());
@@ -208,13 +208,13 @@ namespace ds {
 			//encoded.shrink_to_fit();
 			(*j)[impl->curr_key] = encoded;
 		} else {
-			return error::failure("Read or write mode not set.");
+			return result::failure("Read or write mode not set.");
 		}
-		return error::success();
+		return result::success();
 	}
 
 
-	error kv::object_begin(const char* key) {
+	result kv::object_begin(const char* key) {
 		if (err.is_error) return err;
 
 		if (mode == kv::op_mode::READ) {
@@ -225,27 +225,27 @@ namespace ds {
 					impl->current_json = &(*it);
 					impl->stack_keys.push_back(key);
 				} else {
-					err = error::failure("Key found but it's not an object!");
+					err = result::failure("Key found but it's not an object!");
 				}
 			} else {
-				err = error::failure("Unable to find object key.");
+				err = result::failure("Unable to find object key.");
 			}
 		} else if (mode == kv::op_mode::WRITE) {
 			impl->stack_keys.push_back(key);
 			impl->stack.push_back(json::object());
 			impl->current_json = &impl->stack.back();
 		} else {
-			err = error::failure("Read or write mode not set.");
+			err = result::failure("Read or write mode not set.");
 		}
 
 		return err;
 	}
 
-	error kv::object_end() {
+	result kv::object_end() {
 		if (err.is_error) return err;
 		
 		if (!impl->current_json->is_object()) {
-			err = error::failure("Can't end a json object that is not an object.");
+			err = result::failure("Can't end a json object that is not an object.");
 			return err;
 		}
 
@@ -274,14 +274,14 @@ namespace ds {
 				impl->current_json = &impl->stack.back();
 			}
 		} else {
-			err = error::failure("Read or write mode not set.");
+			err = result::failure("Read or write mode not set.");
 		}
 
 		return err;
 
 	}
 
-	error kv::array_begin(const char* key, std::size_t& count) {
+	result kv::array_begin(const char* key, std::size_t& count) {
 		if (err.is_error) return err;
 		this->key(key);
 
@@ -295,27 +295,27 @@ namespace ds {
 					impl->stack_keys.push_back(key);
 					count = impl->current_json->size();
 				} else {
-					err = error::failure("Key found but it's not an array!");
+					err = result::failure("Key found but it's not an array!");
 				}
 			} else {
-				err = error::failure("Unable to find object key.");
+				err = result::failure("Unable to find object key.");
 			}
 		} else if (mode == kv::op_mode::WRITE) {
 			impl->stack_keys.push_back(key);
 			impl->stack.push_back(json::array());
 			impl->current_json = &impl->stack.back();
 		} else {
-			err = error::failure("Read or write mode not set.");
+			err = result::failure("Read or write mode not set.");
 		}
 		impl->array_idx = 0;
 		return err;
 	}
 	
-	error kv::array_end() {
+	result kv::array_end() {
 		if (err.is_error) return err;
 
 		if (!impl->current_json->is_array()) {
-			err = error::failure("Can't end a json array that is not an array.");
+			err = result::failure("Can't end a json array that is not an array.");
 			return err;
 		}
 
@@ -335,7 +335,7 @@ namespace ds {
 			impl->stack_keys.pop_back();
 			impl->stack.pop_back();
 		} else {
-			err = error::failure("Read or write mode not set.");
+			err = result::failure("Read or write mode not set.");
 		}
 
 		return err;

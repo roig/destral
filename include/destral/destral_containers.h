@@ -1,6 +1,7 @@
 #pragma once
 #include <destral/destral_common.h>
 #include <vector>
+#include <unordered_map>
 
 namespace ds {
 	// Dynamic array
@@ -12,12 +13,6 @@ namespace ds {
 		darray(std::initializer_list<T> l): vec(l) {}
 		
 		///// Insetion
-
-		// Fills an array with count elements with the element passed by parameter
-		void init(i32 count,const T& elem) {
-			for (i32 i = 0; i < count; i++) { push_back(elem); }
-		}
-
 		// Adds the element at the end of the array
 		void push_back(const T& Elem) { vec.push_back(Elem); }
 
@@ -158,15 +153,147 @@ namespace ds {
 		}
 		std::vector<T> vec;
 	};
+
+
+
+
+    template<typename T> struct dmap {
+
+        dmap() = default;
+        dmap(const dmap<T>& other) { map = other.map; }
+
+        // Returns how many elements it holds
+        i32 size() const { return checked_size(); }
+
+        // Returns true only if the array is empty
+        bool empty() const { return map.empty(); }
+
+        // Removes all the elements of the array
+        void clear() {	map.clear(); }
+
+        // Returns true only if the key is a valid array index.
+        bool is_valid_key(i32 key) const { return map.contains(key); }
+
+        // Returns true only if the element was found
+        bool contains(const T& other) const {
+            for (auto pair : map) {
+                if (pair.second == other) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Returns true only if the element was found.
+        // If the element is found, it sets the key parameter to the key of the element found.
+        // If not the key parameter is unmodified.
+        bool find(const T& other, i32& key) const {
+            for (auto pair : map) {
+                if (pair.second == other) {
+                    key = pair.first;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Returns the number of equal elements found. 0 if no elements were found.
+        // When an element is found it fills the pairs array with a pair<key,element> for each one.
+        i32 find_all(const T& other, darray<std::pair<i32,T>>& pairs) const {
+            i32 found = 0;
+            for (auto pair : map) {
+                if (pair.second == other) {
+                    pairs.push_back(std::make_pair(pair.first,pair.second));
+                    found++;
+                }
+            }
+            return found;
+        }
+
+        // Direct access to the map memory (C-Style API), pointer valid as long as
+        // the map exists and before any mutating operation. Only the first .size() indices are dereferenceable
+        T* data() { map.data(); }
+
+        void set(i32 key, const T& elem) {
+            map[key] = elem;
+        }
+
+        void set(dmap<T>& other_map) {
+            for (auto pair : other_map) {
+                map[pair.first] = pair.second;
+            }
+        }
+
+        T& operator[] (i32 key) {
+            dsverify(is_valid_key(key));
+            return map[key];
+        }
+
+        const T& operator[] (i32 key) const {
+            dsverify(is_valid_key(key));
+            return map[key];
+        }
+
+        /**
+        void operator[] (i32 key, const T& element) const {
+            set(key,element);
+        }
+         */
+
+        darray<T> to_array() const{
+            darray<T> array;
+            for (auto pair : map) {
+                array.push_back(pair.second);
+            }
+            return array;
+        }
+
+        // Removes the element at the index position
+        void remove(i32 key) {
+            dsverify(is_valid_key(key));
+            map.erase(key);
+        }
+
+        void remove(const T& elem) {
+            i32 ele_key_remove = -1;
+            if (find(elem, ele_key_remove)) {
+                remove(ele_key_remove);
+            }
+        }
+
+        // Removes all the elements that are considered equal to the element provided (using operator== function)
+        void remove_all(const T& elem) {
+            darray<std::pair<i32,T>> pairs_found;
+            find_all(elem,pairs_found);
+            for (auto pair : pairs_found) {
+                remove(pair.first);
+            }
+        }
+
+
+    private:
+        i32 checked_size() const {
+            dsverify(map.size() < (size_t)std::numeric_limits<i32>::max());
+            return (i32)map.size();
+        }
+        std::unordered_map<i32,T> map;
+    };
+
 }
 
-//namespace std {
-//	template<> struct hash<ds::darray<ds::i32>> {
-//		std::size_t operator()(const ds::darray<ds::i32> & Array) const {
-//			size_t Seed = 0;
-//			for (const auto& Elem : Array)
-//				Seed ^= std::hash<int>()(Elem) + 0x9e3779b9 + (Seed << 6) + (Seed >> 2);
-//			return Seed;
-//		}
-//	};
-//}
+
+
+
+/**
+namespace std {
+
+	template<> struct hash<ds::darray<ds::i32>> {
+		std::size_t operator()(const ds::darray<ds::i32> & Array) const {
+			size_t Seed = 0;
+			for (const auto& Elem : Array)
+				Seed ^= std::hash<int>()(Elem) + 0x9e3779b9 + (Seed << 6) + (Seed >> 2);
+			return Seed;
+		}
+	};
+}
+*/
