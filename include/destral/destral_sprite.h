@@ -1,6 +1,7 @@
 #pragma once
 #include <destral/destral_resource.h>
 #include <destral/destral_image.h>
+#include <destral/destral_containers.h>
 
 namespace ds {
 
@@ -16,7 +17,7 @@ namespace ds {
 	struct animation {
 		std::string name;
 		//TODO play direction forward.. etc..
-		std::vector<animation_frame> frames;
+		ds::darray<animation_frame> frames;
 	};
 
 	struct animation_collection {

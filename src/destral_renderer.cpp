@@ -296,7 +296,7 @@ namespace ds {
 	std::vector<float> s_transform_vertex_data(const mat3& projection, const mat3& view) {
 		const mat3 vp_mat = projection * view;
 		std::vector<float> transformed_vertex_data = g_rs.vertex_data;
-		for (i32 i = 0; i < transformed_vertex_data.size(); i = i + 8 /* vertex stride */) {
+		for (size_t i = 0; i < transformed_vertex_data.size(); i = i + 8 /* vertex stride */) {
 			const vec3 vpos = vp_mat * vec3(transformed_vertex_data[i], transformed_vertex_data[i + 1], 1);
 			transformed_vertex_data[i] = vpos.x;
 			transformed_vertex_data[i + 1] = vpos.y;
@@ -382,7 +382,7 @@ namespace ds {
 			camera_data default_cam({0.f, 0.f, 1.f, 1.f }, mat3(1.0f), aspect, 1.0f);
 			s_draw_camera(default_cam);
 		} else {
-			for (i32 i = 0; i < g_rs.cameras.size(); i++) {
+			for (size_t i = 0; i < g_rs.cameras.size(); i++) {
 				s_draw_camera(g_rs.cameras[i]);
 			}
 		}
@@ -470,7 +470,7 @@ namespace ds {
 
 
 		// fill vertex data, all circle triangles minus one
-		for (auto i = 0; i < (per_pos.size() - 1); i++) 			{
+		for (size_t i = 0; i < (per_pos.size() - 1); i++) 			{
 			const float vertex[] = {
 				center.x, center.y,				color.r, color.g, color.b, color.a, 0,0,	//0
 				per_pos[i].x, per_pos[i].y,     color.r, color.g, color.b, color.a, 0,0,	//1

@@ -188,6 +188,9 @@ enum class key: i32 {
 	/** Returns true if the Key k is a gamepad key*/
 	bool key_is_gamepad(key k);
 
+	/** Returns true if the gamepad is connected and is also valid */
+    bool gamepad_is_connected(i32 gamepad_id = 0);
+
 
 	// TODO callbacks when a gamepad connects/disconnects
 }

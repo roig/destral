@@ -6,7 +6,7 @@ struct handler_registry {
     i64 create_or_recycle_handler() {
         if (available_handler_id == 0) {
             // Verify if we can create more handlers
-            dsverifym(handlers.size() < handler_max_id(), "Can't create more handlers!");
+            dsverifym(handlers.size() < (size_t)handler_max_id(), "Can't create more handlers!");
 
             // Generate a new handler
             const u64 version = 1;
@@ -55,7 +55,7 @@ struct handler_registry {
         const u64 version = get_handler_version(h);
         const i32 id = get_handler_id(h);
         if (version == 0 || id == 0) { return false; }
-        if (id <= handlers.size() && (s_get_handler_by_id(id) == h)) { return true; }
+        if ((size_t)id <= handlers.size() && (s_get_handler_by_id(id) == h)) { return true; }
         return false;
     }
 
@@ -305,6 +305,33 @@ struct enemy_spawner {
     }
 };
 
+void testInputUpdate(registry* r) {
+    bool isconnected = ds::gamepad_is_connected(0);
+    DS_LOG(std::format("Gamepad connected state: {}",isconnected));
+}
+
+void testMapContainer() {
+    ds::dmap<std::string> map;
+    map.set(0,"0");
+    map.set(1,"1");
+    map.set(2,"2");
+    map.set(3,"3");
+    map.set(4,"4");
+
+    DS_LOG(std::format("Key 0 should be 0 -> {}",map[0]));
+    DS_LOG(std::format("Key 1 should be 1 -> {}",map[1]));
+    DS_LOG(std::format("Key 2 should be 2 -> {}",map[2]));
+    DS_LOG(std::format("Key 3 should be 3 -> {}",map[3]));
+    map.set(2,"22");
+    DS_LOG(std::format("Key 2 should be 22 -> {}",map[2]));
+
+    map.remove("3");
+    DS_LOG(std::format("Key 3 should be false -> {}",map.is_valid_key(3)));
+
+    map.remove(4);
+    DS_LOG(std::format("Key 4 should be false -> {}",map.is_valid_key(3)));
+}
+
 struct ecs_test_spawned {
     static constexpr const char* cp_name = "ECSTesterEntityCP";
     static constexpr const char* e_name = "ECSTesterEntity";
@@ -374,6 +401,7 @@ void ecs_config(registry* r) {
     DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::fixed_update, player::fixed_update);
     DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::fixed_update, bullet::fixed_update);
     DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::fixed_update, enemy::fixed_update);
+    DS_REGISTRY_QUEUE_ADD_SYSTEM(r,queue::update,testInputUpdate);
 
     DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::render, player::render);
     DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::render, bullet::render);
@@ -393,6 +421,8 @@ int main() {
     cfg.width = 1280;
     cfg.height = 720;
     cfg.on_ecs_config = ecs_config;
+
+    testMapContainer();
     app_run(cfg);
 }
 

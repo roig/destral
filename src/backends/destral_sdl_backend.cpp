@@ -102,7 +102,7 @@ namespace sdl {
 		// Finds a free array index and returns it. If no free gamepad index found will return -1
 		ds::i32 find_free_gamepad_index() {
 			ds::i32 free_index = -1;
-			for (auto i = 0; i < gamepads.size(); i++) {
+			for (size_t i = 0; i < gamepads.size(); i++) {
 				if (gamepads[i].joy_id == -1) {
 					free_index = i;
 					break;
@@ -113,7 +113,7 @@ namespace sdl {
 
 		ds::i32 find_gamepad_index_by_joy_id(ds::i32 joy_id) {
 			ds::i32 index = -1;
-			for (auto i = 0; i < gamepads.size(); i++) {
+			for (size_t i = 0; i < gamepads.size(); i++) {
 				if (gamepads[i].joy_id == joy_id) {
 					index = i;
 					break;
@@ -376,6 +376,11 @@ namespace ds {
 		}
 		return false;
 	}
+
+
+    bool gamepad_is_connected(i32 gamepad_id) {
+	    return s_is_valid_gamepad_id(gamepad_id) && (sdl::g_sdl.gamepads[gamepad_id].joy_id >= 0);
+	}
 } // ds::in namespace
 
 // platform_backend implementation for SDL
@@ -528,7 +533,6 @@ namespace ds::platform_backend {
 					auto name = SDL_GameControllerName(controller);
 					DS_LOG(std::format("controller removed: {} [id = {}, internal_joy_id = {}]", name, gamepad_index, joy_id));
 					sdl::g_sdl.gamepads[gamepad_index].clear();
-
 				}
 			}break;
 
