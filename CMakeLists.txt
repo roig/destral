@@ -11,7 +11,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bins)
 add_subdirectory(libs/SDL2-2.0.14) #compile SDL2 
 add_subdirectory(libs/freetype-2.9.1) #compile freetype
 
-
 # Edv source files list
 file(GLOB_RECURSE DESTRAL_SOURCE_FILES "src/*.cpp" "src/*.hpp")
 file(GLOB_RECURSE DESTRAL_PUBLIC_HEADER_FILES  "include/*.h" "include/*.hpp")

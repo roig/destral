@@ -40,7 +40,7 @@ namespace ds::ttf {
 
 namespace ds {
 	
-	sg_image load_texture(resource<image>& image) {
+	/*sg_image load_texture(resource<image>& image) {
 		if (!image) { return {}; }
 		
 		sg_image_desc image_desc = { 0 };
@@ -61,7 +61,7 @@ namespace ds {
 		auto img = sg_make_image(image_desc);
 		return img;
 
-	}
+	}*/
 
 	sg_image load_texture_memory(const u8* pixels_data, i32 width, i32 height) {
 		sg_image_desc image_desc = { 0 };
@@ -543,9 +543,9 @@ namespace ds {
 
 	// size world units (aqui tinc dubtes..)
 	// uv_rect: normalized uv coordinates rectangle
-	void draw_texture(const mat3& tx, resource<image> image, vec2 size, rect uv_rect, vec4 color, i32 depth) {
-		draw_texture(tx, image->gpu_texid, size, uv_rect, color, depth);
-	}
+	//void draw_texture(const mat3& tx, resource<image> image, vec2 size, rect uv_rect, vec4 color, i32 depth) {
+	//	draw_texture(tx, image->gpu_texid, size, uv_rect, color, depth);
+	//}
 
 	void draw_texture(const mat3& tx, sg_image texture, vec2 size, rect uv_rect, vec4 color, i32 depth) {
 		// TEST IMAGE

@@ -32,5 +32,4 @@ namespace ds::platform_backend {
 
 	void get_drawable_size(i32* width, i32* height);
 	
-
 }

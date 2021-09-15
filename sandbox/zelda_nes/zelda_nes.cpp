@@ -5,15 +5,37 @@ using namespace ds;
 
 
 
+void test_resources(registry* r) {
+    resource_set_loader(r, {
+        .load_fn = [](registry* r, const resource_key& key) {
+            //auto e = r->entity_make("");
+            resource_set(r, key, entity_null, resource_data_state::loading, resource_policy::reference_counted);
+        },
+        .can_load_resource_fn = [](registry* r, const resource_key& key) { return fs_has_extension(key.key.c_str(), ".png"); }
+        });
+    resource link_texture = resource_get(r, "content/NES-ZeldaLink.png");
+
+    entity texture = link_texture.get();
+    if (texture != entity_null) {
+        DS_LOG("Texture loaded");
+    } else {
+        DS_LOG("Texture not loaded" );
+    }
+
+}
+
+
 int main() {
     app_config cfg;
-    //cfg.width = 256*4;
-    //cfg.height = 240*4;
+    cfg.width = 256*4;
+    cfg.height = 240*4;
 
 
     //sprite walk_link;
     ////resource<animation_collection> link_animations;
-    //cfg.on_init = [&]() {
+    cfg.on_ecs_config = [](registry* r) {
+        r->system_queue_add(queue::game_init, "test_resources", test_resources);
+        
 
     //    
     //    caches_init();
@@ -33,7 +55,7 @@ int main() {
 
     //    //link_animations.animations["link_walk_down"] = animation();
     //    ////16x16 frames  1,11 frame top left one
-    //};
+    };
     
     //cfg.on_shutdown = [&]() {
     //    caches_deinit();

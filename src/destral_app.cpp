@@ -48,6 +48,7 @@ namespace ds {
 
 	void init_engine_ecs(registry* r) {
 		r->system_queue_add(queue::engine_init, "platform_init", [](registry* r) {platform_backend::init();});
+		r->system_queue_add(queue::engine_init, "resource_init", resource_init);
 		r->system_queue_add(queue::engine_init, "render_init", [](registry* r) { render_init(); });
 
 		r->system_queue_add(queue::pre_update, "input_begin_frame", [](registry* r) {input_backend::on_input_begin_frame(); });
@@ -57,6 +58,7 @@ namespace ds {
 		r->system_queue_add(queue::post_render, "render_swap_buffers", [](registry* r) { platform_backend::swap_buffers(); });
 
 		r->system_queue_add(queue::engine_deinit, "render_deinit", [](registry* r) { render_deinit(); });
+		r->system_queue_add(queue::engine_deinit, "resource_deinit", resource_deinit);
 		r->system_queue_add(queue::engine_deinit, "platform_deinit", [](registry* r) { platform_backend::deinit(); });
 	}
 

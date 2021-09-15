@@ -643,10 +643,11 @@ namespace ds {
         
         // Find the element in the ordered variables vector
         bool found = false;
-        i32 i;
+        i32 i = 0;
         for (i = 0; i < _r->ctx_vars_ordered.size(); i++) {
             if (_r->ctx_vars_ordered[i]->hashed_name = id) {
                 found = true;
+                break;
             }
         }
 

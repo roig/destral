@@ -63,5 +63,5 @@ namespace ds {
 
 	// Submit a draw texture rectangle primitive
 	void draw_texture(const mat3& model, sg_image texture = { 0 }, vec2 size = { 1,1 }, rect source_rect = rect::from_size({ 0,0 }, { 1, 1 }), vec4 color = { 1,1,1,1 }, i32 depth = 0);
-	void draw_texture(const mat3& model, resource<image> img, vec2 size = { 1,1 }, rect source_rect = rect::from_size({ 0,0 }, { 1, 1 }), vec4 color = { 1,1,1,1 }, i32 depth = 0);
+	/*void draw_texture(const mat3& model, resource<image> img, vec2 size = { 1,1 }, rect source_rect = rect::from_size({ 0,0 }, { 1, 1 }), vec4 color = { 1,1,1,1 }, i32 depth = 0);*/
 }

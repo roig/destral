@@ -284,8 +284,6 @@ struct enemy {
 
 };
 
-
-
 struct enemy_spawner {
     static constexpr const char* cp_name = "EnemySpawnerComponent";
     static constexpr const char* e_name = "EnemySpawnerEntity";
