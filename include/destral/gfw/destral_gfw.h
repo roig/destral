@@ -196,6 +196,7 @@ namespace ds {
 	// Orthographic camera.
 	struct camera {
 		static constexpr const char* cp_name = "camera";
+		static constexpr const char* e_name = "ds_camera_entity";
 
 		// The viewport is the rectangle into which the contents of the
 		// camera will be displayed, expressed as a factor (between 0 and 1)
@@ -220,7 +221,6 @@ namespace ds {
 		float aspect = 16.0f / 9.0f;
 
 		// Renders all the camera entities
-		static constexpr const char* e_name = "ds_camera_entity";
 		static void render_cameras_system(registry* r);
 	};
 

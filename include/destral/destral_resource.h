@@ -96,31 +96,17 @@ namespace ds {
     /** Key for accessing resource  */
     class resource_key {
     public:
-        ///**
-        // * @brief Default constructor
-        // *
-        // * Creates zero key. Note that it is not the same as calling other
-        // * constructors with empty string.
-        // */
+        /** Creates zero key. Note that it is not the same as calling other constructors with empty string */
         constexpr resource_key() {}
-
-        /** @brief Construct resource key directly from hashed value */
-        //explicit resource_key(u64 key): {}
-
         /** @brief Constructor */
         constexpr resource_key(const char* res_key) : key(res_key), hashed_key(fnv1a_32bit(res_key)) {}
-
-
-        std::string key;
-        i32 hashed_key = 0;
-        
         bool operator==(const resource_key& other) const { return hashed_key == other.hashed_key; }
+
+        std::string key; // non hashed key
+        i32 hashed_key = 0; // hashed key
     };
 
-
-    
     class resource_cache;
-    
 
     /**
         resource reference
@@ -198,13 +184,22 @@ namespace ds {
         entity _data = entity_null;
     };
 
-    void resource_init(registry* r);
-    void resource_deinit(registry* r);
+    // initializes the resource cache
+    void resource_cache_init(registry* r);
+    void resource_cache_deinit(registry* r);
 
+    // Retrieves or loads the resource in to the cache
     resource resource_get(registry* r, const resource_key& key); // TODO aixo hauria de ser un const char*?
+
+    // Set a resource identified by resource_key with data and sets the corresponding resource state and resource policy
     void resource_set(registry* r, const resource_key& key, entity data, const resource_data_state state, const resource_policy policy);
-    void resource_set_fallback(registry* r, entity data);
-    entity resource_get_fallback(registry* r, const char* entity_type_id); // TODO change to i32? type_id
+
+    // Sets the fallback resource for the entity_type_id
+    void resource_set_fallback(registry* r, const char* entity_type_id, entity data);
+
+    // Returs the fallback resource for the entity_type_id, returns entity_null if no fallback was set.
+    entity resource_get_fallback(registry* r, const char* entity_type_id);
+
 
     typedef void (resource_load_fn)(registry* r, const resource_key& key);
     typedef bool (resource_can_load_fn)(registry* r, const resource_key& key);
@@ -212,6 +207,7 @@ namespace ds {
         resource_load_fn* load_fn = nullptr;
         resource_can_load_fn* can_load_resource_fn = nullptr;
     };
+    // Sets a loader for a resource type
     void resource_set_loader(registry* r, resource_loader loader);
 
 

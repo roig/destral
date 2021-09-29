@@ -17,7 +17,6 @@ file(GLOB_RECURSE DESTRAL_PUBLIC_HEADER_FILES  "include/*.h" "include/*.hpp")
 
 add_library(Destral ${DESTRAL_PUBLIC_HEADER_FILES} ${DESTRAL_SOURCE_FILES} )
 
-
 target_link_libraries(Destral PRIVATE
 	Opengl32
 

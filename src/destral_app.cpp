@@ -1,4 +1,5 @@
 #include <destral/destral_app.h>
+#include <destral/destral_texture.h>
 #include <chrono>
 #include <iostream>
 
@@ -29,7 +30,7 @@ namespace ds {
 	static time g_time;
 	static registry* g_registry = nullptr;
 
-	void s_run_queue(registry* r, const char* queue_name, bool log_run = false) {
+	static void s_run_queue(registry* r, const char* queue_name, bool log_run = false) {
 		if (!log_run) {
 			r->system_queue_run(queue_name);
 		} else {
@@ -47,18 +48,26 @@ namespace ds {
 	}
 
 	void init_engine_ecs(registry* r) {
+		// Engine init
 		r->system_queue_add(queue::engine_init, "platform_init", [](registry* r) {platform_backend::init();});
-		r->system_queue_add(queue::engine_init, "resource_init", resource_init);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, resource_cache_init);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, texture::register_component);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, texture::register_entity);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, texture::set_resource_loader);
 		r->system_queue_add(queue::engine_init, "render_init", [](registry* r) { render_init(); });
 
+		// Engine pre update
 		r->system_queue_add(queue::pre_update, "input_begin_frame", [](registry* r) {input_backend::on_input_begin_frame(); });
 		r->system_queue_add(queue::pre_update, "platform_poll_events", [](registry* r) { platform_backend::poll_events(); });
 
+		// Engine post render
 		r->system_queue_add(queue::post_render, "render_present", [](registry* r) { render_present(); });
 		r->system_queue_add(queue::post_render, "render_swap_buffers", [](registry* r) { platform_backend::swap_buffers(); });
 
+
+		// Engine deinit
 		r->system_queue_add(queue::engine_deinit, "render_deinit", [](registry* r) { render_deinit(); });
-		r->system_queue_add(queue::engine_deinit, "resource_deinit", resource_deinit);
+		r->system_queue_add(queue::engine_deinit, "resource_deinit", resource_cache_deinit);
 		r->system_queue_add(queue::engine_deinit, "platform_deinit", [](registry* r) { platform_backend::deinit(); });
 	}
 

@@ -5,27 +5,34 @@ using namespace ds;
 
 
 
+
 int main() {
     app_config cfg;
+    cfg.on_ecs_config = [](registry* r) {
+       
+
+    };
+
+
    // cfg.width = 800;
    // cfg.height = 800;
 
    // resource<image> img_resource;
    // resource<animation_collection> anim_resource;
    // sprite spr;
-   // cfg.on_init = [&]() {
+    cfg.on_ecs_config = [](registry* r) {
 
-   //     caches_init();
-   //     cache_images_add_info("zelda_tileset_gba", "zelda_gba_tileset.png");
-   //     cache_animations_add_info("orco", "UnitAnimations.aseprite");
+      /*  caches_init();
+        cache_images_add_info("zelda_tileset_gba", "zelda_gba_tileset.png");
+        cache_animations_add_info("orco", "UnitAnimations.aseprite");
 
-   //     anim_resource = cache_animations()->get("orco");
+        anim_resource = cache_animations()->get("orco");
 
 
-   //     spr.animations = cache_animations()->get("orco");
-   //     spr.play("Clanrat.Walk");
+        spr.animations = cache_animations()->get("orco");
+        spr.play("Clanrat.Walk");*/
 
-   // };
+    };
    // 
    // //cfg.on_shutdown = [&]() {
    // //    
@@ -77,8 +84,8 @@ int main() {
    //         draw_circle({ x,y }, 0.5f, vec4(1, 0, 0, 1), 5);
    //         draw_rect(math::build_matrix({ 0.5, 0 }, rot), { 0.5, 0.5 }, vec4(0, 1, 0, 1), 4);
    //         draw_fill_rect(math::build_matrix({ -0.5, 0 }, rot), { 0.5, 0.5 }, vec4(1, 0, 0, 1), 3);
-   //         draw_line({ { 0.5, 0.5 } , { 0.0, 0.5 }, {0, -0.5}, {-0.5, -0.5 } }, vec4(0, 0, 1, 1), 2);
-   //         draw_line({ { 0.3, 0.2 } , { 0.2, 0.7 }, {0, -0.5}, {0.5, 0.5 } }, vec4(0, 1, 1, 1), 1);
+   //         render_line({ { 0.5, 0.5 } , { 0.0, 0.5 }, {0, -0.5}, {-0.5, -0.5 } }, vec4(0, 0, 1, 1), 2);
+   //         render_line({ { 0.3, 0.2 } , { 0.2, 0.7 }, {0, -0.5}, {0.5, 0.5 } }, vec4(0, 1, 1, 1), 1);
 
    //         spr.update(dt);
    //         draw_texture(math::build_matrix({ 0, 0 }), spr.get_current_image(), { 0.6, 0.5 }, rect::from_size({ 0,0 }, { 1, 1 }), vec4{ 1,1,1,1 }, 7);

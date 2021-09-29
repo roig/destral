@@ -199,12 +199,12 @@ namespace ds {
         return c;
     }
 
-    void resource_init(registry* r) {
+    void resource_cache_init(registry* r) {
         dsverify(r->ctx_get<resource_cache>(resource_cache::ctx_name) == nullptr);
         r->ctx_set<resource_cache>(resource_cache::ctx_name, new resource_cache(r));
     }
 
-    void resource_deinit(registry* r) {
+    void resource_cache_deinit(registry* r) {
         r->ctx_unset(resource_cache::ctx_name);
     }
 

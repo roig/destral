@@ -401,7 +401,7 @@ void ecs_config(registry* r) {
     DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::fixed_update, player::fixed_update);
     DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::fixed_update, bullet::fixed_update);
     DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::fixed_update, enemy::fixed_update);
-    DS_REGISTRY_QUEUE_ADD_SYSTEM(r,queue::update,testInputUpdate);
+    //DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::update,testInputUpdate);
 
     DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::render, player::render);
     DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::render, bullet::render);

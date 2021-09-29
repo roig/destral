@@ -541,8 +541,8 @@ namespace ds {
             for (i32 i = 0; i < _r->entities.size(); ++i) {
                 entity e = _r->entities[i];
                 
-                // if the entity id is the same as the index, means its not a recycled one
-                if (e.id == i) {
+                // if the entity id minus 1 is the same as the index, means its not a recycled one
+                if ((e.id - 1) == i) {
                     alive.push_back(e);
                 }
             }

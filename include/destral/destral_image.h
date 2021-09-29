@@ -4,12 +4,6 @@
 #include <vector>
 
 namespace ds {
-	struct texture {
-		static constexpr const char* cp_name = "ds_texture_cp";
-		static constexpr const char* e_name = "ds_texture";
-		sg_image gpu_texid = { .id = 0 };
-		~texture();
-	};
 
 
 
@@ -26,7 +20,10 @@ namespace ds {
 
 		// sg_image sokol image texture reference
 		sg_image gpu_texid = { .id = 0 };
-		~image();
+		~image()
+		{
+			//TODO destroy sg_image
+		}
 	};
 	
 

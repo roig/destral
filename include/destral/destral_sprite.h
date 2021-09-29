@@ -6,25 +6,32 @@
 namespace ds {
 
 
-	struct animation_frame {
-		resource<image> image;
-		float time = 0;
-
-		// this is the source rectangle that will be drawn from image in pixels
-		rect source_rect_px;
-	};
 
 	struct animation {
+		struct frame {
+			resource<image> image;
+			float time = 0;
+
+			// this is the source rectangle that will be drawn from image in pixels
+			rect source_rect_px;
+		};
+
 		std::string name;
 		//TODO play direction forward.. etc..
-		ds::darray<animation_frame> frames;
+		ds::darray<frame> frames;
 	};
+
 
 	struct animation_collection {
 		std::unordered_map<std::string, animation> animations;
 	};
 
-
+	/**
+	* Sprite component and entity.
+	* Represents a set of drawable animations. Each animation is a collection of frames, 
+	* where each frame is one texture to display on screen. The frames themselves are stored
+	* elsewhere, and the sprite simply refers to them by a animation_collection resource.
+	*/
 	struct sprite {
 		/**
 		 * Switches to a new aninmation and starts playing it from the beginning.

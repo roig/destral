@@ -14,6 +14,7 @@
 #include <destral/destral_resource.h>
 
 #include <destral/destral_renderer.h>
+#include <destral/destral_texture.h>
 
 #include <destral/destral_input.h>
 

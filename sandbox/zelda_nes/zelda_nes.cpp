@@ -4,26 +4,20 @@
 using namespace ds;
 
 
-
-void test_resources(registry* r) {
-    resource_set_loader(r, {
-        .load_fn = [](registry* r, const resource_key& key) {
-            //auto e = r->entity_make("");
-            resource_set(r, key, entity_null, resource_data_state::loading, resource_policy::reference_counted);
-        },
-        .can_load_resource_fn = [](registry* r, const resource_key& key) { return fs_has_extension(key.key.c_str(), ".png"); }
-        });
-    resource link_texture = resource_get(r, "content/NES-ZeldaLink.png");
+resource link_texture;
+void test_resources_init(registry* r) {
+    link_texture = resource_get(r, "content/NES-ZeldaLink.png");
 
     entity texture = link_texture.get();
-    if (texture != entity_null) {
-        DS_LOG("Texture loaded");
-    } else {
-        DS_LOG("Texture not loaded" );
-    }
-
 }
 
+void test_resources_deinit(registry* r) {
+    link_texture = resource(); // remove reference to the resource
+}
+
+void test_render(registry* r) {
+    render_texture(r, ds::math::build_matrix({ 0,0 }), link_texture);
+}
 
 int main() {
     app_config cfg;
@@ -34,8 +28,10 @@ int main() {
     //sprite walk_link;
     ////resource<animation_collection> link_animations;
     cfg.on_ecs_config = [](registry* r) {
-        r->system_queue_add(queue::game_init, "test_resources", test_resources);
-        
+        DS_REGISTRY_QUEUE_ADD_SYSTEM(r,queue::game_init, test_resources_init);
+        DS_REGISTRY_QUEUE_ADD_SYSTEM(r,queue::update, test_render);
+        DS_REGISTRY_QUEUE_ADD_SYSTEM(r,queue::game_deinit, test_resources_deinit);
+       
 
     //    
     //    caches_init();

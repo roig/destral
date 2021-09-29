@@ -2,7 +2,7 @@
 #include "backends/destral_platform_backend.h"
 #include <destral/destral_ecs.h>
 #include <destral/thirdparty/ap_gl33core.h>
-#include "thirdparty/stb_image.h"
+#include <destral/destral_texture.h>
 #include <unordered_map>
 #include <map>
 
@@ -40,68 +40,9 @@ namespace ds::ttf {
 
 namespace ds {
 	
-	/*sg_image load_texture(resource<image>& image) {
-		if (!image) { return {}; }
-		
-		sg_image_desc image_desc = { 0 };
-		image_desc.width = image->size.x;
-		image_desc.height = image->size.y;
-		image_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-		image_desc.min_filter = SG_FILTER_NEAREST;
-		image_desc.mag_filter = SG_FILTER_NEAREST;
-		image_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
-		image_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-		image_desc.wrap_w = SG_WRAP_CLAMP_TO_EDGE;
-		image_desc.data.subimage[0][0] = {
-			  .ptr = image->pixels.data(),
-			  .size = sizeof(unsigned char)
-		};
 
-		image_desc.label = "texture";
-		auto img = sg_make_image(image_desc);
-		return img;
 
-	}*/
 
-	sg_image load_texture_memory(const u8* pixels_data, i32 width, i32 height) {
-		sg_image_desc image_desc = { 0 };
-		image_desc.width = width;
-		image_desc.height = height;
-		image_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-		image_desc.min_filter = SG_FILTER_NEAREST;
-		image_desc.mag_filter = SG_FILTER_NEAREST;
-		image_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
-		image_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-		image_desc.wrap_w = SG_WRAP_CLAMP_TO_EDGE;
-		image_desc.data.subimage[0][0] = {
-			  .ptr = pixels_data,
-			  .size = sizeof(pixels_data)
-		};
-
-		//image_desc.label = "texture";
-		return sg_make_image(image_desc);
-	}
-
-	sg_image load_texture_file(const std::string& filename) {
-		int x,y,n;
-		stbi_set_flip_vertically_on_load(true);
-		unsigned char *pixels = stbi_load(filename.c_str(), &x, &y, &n, 0);
-		if (pixels != nullptr) {
-			// ... process data if not null ...
-			// ... x = width, y = height, n = # 8-bit components per pixel ...
-			// ... replace '0' with '1'..'4' to force that many components per pixel
-			// ... but 'n' will always be the number that it would have been if you said 0
-			sg_image img = load_texture_memory(pixels, x, y);
-			stbi_image_free(pixels);
-			return img;
-		}
-		DS_WARNING(std::format("Error loading the image: {}. Current path: {}", filename));
-		return {0}; 
-	}
-
-	void destroy_texture(sg_image texture) {
-		sg_destroy_image(texture);
-	}
 
 
 
@@ -320,7 +261,7 @@ namespace ds {
 		}
 	}
 
-	void s_draw_all_primitives(const mat3& projection, const mat3& view) {
+	void s_render_all_primitives(const mat3& projection, const mat3& view) {
 		auto vdata = s_transform_vertex_data(projection, view);
 		s_gpu_upload_vertex_data(vdata);
 		
@@ -352,7 +293,7 @@ namespace ds {
 		
 	}
 
-	void s_draw_camera(const camera_data& cam) {
+	void s_render_camera(const camera_data& cam) {
 		// This sets a default pass (don't care = don't clear the screen)
 		ivec2 vp_size;
 		platform_backend::get_drawable_size(&vp_size.x, &vp_size.y);
@@ -365,7 +306,7 @@ namespace ds {
 		sg_apply_scissor_rect(cam.scis.x, cam.scis.y, cam.scis.z, cam.scis.w, false);
 
 		// Draw all the primitives with this projection and view matrices
-		s_draw_all_primitives(cam.projection_matrix, cam.view_matrix);
+		s_render_all_primitives(cam.projection_matrix, cam.view_matrix);
 		sg_end_pass();
 	}
 
@@ -380,10 +321,10 @@ namespace ds {
 			const float aspect = vp_size.x / (float)vp_size.y;
 			const float ortho_width = 1.0f;
 			camera_data default_cam({0.f, 0.f, 1.f, 1.f }, mat3(1.0f), aspect, 1.0f);
-			s_draw_camera(default_cam);
+			s_render_camera(default_cam);
 		} else {
 			for (size_t i = 0; i < g_rs.cameras.size(); i++) {
-				s_draw_camera(g_rs.cameras[i]);
+				s_render_camera(g_rs.cameras[i]);
 			}
 		}
 	}
@@ -417,7 +358,7 @@ namespace ds {
 		s_render_clear();
 	}
 
-	void draw_line(const std::vector<vec2>& points, vec4 color, i32 depth) {
+	void render_line(const std::vector<vec2>& points, vec4 color, i32 depth) {
 		mesh_data md;
 		md.bind.vertex_buffers[0] = g_rs.vbo;
 		md.vertex_start = (int)g_rs.vertex_data.size() / 8;
@@ -439,7 +380,7 @@ namespace ds {
 		g_rs.render_list[depth][g_rs.lines_pip.id].push_back(md);
 	}
 
-	void draw_circle(vec2 center, float radius, vec4 color, i32 depth) {
+	void render_circle(vec2 center, float radius, vec4 color, i32 depth) {
 		const i32 segments = 24;
 		const float increment = glm::two_pi<float>() / segments;
 
@@ -450,11 +391,11 @@ namespace ds {
 
 		// close the line
 		per_pos.push_back(per_pos[0]);
-		draw_line(per_pos, color, depth);
+		render_line(per_pos, color, depth);
 		return;
 	}
 	
-	void draw_fill_circle(vec2 center, float radius , vec4 color, i32 depth) {
+	void render_fill_circle(vec2 center, float radius , vec4 color, i32 depth) {
 		const i32 segments = 24;
 		const float increment = glm::two_pi<float>() / segments;
 
@@ -496,7 +437,7 @@ namespace ds {
 		
 	}
 	
-	void draw_fill_rect(const mat3& tx, vec2 size, vec4 color, i32 depth) {
+	void render_fill_rect(const mat3& tx, vec2 size, vec4 color, i32 depth) {
 		const vec2 half_size = size / 2.0f;
 		
 		const glm::vec2 positions[]{
@@ -529,7 +470,7 @@ namespace ds {
 		g_rs.vertex_data.insert(g_rs.vertex_data.end(), vertex, vertex + (6 * 8));
 	}
 
-	void draw_rect(const mat3& tx, vec2 size, vec4 color, i32 depth) {
+	void render_rect(const mat3& tx, vec2 size, vec4 color, i32 depth) {
 		const vec2 half_size = size / 2.0f;
 		const std::vector<glm::vec2> points {
 			tx * vec3{ -half_size.x, half_size.y, 1},
@@ -538,16 +479,28 @@ namespace ds {
 			tx * vec3{ -half_size.x, -half_size.y, 1 },
 			tx * vec3{ -half_size.x, half_size.y, 1 }
 		};
-		draw_line(points, color, depth);
+		render_line(points, color, depth);
 	}
 
 	// size world units (aqui tinc dubtes..)
 	// uv_rect: normalized uv coordinates rectangle
-	//void draw_texture(const mat3& tx, resource<image> image, vec2 size, rect uv_rect, vec4 color, i32 depth) {
-	//	draw_texture(tx, image->gpu_texid, size, uv_rect, color, depth);
+	//void render_texture(const mat3& tx, resource<image> image, vec2 size, rect uv_rect, vec4 color, i32 depth) {
+	//	render_texture(tx, image->gpu_texid, size, uv_rect, color, depth);
 	//}
 
-	void draw_texture(const mat3& tx, sg_image texture, vec2 size, rect uv_rect, vec4 color, i32 depth) {
+	void render_texture(registry *r, const mat3& model, resource texture_res, vec2 size, rect uv_rect, vec4 color, i32 depth) {
+		if (texture_res.is_available()) {
+			entity texture_e = texture_res.get();
+			dsverify(r->entity_valid(texture_e));
+			texture* tex = r->component_try_get<texture>(texture_e, texture::cp_name);
+			dsverifym(tex, "Resource is not a texture!");
+			render_texture(model, tex->gpu_texid, size, uv_rect, color, depth);
+		} else {
+			// TODO render fallback texture?
+		}
+	}
+
+	void render_texture(const mat3& tx, sg_image texture, vec2 size, rect uv_rect, vec4 color, i32 depth) {
 		// TEST IMAGE
 		//static sg_image test_img = { .id = 0 };
 
