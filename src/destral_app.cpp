@@ -6,6 +6,8 @@
 #include "backends/destral_platform_backend.h"
 #include "backends/destral_input_backend.h"
 #include <destral/destral_renderer.h>
+#include <destral/gfw/destral_gfw.h>
+#include <destral/destral_sprite.h>
 
 #include <thread>
 
@@ -50,24 +52,45 @@ namespace ds {
 	void init_engine_ecs(registry* r) {
 		// Engine init
 		r->system_queue_add(queue::engine_init, "platform_init", [](registry* r) {platform_backend::init();});
-		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, resource_cache_init);
-		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, texture::register_component);
-		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, texture::register_entity);
-		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, texture::set_resource_loader);
+		//DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, resource_cache_init);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, cp::resource::register_component);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, cp::resource_loader::register_component);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, cp::texture::register_component);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, cp::camera::register_component);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, cp::hierarchy::register_component);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, cp::sprite::register_component);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, cp::sprite_renderer::register_component);
+
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, en::texture_loader::register_entity);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, en::texture::register_entity);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, en::camera::register_entity);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, en::sprite::register_entity);
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::engine_init, en::sprite_renderer::register_entity);
 		r->system_queue_add(queue::engine_init, "render_init", [](registry* r) { render_init(); });
+
+		
+		
 
 		// Engine pre update
 		r->system_queue_add(queue::pre_update, "input_begin_frame", [](registry* r) {input_backend::on_input_begin_frame(); });
 		r->system_queue_add(queue::pre_update, "platform_poll_events", [](registry* r) { platform_backend::poll_events(); });
 
+		// Engine pre render
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::pre_render, en::sprite_renderer::update_sprite_animation_frame);
+
+		// Engine render
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::render, en::sprite_renderer::render_sprites);
+
 		// Engine post render
+		DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::post_render, en::camera::render_cameras_system);
 		r->system_queue_add(queue::post_render, "render_present", [](registry* r) { render_present(); });
 		r->system_queue_add(queue::post_render, "render_swap_buffers", [](registry* r) { platform_backend::swap_buffers(); });
 
 
 		// Engine deinit
+		r->system_queue_add(queue::engine_deinit, "entity_destroy_all", [](registry* r) { r->entity_destroy_all(); });
 		r->system_queue_add(queue::engine_deinit, "render_deinit", [](registry* r) { render_deinit(); });
-		r->system_queue_add(queue::engine_deinit, "resource_deinit", resource_cache_deinit);
+		//r->system_queue_add(queue::engine_deinit, "resource_deinit", resource_cache_deinit);
 		r->system_queue_add(queue::engine_deinit, "platform_deinit", [](registry* r) { platform_backend::deinit(); });
 	}
 

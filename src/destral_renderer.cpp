@@ -488,17 +488,17 @@ namespace ds {
 	//	render_texture(tx, image->gpu_texid, size, uv_rect, color, depth);
 	//}
 
-	void render_texture(registry *r, const mat3& model, resource texture_res, vec2 size, rect uv_rect, vec4 color, i32 depth) {
-		if (texture_res.is_available()) {
-			entity texture_e = texture_res.get();
-			dsverify(r->entity_valid(texture_e));
-			texture* tex = r->component_try_get<texture>(texture_e, texture::cp_name);
-			dsverifym(tex, "Resource is not a texture!");
-			render_texture(model, tex->gpu_texid, size, uv_rect, color, depth);
-		} else {
-			// TODO render fallback texture?
-		}
-	}
+	//void render_texture(registry *r, const mat3& model, resource texture_res, vec2 size, rect uv_rect, vec4 color, i32 depth) {
+	//	if (texture_res.is_available()) {
+	//		entity texture_e = texture_res.get();
+	//		dsverify(r->entity_valid(texture_e));
+	//		texture* tex = r->component_try_get<texture>(texture_e, texture::cp_name);
+	//		dsverifym(tex, "Resource is not a texture!");
+	//		render_texture(model, tex->gpu_texid, size, uv_rect, color, depth);
+	//	} else {
+	//		// TODO render fallback texture?
+	//	}
+	//}
 
 	void render_texture(const mat3& tx, sg_image texture, vec2 size, rect uv_rect, vec4 color, i32 depth) {
 		// TEST IMAGE

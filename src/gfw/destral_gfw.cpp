@@ -4,31 +4,28 @@
 #include <destral/destral_renderer.h>
 
 namespace ds {
-
-
-
-	void game_framework_register_entities(registry* r) {
-        // Register the components
-        r->component_register<hierarchy>(hierarchy::cp_name, hierarchy::serialize, hierarchy::cleanup);
-        r->component_register<camera>(camera::cp_name);
-
-        // Register the entities
-        r->entity_register(camera::e_name, {hierarchy::cp_name, camera::cp_name});
+	void cp::hierarchy::register_component(registry* r) {
+        r->component_register<cp::hierarchy>(cp::hierarchy::name, 
+            cp::hierarchy::serialize, cp::hierarchy::cleanup);
 	}
 
-    void camera::render_cameras_system(registry* r) {
-        view v = r->view_create({ hierarchy::cp_name, camera::cp_name });
-        auto hr_idx = v.index(hierarchy::cp_name);
-        auto cam_idx = v.index(camera::cp_name);
+    void cp::camera::register_component(registry* r) {
+        r->component_register<cp::camera>(cp::camera::name);
+    }
+
+    void en::camera::register_entity(registry* r) {
+        r->entity_register(en::camera::name, { cp::hierarchy::name, cp::camera::name});
+    }
+
+    void en::camera::render_cameras_system(registry* r) {
+        view v = r->view_create({ cp::hierarchy::name, cp::camera::name });
+        auto hr_idx = v.index(cp::hierarchy::name);
+        auto cam_idx = v.index(cp::camera::name);
         while (v.valid()) {
-            auto hr = v.data<hierarchy>(hr_idx);
-            auto cam = v.data<camera>(cam_idx);
+            auto hr = v.data<cp::hierarchy>(hr_idx);
+            auto cam = v.data<cp::camera>(cam_idx);
             render_add_camera(hr->ltw(), cam->viewport, cam->aspect, cam->ortho_width);
             v.next();
         }
     }
-
-	void game_framework_deinit() {
-
-	}
 }

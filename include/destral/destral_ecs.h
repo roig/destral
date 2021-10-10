@@ -311,6 +311,9 @@ struct registry {
     // Returns true only if the entity is valid. Valid means that registry has created it and it's not null. 
     bool entity_valid(entity e);
 
+    // Returns true only if the entity is valid and it's type name is the same as the parameter entity_name
+    bool entity_is_name(entity e, const char* entity_name);
+
     // Returns a copy of all the entities in the registry (WARNING: this is a slow operation)
     // Remember that after operations this vector will not be update.
     ds::darray<entity> entity_all();

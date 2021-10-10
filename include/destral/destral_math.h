@@ -227,7 +227,10 @@ namespace ds {
         */
         static rect from_size(vec2 min, vec2 size) { return { min, min + size }; }
 
-       // static rect from_top_left_size(vec2 top_left, vec2 size) { return {} }
+
+        
+
+       
 
 
         /**
@@ -389,3 +392,74 @@ namespace ds {
 
 
 }
+
+
+
+/*
+    Formatters for types:
+
+    vec2 
+    vec3 
+    vec4 
+    ivec2
+    ivec3
+    ivec4
+    mat3 
+    rect
+*/
+
+template <>
+struct std::formatter<ds::vec2> : std::formatter<std::string> {
+    auto format(ds::vec2 p, std::format_context& ctx) {
+        return std::formatter<string>::format(std::format("[{}, {}]", p.x, p.y), ctx);  }
+};
+
+template <>
+struct std::formatter<ds::ivec2> : std::formatter<std::string> {
+    auto format(ds::ivec2 p, std::format_context& ctx) {
+        return std::formatter<string>::format(std::format("[{}, {}]", p.x, p.y), ctx); }
+};
+
+template <>
+struct std::formatter<ds::vec3> : std::formatter<std::string> {
+    auto format(ds::vec3 p, std::format_context& ctx) {
+        return std::formatter<string>::format(std::format("[{}, {}, {}]", p.x, p.y, p.z), ctx);
+    }
+};
+
+template <>
+struct std::formatter<ds::ivec3> : std::formatter<std::string> {
+    auto format(ds::ivec3 p, std::format_context& ctx) {
+        return std::formatter<string>::format(std::format("[{}, {}, {}]", p.x, p.y, p.z), ctx);
+    }
+};
+
+
+template <>
+struct std::formatter<ds::vec4> : std::formatter<std::string> {
+    auto format(ds::vec4 p, std::format_context& ctx) {
+        return std::formatter<string>::format(std::format("[{}, {}, {}, {}]", p.x, p.y, p.z, p.w), ctx);
+    }
+};
+
+template <>
+struct std::formatter<ds::ivec4> : std::formatter<std::string> {
+    auto format(ds::ivec4 p, std::format_context& ctx) {
+        return std::formatter<string>::format(std::format("[{}, {}, {}, {}]", p.x, p.y, p.z, p.w), ctx);
+    }
+};
+
+template <>
+struct std::formatter<ds::mat3> : std::formatter<std::string> {
+    auto format(ds::mat3 p, std::format_context& ctx) {
+        return std::formatter<string>::format(std::format("[{}, {}, {}]", p[0], p[1], p[2]), ctx);
+    }
+};
+
+template <>
+struct std::formatter<ds::rect> : std::formatter<std::string> {
+    auto format(ds::rect p, std::format_context& ctx) {
+        return std::formatter<string>::format(
+            std::format("[min:{}, max:{}]", p.min, p.max), ctx);
+    }
+};

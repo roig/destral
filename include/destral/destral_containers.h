@@ -55,16 +55,19 @@ namespace ds {
 
 		// Removes all the elements that are considered equal to the element provided (using operator== function)
 		void remove_all(const T& elem) {
-			i32 ele_idx_remove = -1;
 			// TODO not optimized.. but it should work
-			while (find(elem, &ele_idx_remove)) {
-				remove_at(ele_idx_remove);
-			}
+			i32 ele_idx_remove = -1;
+			do {
+				ele_idx_remove = find(elem);
+				if (ele_idx_remove != -1) {
+					remove_at(ele_idx_remove);
+				}
+			} while (ele_idx_remove != -1);
 		}
 
 		void remove_single(const T& elem) {
-			i32 ele_idx_remove = -1;
-			if (find(elem, &ele_idx_remove)) {
+			i32 ele_idx_remove = find(elem);
+			if (ele_idx_remove != -1) {
 				remove_at(ele_idx_remove);
 			}
 		}
@@ -122,26 +125,36 @@ namespace ds {
 			return false;
 		}
 
-		// Returns true only if the element was found. 
-		// Sets the index parameter to the index of the first element found or -1 if no element is found
-		bool find(const T& other, i32* index) const {
-			dscheck(index != nullptr);
+		// Returns the index of the first element found or -1 if it's not found
+		i32 find(const T& other) const {
 			for (i32 i = 0; i < size(); i++) {
-				if (vec[i] == other) { *index = i;	return true; }
+				if (vec[i] == other) { 
+					return i; 
+				}
 			}
-			*index = -1; return false;
+			return -1;
 		}
 
-		// Returns true only if the element was found. 
-		// Sets the index parameter to the index of the last element found or -1 if no element is found
-		bool find_last(const T& other, i32* last_index) const {
-			dscheck(last_index != nullptr);
-			bool found = false;
-			*last_index = -1;
+		// Returns the index of the last element found or -1 if it's not found
+		i32 find_last(const T& other) const {
+			i32 last_index = -1;
 			for (i32 i = 0; i < size(); i++) {
-				if (vec[i] == other) { *last_index = i; found = true; }
+				if (vec[i] == other) { 
+					last_index = i;
+				}
 			}
-			return found;
+			return last_index;
+		}
+
+		// Returns the index if the element is found by the predicate or -1 if not found
+		i32 find_predicate(bool (*pred_fn)(T*)) const {
+			dsverify(pred_fn);
+			for (i32 i = 0; i < size(); i++) {
+				if (pred_fn(vec[i])) {
+					return i;
+				}
+			}
+			return -1;
 		}
 
 		///// Sorting TODO
@@ -184,6 +197,17 @@ namespace ds {
             return false;
         }
 
+		// Returns a valid pointer if the element with the key was found.
+		// Returns nullptr if the element with the key was not found
+		T* find(i32 key) {
+			auto search = map.find(key);
+			if (search != map.end()) {
+				return &search->second;
+			} else {
+				return nullptr;
+			}
+		}
+
         // Returns true only if the element was found.
         // If the element is found, it sets the key parameter to the key of the element found.
         // If not the key parameter is unmodified.
@@ -210,10 +234,6 @@ namespace ds {
             return found;
         }
 
-        // Direct access to the map memory (C-Style API), pointer valid as long as
-        // the map exists and before any mutating operation. Only the first .size() indices are dereferenceable
-        T* data() { map.data(); }
-
         void set(i32 key, const T& elem) {
             map[key] = elem;
         }
@@ -224,22 +244,8 @@ namespace ds {
             }
         }
 
-        T& operator[] (i32 key) {
-            dsverify(is_valid_key(key));
-            return map[key];
-        }
 
-        const T& operator[] (i32 key) const {
-            dsverify(is_valid_key(key));
-            return map[key];
-        }
-
-        /**
-        void operator[] (i32 key, const T& element) const {
-            set(key,element);
-        }
-         */
-
+      
         darray<T> to_array() const{
             darray<T> array;
             for (auto pair : map) {

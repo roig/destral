@@ -1,5 +1,5 @@
 #include <destral/destral_texture.h>
-#include <destral/destral_resource.h>
+#include <destral/destral_resource2.h>
 #include <destral/destral_renderer.h>
 #include <destral/destral_filesystem.h>
 #include "thirdparty/stb_image.h"
@@ -42,33 +42,45 @@ namespace ds {
 	}
 
 	///////////////////////
-    
-    texture::~texture() {
+
+	ivec2 cp::texture::get_size() {
+		sg_image_info info = sg_query_image_info(gpu_texid);
+		return { info.width, info.height };
+	}
+
+	cp::texture::~texture() {
 		sg_destroy_image(gpu_texid);
+	}
+
+	void cp::texture::register_component(registry* r) {
+		r->component_register<cp::texture>(cp::texture::name);
+	}
+	
+	void en::texture::register_entity(registry* r) {
+		r->entity_register(en::texture::name, { cp::texture::name, cp::resource::name });
+	}
+
+    void en::texture_loader::register_entity(registry* r) {
+		r->entity_register(en::texture_loader::name, { cp::resource_loader::name });
     }
 
-    void texture::register_component(registry* r) {
-        r->component_register<texture>(texture::cp_name);
-    }
-
-    void texture::register_entity(registry* r) {
-        r->entity_register(texture::e_name, { texture::cp_name });
-    }
-
-    void texture::set_resource_loader(registry* r) {
-        resource_loader rl;
-        rl.can_load_resource_fn = [](registry* r, const resource_key& key) { return fs_has_extension(key.key.c_str(), ".png"); };
-        rl.load_fn = [](registry* r, const resource_key& key) {
-            auto e = r->entity_make(texture::e_name);
-            texture* t = r->component_get<texture>(e, texture::cp_name);
-            sg_image gpu_img = create_sg_iamge_from_file(key.key);
-            if (gpu_img.id == 0) {
-                resource_set(r, key, entity_null, resource_data_state::not_found, resource_policy::reference_counted);
-            } else {
-                t->gpu_texid = gpu_img;
-                resource_set(r, key, e, resource_data_state::loaded_final, resource_policy::reference_counted);
-            }
-        };
-        resource_set_loader(r, rl);
-    }
+	entity en::texture_loader::create_setup_entity(registry* r) {
+		entity e_tl = r->entity_make(en::texture_loader::name);
+		cp::resource_loader *rl = r->component_get<cp::resource_loader>(e_tl, cp::resource_loader::name);
+		rl->can_load_fn = [](registry* r, const char* res_key_filepath) {
+			return fs_has_extension(res_key_filepath, ".png");
+		};
+		rl->load_fn = [](registry* r, const char* res_key_filepath) {
+			auto e = r->entity_make(en::texture::name);
+			cp::texture* t = r->component_get<cp::texture>(e, cp::texture::name);
+			sg_image gpu_img = create_sg_iamge_from_file(res_key_filepath);
+			if (gpu_img.id == 0) {
+				return entity_null;
+			} else {
+				t->gpu_texid = gpu_img;
+				return e;
+			}
+		};
+		return e_tl;
+	}
 }

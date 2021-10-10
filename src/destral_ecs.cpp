@@ -532,6 +532,16 @@ namespace ds {
         return (e.id <= _r->entities.size() ) && ( _r->entities[e.id - 1] == e );
     }
 
+    bool registry::entity_is_name(entity e, const char* entity_name) {
+        if (entity_valid(e)) {
+            auto et = s_get_entity_type(this, e);
+            if (et->type_id == fnv1a_32bit(entity_name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     ds::darray<entity> registry::entity_all() {
         // If no entities are available to recycle, means that the full vector is valid
         if (_r->available_id == 0) {

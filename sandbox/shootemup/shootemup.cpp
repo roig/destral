@@ -191,7 +191,7 @@ struct bullet {
         view v = r->view_create({ cp_name });
         while (v.valid()) {
             bullet* p = v.data<bullet>(v.index(cp_name));
-            draw_circle(p->pos, 0.1f, vec4(1, 0, 1, 1), 4);
+            render_circle(p->pos, 0.1f, vec4(1, 0, 1, 1), 4);
             v.next();
         }
     }
@@ -239,7 +239,7 @@ struct player {
             }
 
             p->pos.x = p->pos.x + (p->velocity * app_dt() * dir);
-            draw_rect(math::build_matrix(p->pos), { 0.5, 0.5 }, vec4(0, 1, 0, 1), 4);
+            render_rect(math::build_matrix(p->pos), { 0.5, 0.5 }, vec4(0, 1, 0, 1), 4);
             v.next();
         }
     }
@@ -249,7 +249,7 @@ struct player {
         auto player_cpidx = v.index(cp_name);
         while (v.valid()) {
             player* p = v.data<player>(player_cpidx);
-            draw_rect(math::build_matrix(p->pos), { 0.5, 0.5 }, vec4(0, 1, 0, 1), 4);
+            render_rect(math::build_matrix(p->pos), { 0.5, 0.5 }, vec4(0, 1, 0, 1), 4);
             v.next();
         }
     }
@@ -277,7 +277,7 @@ struct enemy {
         view v = r->view_create({ cp_name });
         while (v.valid()) {
             auto* en = v.data<enemy>(v.index(cp_name));
-            draw_circle(en->pos, 0.05f, vec4(1, 0, 0, 1), 4);
+            render_circle(en->pos, 0.05f, vec4(1, 0, 0, 1), 4);
             v.next();
         }
     }
@@ -318,12 +318,12 @@ void testMapContainer() {
     map.set(3,"3");
     map.set(4,"4");
 
-    DS_LOG(std::format("Key 0 should be 0 -> {}",map[0]));
-    DS_LOG(std::format("Key 1 should be 1 -> {}",map[1]));
-    DS_LOG(std::format("Key 2 should be 2 -> {}",map[2]));
-    DS_LOG(std::format("Key 3 should be 3 -> {}",map[3]));
+    DS_LOG(std::format("Key 0 should be 0 -> {}",*map.find(0)));
+    DS_LOG(std::format("Key 1 should be 1 -> {}",*map.find(1)));
+    DS_LOG(std::format("Key 2 should be 2 -> {}",*map.find(2)));
+    DS_LOG(std::format("Key 3 should be 3 -> {}",*map.find(3)));
     map.set(2,"22");
-    DS_LOG(std::format("Key 2 should be 22 -> {}",map[2]));
+    DS_LOG(std::format("Key 2 should be 22 -> {}",*map.find(2)));
 
     map.remove("3");
     DS_LOG(std::format("Key 3 should be false -> {}",map.is_valid_key(3)));
@@ -380,7 +380,6 @@ void ecs_test_register(registry* r) {
 void ecs_config(registry* r) {
     //ecs_test_register(r);
 
-    game_framework_register_entities(r); // this registers camera and hierarchy components
 
     // Now register game ecs:
     // Register game components
@@ -406,14 +405,14 @@ void ecs_config(registry* r) {
     DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::render, player::render);
     DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::render, bullet::render);
     DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::render, enemy::render);
-    DS_REGISTRY_QUEUE_ADD_SYSTEM(r, queue::render, camera::render_cameras_system);
+    
 
     //handle_registry_add_test_system(r);
     //r->entity_make(handle_registry_tester::e_name);
     // Spawn game entities
     r->entity_make(player::e_name);
     r->entity_make(enemy_spawner::e_name);
-    r->entity_make(camera::e_name);
+    r->entity_make(en::camera::name);
 }
 
 int main() {

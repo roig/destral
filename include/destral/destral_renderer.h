@@ -3,7 +3,7 @@
 #include <destral/destral_common.h>
 #include <destral/destral_math.h>
 #include <destral/thirdparty/sokol_gfx.h>
-#include <destral/destral_resource.h>
+#include <destral/destral_resource2.h>
 #include <destral/destral_image.h>
 #include <vector>
 
@@ -53,6 +53,6 @@ namespace ds {
 	// Submit a draw texture rectangle primitive
 	void render_texture(const mat3& model, sg_image texture = { 0 }, vec2 size = { 1,1 }, rect source_rect = rect::from_size({ 0,0 }, { 1, 1 }), vec4 color = { 1,1,1,1 }, i32 depth = 0);
 
-	void render_texture(registry* r, const mat3& model, resource texture, vec2 size = { 1,1 }, rect source_rect = rect::from_size({ 0,0 }, { 1, 1 }), vec4 color = { 1,1,1,1 }, i32 depth = 0);
+	//void render_texture(registry* r, const mat3& model, resource texture, vec2 size = { 1,1 }, rect source_rect = rect::from_size({ 0,0 }, { 1, 1 }), vec4 color = { 1,1,1,1 }, i32 depth = 0);
 	/*void draw_texture(const mat3& model, resource<image> img, vec2 size = { 1,1 }, rect source_rect = rect::from_size({ 0,0 }, { 1, 1 }), vec4 color = { 1,1,1,1 }, i32 depth = 0);*/
 }

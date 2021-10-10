@@ -11,10 +11,11 @@
 #include <destral/destral_ecs.h>
 #include <destral/destral_math.h>
 
-#include <destral/destral_resource.h>
+#include <destral/destral_resource2.h>
 
 #include <destral/destral_renderer.h>
 #include <destral/destral_texture.h>
+#include <destral/destral_sprite.h>
 
 #include <destral/destral_input.h>
 
