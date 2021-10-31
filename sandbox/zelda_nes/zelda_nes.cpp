@@ -63,13 +63,43 @@ rect rect_texture_uv_from_top_left_origin_px(vec2 top_left_position_px, vec2 hal
     return r;
 }
 
+void add_horizontal_sprite_animation_from_texture(registry* r, entity sprite_e, entity texture_e, const char* animation_name,
+    i32 frame_count, float frame_time, vec2 rect_tl_position_with_tl_origin_px, vec2 sprite_size_px, float sprite_horizontal_spacing_px ) {
+
+    dsverify(r->entity_is_name(texture_e, en::texture::name));
+    dsverify(r->entity_is_name(sprite_e, en::sprite::name));
+    cp::texture* cp_tex = r->component_get<cp::texture>(texture_e, cp::texture::name);
+    const ivec2 tex_size_px = cp_tex->get_size();
+  
+    cp::sprite* cp_spr = r->component_get<cp::sprite>(sprite_e, cp::sprite::name);
+
+    cp::sprite::animation anim;
+    anim.name = animation_name;
+    //const float sprite_frame_horizontal_spacing_px = 8;
+    //const vec2 sprite_size_px = { 24,32 };
+    //vec2 walk_rect_tl_origin_tl_pos_px = { 12,72 };
+    for (i32 i = 0; i < frame_count; i++) {
+        cp::sprite::animation::frame f;
+        f.texture = texture_e;
+        f.time = frame_time;
+        f.source_rect_px = rect_texture_uv_from_top_left_origin_px(rect_tl_position_with_tl_origin_px, sprite_size_px / 2.0f, tex_size_px);
+        rect_tl_position_with_tl_origin_px.x += sprite_size_px.x + sprite_horizontal_spacing_px;
+        anim.frames.push_back(f);
+    }
+    cp_spr->animations.set(fnv1a_32bit(anim.name), anim);
+}
+
 entity create_link_sprite_and_animations(registry *r, entity link_texture) {
-    dsverify(r->entity_is_name(link_texture, en::texture::name));
+
+    auto e_sprite = r->entity_make(en::sprite::name);
+    add_horizontal_sprite_animation_from_texture(r, e_sprite, link_texture, "walk_down", 10, 0.05f, { 12,72 }, { 24,32 }, 8);
+    add_horizontal_sprite_animation_from_texture(r, e_sprite, link_texture, "walk_up", 10, 0.05f, { 12,72 }, { 24,32 }, 8);
+
+   /* dsverify(r->entity_is_name(link_texture, en::texture::name));
 
     cp::texture* cp_tex = r->component_get<cp::texture>(link_texture, cp::texture::name);
     const ivec2 tex_size_px = cp_tex->get_size();
 
-    auto e_sprite = r->entity_make(en::sprite::name);
     cp::sprite* cp_spr = r->component_get<cp::sprite>(e_sprite, cp::sprite::name);
 
     cp::sprite::animation anim;
@@ -85,7 +115,7 @@ entity create_link_sprite_and_animations(registry *r, entity link_texture) {
         walk_rect_tl_origin_tl_pos_px.x += sprite_size_px.x + sprite_frame_horizontal_spacing_px;
         anim.frames.push_back(f);
     }
-    cp_spr->animations.set(fnv1a_32bit(anim.name), anim);
+    cp_spr->animations.set(fnv1a_32bit(anim.name), anim);*/
 
     return e_sprite;
 }
@@ -122,7 +152,7 @@ void test_render(registry* r) {
    // render_texture(ds::math::build_matrix({ 0,0 }), t->gpu_texid, { 1, 1 }, link_sample_src_uv);
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     app_config cfg;
     cfg.width = 1280;
     cfg.height = 720;
@@ -131,9 +161,9 @@ int main() {
     //sprite walk_link;
     ////resource<animation_collection> link_animations;
     cfg.on_ecs_config = [](registry* r) {
-        DS_REGISTRY_QUEUE_ADD_SYSTEM(r,queue::game_init, test_resources_init);
-        DS_REGISTRY_QUEUE_ADD_SYSTEM(r,queue::update, test_render);
-        DS_REGISTRY_QUEUE_ADD_SYSTEM(r,queue::game_deinit, test_resources_deinit);
+        DS_REGISTRY_QUEUE_ADD_SYSTEM(r,queue::game::init, test_resources_init);
+        DS_REGISTRY_QUEUE_ADD_SYSTEM(r,queue::game::update, test_render);
+        DS_REGISTRY_QUEUE_ADD_SYSTEM(r,queue::game::deinit, test_resources_deinit);
        
 
     //    

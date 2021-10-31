@@ -37,7 +37,7 @@ namespace ds {
 			stbi_image_free(pixels);
 			return img;
 		}
-		DS_WARNING(std::format("Error loading the image: {}. Current path: {}", filename));
+		DS_WARNING(std::format("Error loading the image file: {}.", filename));
 		return { 0 };
 	}
 

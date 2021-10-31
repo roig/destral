@@ -5,26 +5,35 @@
 namespace ds {
     // Destral internal system queues
     namespace queue {
-        // Ordered queues by execution
-        static constexpr const char* engine_init = "ds_engine_init"; // Engine subsystems init are here
-        static constexpr const char* game_init = "ds_game_init"; // This is where your init systems should be, they wil be executed on game init
+        // Ordered queues by execution:
+        // [engine::init]
+        // [game::init]
+        // for each frame {
+        //     [engine::update]
+        //     [game::update]
+        //     for each fixed tick (framerate dependent code should be (accelerations, physics, collisions..)) {
+        //         [game::fixed_update]
+        //     }
+        //     [game::render]
+        //     [engine::render]
+        //     [engine::post_render]
+        // }
+        // [game::deinit]
+        // [engine::deinit]
+        namespace engine {
+            static constexpr const char* init = "ds_engine_init"; // Engine subsystems init are here
+            static constexpr const char* update = "ds_engine_update"; // Engine pre-update
+            static constexpr const char* render = "ds_engine_render"; // Engine specific post render systems are executed here
+            static constexpr const char* deinit = "ds_engine_deinit"; // called when application quits after game_deinit queue
+        }
 
-        /////////// Start frame:
-        static constexpr const char* pre_update = "ds_pre_update"; // Input update polling
-        static constexpr const char* update = "ds_update"; // This is where your indepenent framerate logic should be(particles, cosmetics..)
-
-            // While available time for a fixed update
-                // Called 0 to N times per frame this is where your framerate dependent code should be (accelerations, physics, collisions..) 
-                static constexpr const char* fixed_update = "ds_fixed_update"; 
-            // End fixed while
-
-        static constexpr const char* pre_render= "ds_pre_render";
-        static constexpr const char* render = "ds_render"; // Here is where you should put your rendering systems
-        static constexpr const char* post_render = "ds_post_render"; // Engine specific post render systems are executed here
-        /////////// End frame
-
-        static constexpr const char* game_deinit = "ds_game_deinit"; // called when application quits
-        static constexpr const char* engine_deinit = "ds_engine_deinit"; // called when application quits after game_deinit queue
+        namespace game {
+            static constexpr const char* init = "ds_game_init"; // This is where your init systems should be, they wil be executed on game init
+            static constexpr const char* update = "ds_game_update"; // This is where your indepenent framerate logic should be(particles, cosmetics..)
+            static constexpr const char* fixed_update = "ds_game_fixed_update";
+            static constexpr const char* render = "ds_game_render"; // Here is where you should put your rendering systems
+            static constexpr const char* deinit = "ds_game_deinit"; // called when application quits
+        }
     }
 
 

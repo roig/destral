@@ -1,5 +1,6 @@
 # Destral
 out/*
+build/*
 
 # Visual studio
 *.vs

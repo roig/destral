@@ -97,7 +97,7 @@ namespace ds {
 				paused = false;
 				cur_frame_idx = 0;
 				loop_count = 0;
-				t = 0;
+				cur_frame_acum_time = 0;
 			}
 
 			/**
@@ -105,9 +105,6 @@ namespace ds {
 			 */
 			void update(float dt) {
 				if (paused) return;
-
-				if (!cur_animation_found) return;
-
 				cp::sprite* spr = r->component_try_get<cp::sprite>(sprite_to_render, cp::sprite::name);
 				dsverifym(spr, "Entity doesn't contains a sprite component.");
 
@@ -115,22 +112,26 @@ namespace ds {
 				if (!anim) {
 					cur_animation_found = false;
 				} else {
-					t += dt * play_speed_multiplier;
-					if (t >= anim->frames[cur_frame_idx].time) {
+					dsverify(play_speed_multiplier > 0.0f);
+					dt = dt * play_speed_multiplier;
+
+					float cur_frame_total_time = anim->frames[cur_frame_idx].time;
+					while ((cur_frame_acum_time + dt) >= cur_frame_total_time) {
+						dt = dt - (cur_frame_total_time - cur_frame_acum_time);
+						glm::max(0.0f, dt);
+
 						cur_frame_idx++;
 						if (cur_frame_idx == anim->frames.size()) {
-							loop_count++;
 							cur_frame_idx = 0;
+							loop_count++;
 						}
-						DS_LOG(std::format("frame: {}", cur_frame_idx));
-						t = 0;
 
-						// TODO - Backwards and pingpong.
+						cur_frame_total_time = anim->frames[cur_frame_idx].time;
+						cur_frame_acum_time = 0;
 					}
+					cur_frame_acum_time += dt;
+					//	DS_LOG(std::format("frame: {}", cur_frame_idx));
 				}
-
-
-				
 			}
 
 			entity get_current_texture_entity() {
@@ -173,12 +174,11 @@ namespace ds {
 			i32 cur_animation_hash_key;
 			bool cur_animation_found = false;
 			i32 cur_frame_idx = 0;
+			float cur_frame_acum_time = 0;
 			i32 loop_count = 0;
 			bool paused = true;
-			float t = 0;
-			float play_speed_multiplier = 1.0;
+			float play_speed_multiplier = 0.5;
 			ds::registry* r = nullptr;
-
 		};
 	}
 

@@ -48,11 +48,11 @@ namespace ds::log {
         std::strftime(time_str, 256, "%Y-%m-%d %H:%M:%S", &tm_t);
         std::string full_msg = std::format("{}.{:0>3} {} {}:{} {}\n", time_str, now_milis.count(), lvl_char, file_name, line, msg);
         std::printf("%s", full_msg.c_str());
-
+        std::fflush(stdout);  // We can setvbuf(stdout, NULL, _IONBF, 0);  to disable buffering entirely
         if (g_logfile) {
             g_logfile << full_msg;
         }
-
+        
 
     }
 
