@@ -2,6 +2,7 @@
 #include "entt/entity/fwd.hpp"
 #include <SDL_events.h>
 #include <functional>
+#include "platform.h"
 
 
 namespace ds {
@@ -15,9 +16,9 @@ struct platform_event {
 
 struct platform_app_desc {
     std::string window_name = "Destral Engine window";
-    int window_width = 1280;
-    int window_height = 720;
-
+    i32 window_width = 1280;
+    i32 window_height = 720;
+    
     // application callbacks
     std::function<void(entt::registry&) > init_cb = nullptr;
     std::function<void(entt::registry&) > tick_cb = nullptr;

@@ -17,23 +17,23 @@
 #include "ap/sokol_gfx.h"
 
 
-#define SOKOL_GL_IMPL
-#include "ap/sokol_gl.h"
-
-
-#pragma warning( push )
-#pragma warning(disable : 4505)
-#pragma warning(disable : 4996)
-#pragma warning(disable : 4267)
-#define FONTSTASH_IMPLEMENTATION
-#include "ap/fontstash.h"
-#pragma warning( pop )
-
-
-#define SOKOL_FONTSTASH_IMPL
-#include "ap/sokol_fontstash.h"
-
-
+//#define SOKOL_GL_IMPL
+//#include "ap/sokol_gl.h"
+//
+//
+//#pragma warning( push )
+//#pragma warning(disable : 4505)
+//#pragma warning(disable : 4996)
+//#pragma warning(disable : 4267)
+//#define FONTSTASH_IMPLEMENTATION
+//#include "ap/fontstash.h"
+//#pragma warning( pop )
+//
+//
+//#define SOKOL_FONTSTASH_IMPL
+//#include "ap/sokol_fontstash.h"
+//
+//
 
 
 #define AP_SDL_IMPL

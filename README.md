@@ -5,6 +5,9 @@ Programming Info:
 To set the default working directories for subprojects:
 https://stackoverflow.com/questions/41864259/how-to-set-working-directory-for-visual-studio-2017-rc-cmake-project
 
+Switch to cmake targets view in the Solution Explorer, then right click Arkanoid target -> Add Debug Configuration and then add this line:
+
+"currentDir": "${workspaceRoot}\\sandbox\\arkanoid"
 
 
 

@@ -9,9 +9,9 @@ set(Destral_PUBLIC_HEADERS
 "archtypes.h"
 "collision.h"
 "assets.h"
-"rect.h"
+
 "ecs.h"
-"math_funs.h"
+"math2d.h"
 ) 
 
 # Those headers will only be shown in the IDE (should not be installed)
@@ -27,10 +27,10 @@ set(Destral_SOURCES
 "render.cpp"
 "archtypes.cpp"
 "assets.cpp"
-"rect.cpp"
+
 "collision.cpp"
 "ecs.cpp"
-"math_funs.cpp"
+"math2d.cpp"
 )
 
 #add_executable(Destral 

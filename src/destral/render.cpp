@@ -2,6 +2,7 @@
 
 #include "ap/ap_debug.h"
 #include "ap/ap_sdl.h"
+
 #pragma warning( push )
 #pragma warning(disable : 4505) // 
 #pragma warning(disable : 4996) // disable fopen warning in cute_png..
@@ -10,120 +11,19 @@
 #pragma warning( pop )
 
 
-#include "math_funs.h"
+#include "math2d.h"
 #include "transform.h"
 #include "ap/ap_gl33compat.h"
 #include "entt/entity/registry.hpp"
 #include "glm/gtc/matrix_transform.hpp"
-#include <array>
+#include "ap/sokol_gfx.h"
+
 #include <filesystem>
 
-
-#include "ap/stb_truetype.h"
-
-
-#include "ap/sokol_gfx.h"
-#include "ap/sokol_gl.h"
-#include "ap/fontstash.h"
-#include "ap/sokol_fontstash.h"
 
 
 
 using namespace ds;
-
-
-typedef struct {
-    FONScontext* fons;
-    float dpi_scale;
-    int font_normal;
-    int font_italic;
-    int font_bold;
-    int font_japanese;
-    uint8_t font_normal_data[256 * 1024];
-    uint8_t font_italic_data[256 * 1024];
-    uint8_t font_bold_data[256 * 1024];
-    uint8_t font_japanese_data[2 * 1024 * 1024];
-} state_t;
-static state_t fons_state;
-
-
-
-void fonts_init() {
-    const int atlas_dim = 512;
-    FONScontext* fons_context = sfons_create(atlas_dim, atlas_dim, FONS_ZERO_TOPLEFT);
-    fons_state.fons = fons_context;
-    fons_state.font_normal = FONS_INVALID;
-    fons_state.font_italic = FONS_INVALID;
-    fons_state.font_bold = FONS_INVALID;
-    fons_state.font_japanese = FONS_INVALID;
-
-
-    // Read font
-    FILE* f = nullptr;
-    fopen_s(&f, "c:/windows/fonts/arialbd.ttf", "rb");
-    // Determine file size
-    fseek(f, 0, SEEK_END);
-    int buffer_size = (int)ftell(f);
-
-    // Allocate and read file
-    unsigned char* buffer_ptr = new unsigned char[buffer_size];
-    rewind(f);
-    fread(buffer_ptr, sizeof(char), buffer_size, f);
-        
-    fons_state.font_normal = fonsAddFontMem(fons_state.fons, "sans", buffer_ptr, buffer_size, false);
-   // FIX ME  delete[] buffer_ptr;   // don't know the ownership yet.
-}
-
-void fonts_frame() {
-    /* text rendering via fontstash.h */
-    float sx, sy, dx, dy, lh = 0.0f;
-
-    sx = 50; sy = 50;
-    dx = sx; dy = sy;
-
-    glm::ivec2 ws;
-    SDL_GetWindowSize(ap_sdl_app_window(), &ws.x, &ws.y);
-    sgl_defaults();
-    sgl_matrix_mode_projection();
-    sgl_ortho(0.0f, (float)ws.x, (float)ws.x, 0.0f, -1.0f, +1.0f);
-
-    FONScontext* fs = fons_state.fons;
-    fonsSetFont(fs, fons_state.font_normal);
-    fonsSetSize(fs, 124.0f);
-    fonsVertMetrics(fs, NULL, NULL, &lh);
-    dx = sx;
-    dy += lh;
-    uint32_t white = sfons_rgba(255, 255, 255, 255);
-    fonsSetColor(fs, white);
-    const char8_t* text = u8"Eloi ves a la merda";
-    dx = fonsDrawText(fs, dx, dy,(const char*)text, NULL);
-    //dx = fonsDrawText(fs, dx, dy, "", NULL);
-    
-
-    /* flush fontstash's font atlas to sokol-gfx texture */
-    sfons_flush(fs);
-
-    /* render pass */
-    sg_pass_action pass_action = {0};
-    pass_action.colors[0].action = SG_ACTION_CLEAR;
-    pass_action.colors[0].val[0] = 0.3f;
-    pass_action.colors[0].val[1] = 0.3f;
-    pass_action.colors[0].val[2] = 0.32f;
-    pass_action.colors[0].val[3] = 1.0f;
-    sg_begin_default_pass(pass_action, ws.x, ws.y);
-    sgl_draw();
-    sg_end_pass();
-    sg_commit();
-
-}
-
-void fonts_shutdown() {
-    sfons_destroy(fons_state.fons);
-
-}
-
-
-
 
 void sprite::init_from_texture(as::id tex_id) {
     texture_id = tex_id;
@@ -132,12 +32,8 @@ void sprite::init_from_texture(as::id tex_id) {
         return;
     }
     auto img_info = sg_query_image_info(t->image);
-    src_rect = rect::from_size({ 0,0 }, { img_info.width, img_info.height });
+    src_rect = rect_from_size({ 0,0 }, { img_info.width, img_info.height });
 }
-
-
-
-
 
 sg_pipeline g_base_lines_pip = { 0 };
 sg_pipeline g_base_triangle_strip_pip = { 0 };
@@ -205,130 +101,12 @@ void register_render_asset_types() {
 
 }
 
-//struct {
-//    stbtt_fontinfo* info;
-//    stbtt_packedchar* chars;
-//    int texture_size;
-//    float size;
-//    float scale;
-//    int ascent;
-//    int baseline;
-//    std::unique_ptr<stbtt_packedchar[]> charInfo;
-//    GLuint texture_atlas = 0;
-//} font_;
-//
-//
-//unsigned char ___bufferd[24 << 20];
-//#define screen_x 200
-//#define screen_y 200
-//unsigned char screen[screen_x][screen_y];
-//#pragma warning(disable : 4996) // 
-//int load_system_font() {
-//    stbtt_fontinfo font;
-//    int i, j, ascent, baseline, ch = 0;
-//    float scale, xpos = 2; // leave a little padding in case the character extends left
-//    char* text = "HELLO WORLD!"; // intentionally misspelled to show 'lj' brokenness
-//
-//    fread(___bufferd, 1, 1000000, fopen("c:/windows/fonts/arialbd.ttf", "rb"));
-//    stbtt_InitFont(&font, ___bufferd, 0);
-//
-//    scale = stbtt_ScaleForPixelHeight(&font, 15);
-//    stbtt_GetFontVMetrics(&font, &ascent, 0, 0);
-//    baseline = (int)(ascent * scale);
-//
-//    while (text[ch]) {
-//        int advance, lsb, x0, y0, x1, y1;
-//        float x_shift = xpos - (float)floor(xpos);
-//        stbtt_GetCodepointHMetrics(&font, text[ch], &advance, &lsb);
-//        stbtt_GetCodepointBitmapBoxSubpixel(&font, text[ch], scale, scale, x_shift, 0, &x0, &y0, &x1, &y1);
-//        stbtt_MakeCodepointBitmapSubpixel(&font, &screen[baseline + y0][(int)xpos + x0], x1 - x0, y1 - y0, screen_y, scale, scale, x_shift, 0, text[ch]);
-//        // note that this stomps the old data, so where character boxes overlap (e.g. 'lj') it's wrong
-//        // because this API is really for baking character bitmaps into textures. if you want to render
-//        // a sequence of characters, you really need to render each bitmap to a temp buffer, then
-//        // "alpha blend" that into the working buffer
-//        xpos += (advance * scale);
-//        if (text[ch + 1])
-//            xpos += scale * stbtt_GetCodepointKernAdvance(&font, text[ch], text[ch + 1]);
-//        ++ch;
-//    }
-//
-//    for (j = 0; j < screen_x; ++j) {
-//        for (i = 0; i < screen_y; ++i)
-//            putchar(" .:ioVM@"[screen[j][i] >> 5]);
-//        putchar('\n');
-//    }
-//    return 0;
-//}
-
-//void load_system_font() {
-//
-//    // Read the contents of the ttf
-//    FILE* fontFile = fopen("C:\Windows\Fonts\arial.ttf", "rb");
-//    fseek(fontFile, 0, SEEK_END);
-//    std::size_t size = ftell(fontFile); /* how long is the file ? */
-//    fseek(fontFile, 0, SEEK_SET); /* reset */
-//    std::vector<unsigned char> font_buffer;
-//    font_buffer.reserve(size);
-//    fread(font_buffer.data(), size, 1, fontFile);
-//    fclose(fontFile);
-//
-//    // Prepare font
-//    stbtt_fontinfo font_info;
-//    if (!stbtt_InitFont(&font_info, font_buffer.data(), 0)) {
-//        AP_FATAL("Error initializing font");
-//    }
-//
-//
-//
-//    
-//    auto fontData = readFile(assetPath("fonts/OpenSans-Regular.ttf").c_str());
-//    auto atlasData = std::make_unique<uint8_t[]>(font_.atlasWidth * font_.atlasHeight);
-//    font_.charInfo = std::make_unique<stbtt_packedchar[]>(font_.charCount);
-//
-//    stbtt_pack_context context;
-//    if (!stbtt_PackBegin(&context, atlasData.get(), font_.atlasWidth, font_.atlasHeight, 0, 1, nullptr)) {
-//        AP_FATAL("Failed to initialize font");
-//    }
-//
-//    stbtt_PackSetOversampling(&context, font_.oversampleX, font_.oversampleY);
-//    if (!stbtt_PackFontRange(&context, fontData.data(), 0, font_.size, font_.firstChar, font_.charCount, font_.charInfo.get())) {
-//        AP_FATAL("Failed to pack font");
-//    }
-//
-//    stbtt_PackEnd(&context);
-//
-//    glGenTextures(1, &font_.texture);
-//    glBindTexture(GL_TEXTURE_2D, font_.texture);
-//    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, font_.atlasWidth, font_.atlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE, atlasData.get());
-//    glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
-//    glGenerateMipmap(GL_TEXTURE_2D);
-//}
-
 void rd::init() {
     sg_desc sg_desc = { 0 };
     sg_setup(&sg_desc);
-    sgl_desc_t sgl_desc = { 0 };
-    sgl_setup(&sgl_desc);
-
-    fonts_init();
-
     register_render_asset_types();
-   // load_system_font();
-    // First create a dynamic streaming buffer
-  /*  sg_buffer_desc buff_d = { 0 };
-    buff_d.type = SG_BUFFERTYPE_VERTEXBUFFER;
-    buff_d.usage = SG_USAGE_STREAM;
-    buff_d.size = vert_buf.size() * sizeof(float);
-    g_vbo = sg_make_buffer(buff_d);
-    
-    sg_buffer_desc buff_ibo_d = { 0 };
-    buff_ibo_d.type = SG_BUFFERTYPE_INDEXBUFFER;
-    buff_ibo_d.usage = SG_USAGE_STREAM;
-    buff_ibo_d.size = index_buf.size() * sizeof(std::uint32_t);
-    g_ibo = sg_make_buffer(buff_ibo_d);*/
 
-
+   
     sg_shader_desc sh1 = { 0 };
     sh1.fs.images[0] = { .name = "tex", .type = SG_IMAGETYPE_2D },
     sh1.vs.source =
@@ -452,10 +230,10 @@ void draw_sprite(entt::registry& r, const glm::mat3& mvp_mat, as::id sprite_asse
     auto tex_info = sg_query_image_info(tex->image);
 
     // retrieve the size in world units for that sprite
-    const auto rect_size = spr->src_rect.size() / spr->ppu;
+    const auto rsize = rect_size(&spr->src_rect) / spr->ppu;
 
     // calculate the positions for that sprite
-    const auto half_rect_size = rect_size / 2.0f;
+    const auto half_rect_size = rsize / 2.0f;
     float pos[]{
         -half_rect_size.x , -half_rect_size.y,
         -half_rect_size.x , half_rect_size.y,
@@ -477,14 +255,16 @@ void draw_sprite(entt::registry& r, const glm::mat3& mvp_mat, as::id sprite_asse
     //* |_______|
     //*0        2
     // coordinate change to UVs coordinate system
-    auto uvs_rect = map_range_clamped(rect::from_size({ 0,0 }, { tex_info.width, tex_info.height }), rect::from_size({ 0,0 }, { 1,-1 }), spr->src_rect);
+    rect tex_rect = rect_from_size({ 0,0 }, { tex_info.width, tex_info.height });
+    rect normalized_rect = rect_from_size({ 0,0 }, { 1,-1 });
+    ds::rect uvs_rect = map_range_clamped(&tex_rect, &normalized_rect, &spr->src_rect);
 
     
     float vertices[] = {
-        pos[0], pos[1], color.r, color.g, color.b, color.a, uvs_rect.bottom_left().x, uvs_rect.bottom_left().y,
-        pos[2], pos[3], color.r, color.g, color.b, color.a, uvs_rect.top_left().x, uvs_rect.top_left().y,
-        pos[4], pos[5], color.r, color.g, color.b, color.a, uvs_rect.bottom_right().x, uvs_rect.bottom_right().y,
-        pos[6], pos[7], color.r, color.g, color.b, color.a, uvs_rect.top_right().x, uvs_rect.top_right().y,
+        pos[0], pos[1], color.r, color.g, color.b, color.a, rect_bottom_left(&uvs_rect).x, rect_bottom_left(&uvs_rect).y,
+        pos[2], pos[3], color.r, color.g, color.b, color.a, rect_top_left(&uvs_rect).x, rect_top_left(&uvs_rect).y,
+        pos[4], pos[5], color.r, color.g, color.b, color.a, rect_bottom_right(&uvs_rect).x, rect_bottom_right(&uvs_rect).y,
+        pos[6], pos[7], color.r, color.g, color.b, color.a, rect_top_right(&uvs_rect).x, rect_top_right(&uvs_rect).y,
     };
 
     sg_buffer_desc buff_desc = { 0 };
@@ -634,7 +414,6 @@ void draw_rect(entt::registry& r, const glm::mat3& mvp_mat, const glm::vec2& siz
 
 
 void draw_entities(entt::registry& r, const glm::mat3& vp_mat) {
-
     {
         auto lines = r.view<cp::transform, cp::line_rd>();
         for (auto entity : lines) {
@@ -665,6 +444,7 @@ void draw_entities(entt::registry& r, const glm::mat3& vp_mat) {
     {
         auto circles = r.view<cp::transform, cp::circle_rd>();
         for (auto entity : circles) {
+            (void)entity;
             auto& ltr = circles.get<cp::transform>(entity);
             auto& circle = circles.get<cp::circle_rd>(entity);
             draw_circle(r, vp_mat * ltr.local_to_world, circle.radius, circle.color, circle.filled);
@@ -702,30 +482,49 @@ void rd::draw_all(entt::registry& r) {
     sg_pass_action pass_action = { 0 };
     sg_begin_default_pass(&pass_action, ws.x, ws.y);
 
-    auto view_cameras = r.view<cp::camera, cp::transform>();
-    for (auto entity : view_cameras) {
-        auto& tr = view_cameras.get<cp::transform>(entity);
-        auto& cam = view_cameras.get<cp::camera>(entity);
-        draw_camera(r, ws, cam, tr);
+    //auto view_cameras = r.view<cp::camera, cp::transform>();
+    //for (auto entity : view_cameras) {
+    //    
+    //    auto& tr = view_cameras.get<cp::transform>(entity);
+    //    auto& cam = view_cameras.get<cp::camera>(entity);
+    //    draw_camera(r, ws, cam, tr);
+    //}
+
+    int i = 100;
+    while (i) {
+   
+        float vertices[] = {
+    1,2,3,4,5,6,7,8,
+    1,2,3,4,5,6,7,8,
+    1,2,3,4,5,6,7,8,
+    1,2,3,4,5,6,7,8
+        };
+        sg_buffer_desc buff_desc = { 0 };
+        buff_desc.size = sizeof(vertices);
+        buff_desc.content = vertices;
+        
+        sg_buffer vbuf = sg_make_buffer(&buff_desc);
+        //AP_TRACE("Buffid: %d %d ", (vbuf.id << 16) , (vbuf.id >> 16));
+        sg_destroy_buffer(vbuf);
+        i--;
     }
+
+
 
     sg_end_pass();
     sg_commit();
 
-    fonts_frame();
+    //fonts_frame();
 }
 
 
 
 void rd::shutdown() {
-    /* cleanup */
-    fonts_shutdown();
-    sgl_shutdown();
     sg_shutdown();
 }
 
 sg_image rd::create_image(const char* file_name) {
-    assert(file_name);
+    AP_ASSERT(file_name);
     cp_image_t img = cp_load_png(file_name);
     if (!img.pix) {
         AP_WARNING("Error loading texture file : %s : %s", file_name, cp_error_reason);

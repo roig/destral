@@ -7,7 +7,7 @@
 #include <destral/archtypes.h>
 #include <destral/render.h>
 #include <destral/ecs.h>
-#include <destral/math_funs.h>
+#include <destral/math2d.h>
 using namespace ds;
 
 
@@ -137,7 +137,7 @@ void ak_shutdown(entt::registry& r) {
 }
 
 int main() {
-	ds::platform_app_desc app_desc = { 0 };
+	ds::platform_app_desc app_desc;
 	app_desc.tick_cb = ak_tick;
 	app_desc.init_cb = ak_init;
 	app_desc.cleanup_cb = ak_shutdown;

@@ -5,7 +5,7 @@
 #include "ap/ap_debug.h"
 #include <algorithm>
 #include <optional>
-#include "math_funs.h"
+#include "math2d.h"
 
 /**
 Some instructions from PhysX in order to implement a kinematic controller movement.
@@ -59,13 +59,19 @@ inline glm::vec2 to_vec2(const c2v& v) { return { v.x, v.y }; }
 // Coordinate conversions (TODO this could be improved without using map_range_functions)
 const glm::vec2 g_destral_world_size_range = { 0,100000 };
 const glm::vec2 g_c2_world_size_range = { 0,10 };
-template <typename T>
-inline T to_c2_units(T value) {
-    return ds::map_range_unclamped(g_destral_world_size_range, g_c2_world_size_range, value);
+
+inline float to_c2_units(float value) {
+    return ds::map_range_unclamped(&g_destral_world_size_range, &g_c2_world_size_range, value);
 }
-template <typename T>
-inline T to_destral_units(T value) {
-    return ds::map_range_unclamped(g_c2_world_size_range, g_destral_world_size_range, value);
+
+inline glm::vec2 to_c2_units(glm::vec2 value) {
+    return ds::map_range_unclamped(&g_destral_world_size_range, &g_c2_world_size_range, &value);
+}
+inline float to_destral_units(float value) {
+    return ds::map_range_unclamped(&g_c2_world_size_range, &g_destral_world_size_range, value);
+}
+inline glm::vec2 to_destral_units(glm::vec2 value) {
+    return ds::map_range_unclamped(&g_c2_world_size_range, &g_destral_world_size_range, &value);
 }
 
 

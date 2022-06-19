@@ -7,7 +7,7 @@
 #include <destral/archtypes.h>
 #include <destral/render.h>
 #include <destral/ecs.h>
-#include <destral/math_funs.h>
+#include <destral/math2d.h>
 using namespace ds;
 
 

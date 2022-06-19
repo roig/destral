@@ -18,6 +18,7 @@ namespace ds::cp {
 		glm::mat3 local_to_world = glm::mat3(1);
 		entt::entity parent = entt::null;
 		std::vector<entt::entity> children;
+
 	};
 }
 

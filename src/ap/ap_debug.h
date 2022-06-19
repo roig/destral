@@ -66,37 +66,24 @@
 #endif
 #endif
 
-#ifdef NDEBUG
-    // TODO make this macros work in C
-    #define AP_LOG(loglvl_, format_, ...) do { AP_UNUSED(__VA_ARGS__); } while(0)
-    #define AP_TRACE(format_ , ...) do { AP_UNUSED(__VA_ARGS__); } while(0)
-    #define AP_INFO(format_ , ...) do { AP_UNUSED(__VA_ARGS__); } while(0)
-    #define AP_WARNING(format_ , ...) do { AP_UNUSED(__VA_ARGS__); } while(0)
-    #define AP_FATAL(format_, ...) do { ap_dbg_log(AP_DBG_ERROR, __FILE__ , __LINE__, format_ , ##__VA_ARGS__ ); abort(); } while(0);
+
+#ifdef AP_DEBUG_STREAMS
+    #include <sstream>
+    #define AP_LOG(loglvl_, sstream)  do {  std::stringstream s_s__; s_s__ << sstream; ap_dbg_Log(loglvl_, __FILE__ , __LINE__, "%s" , s_s__.str().c_str()); } while (0)
+    #define AP_TRACE(sstream) AP_LOG(AP_DBG_TRACE, sstream)
+    #define AP_INFO(sstream) AP_LOG(AP_DBG_INFO, sstream)
+    #define AP_WARNING(sstream) AP_LOG(AP_DBG_WARNING, sstream)
+    #define AP_FATAL(sstream) do { AP_LOG(AP_DBG_ERROR, sstream); abort(); } while(0);
 #else
-    #ifdef AP_DEBUG_STREAMS
-        #include <sstream>
-        #define AP_LOG(loglvl_, sstream)  do {  std::stringstream s_s__; s_s__ << sstream; ap_dbg_Log(loglvl_, __FILE__ , __LINE__, "%s" , s_s__.str().c_str()); } while (0)
-        #define AP_TRACE(sstream) AP_LOG(AP_DBG_TRACE, sstream)
-        #define AP_INFO(sstream) AP_LOG(AP_DBG_INFO, sstream)
-        #define AP_WARNING(sstream) AP_LOG(AP_DBG_WARNING, sstream)
-        #define AP_FATAL(sstream) do { AP_LOG(AP_DBG_ERROR, sstream); abort(); } while(0);
-    #else
-        #define AP_LOG(loglvl_, format_ , ...) ap_dbg_log(loglvl_, __FILE__ , __LINE__, format_ , ##__VA_ARGS__ )
-        #define AP_TRACE(format_ , ...) AP_LOG(AP_DBG_TRACE, format_ , ##__VA_ARGS__ )
-        #define AP_INFO(format_ , ...) AP_LOG(AP_DBG_INFO, format_ , ##__VA_ARGS__ )
-        #define AP_WARNING(format_ , ...) AP_LOG(AP_DBG_WARNING, format_ , ##__VA_ARGS__ )
-        #define AP_FATAL(format_, ...) do { AP_LOG(AP_DBG_ERROR, format_, ##__VA_ARGS__); abort(); } while(0);
-    #endif AP_DEBUG_STREAMS
-#endif
+    #define AP_LOG(loglvl_, format_ , ...) ap_dbg_log(loglvl_, __FILE__ , __LINE__, format_ , ##__VA_ARGS__ )
+    #define AP_TRACE(format_ , ...) AP_LOG(AP_DBG_TRACE, format_ , ##__VA_ARGS__ )
+    #define AP_INFO(format_ , ...) AP_LOG(AP_DBG_INFO, format_ , ##__VA_ARGS__ )
+    #define AP_WARNING(format_ , ...) AP_LOG(AP_DBG_WARNING, format_ , ##__VA_ARGS__ )
+    #define AP_FATAL(format_, ...) do { AP_LOG(AP_DBG_ERROR, format_, ##__VA_ARGS__); abort(); } while(0);
+#endif AP_DEBUG_STREAMS
+
 
 #ifdef __cplusplus
-
-template <typename ...Args>
-void AP_UNUSED(Args&& ...args) {
-    (void)(sizeof...(args));
-}
-
 extern "C" {
 #endif
 
@@ -109,12 +96,12 @@ enum ap_dbg_loglvl {
 };
 
 /**
-        Initializes the log system:
-        If file_id is NULL it only logs in stdout.
-        Else logs in stdout and creates a file like this: (supposing file_id = "AstralPixel")
-        AstralPixel-2020.09.13-20.40.50.txt
+    Initializes the log system:
+    If file_id is NULL it only logs in stdout.
+    Else logs in stdout and creates a file like this: (supposing file_name = "AstralPixel")
+    AstralPixel-2020.09.13-20.40.50.txt
 */
-void ap_dbg_init(const char* file_id);
+void ap_dbg_init(const char* file_name);
 
 /**
     Logs the message to the stdout and file if file is opened.
@@ -127,14 +114,10 @@ void ap_dbg_log(enum ap_dbg_loglvl lvl, const char* file, int line, const char* 
 */
 void ap_dbg_shutdown();
 
-
-
-
-
-
 #ifdef __cplusplus
 }
 #endif
+
 #ifdef AP_DEBUG_IMPL
 #include <stdio.h>
 #include <time.h>

@@ -5,7 +5,7 @@
 #include "assets.h"
 #include <vector>
 #include "ap/sokol_gfx.h"
-#include "rect.h"
+#include "math2d.h"
 
 namespace ds {
 	struct sprite {

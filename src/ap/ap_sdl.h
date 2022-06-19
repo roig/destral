@@ -91,12 +91,12 @@ struct ap_sdl_ms_state {
 	struct ap_sdl_ms_butt_state buttons[5];
 
 	//X,Y relative to window
-	Sint32 x;
-	Sint32 y;
+	int32_t x;
+	int32_t y;
 
 	// frame motion
-	Sint32 xrel;
-	Sint32 yrel;
+	int32_t xrel;
+	int32_t yrel;
 };
 
 
@@ -177,7 +177,6 @@ void ap_sdl_input_handle_event(struct ap_sdl_input* state, SDL_Event* e);
 */
 
 struct ap_sdl_app_desc {
-	uint32_t _start_canary;
 	void (*init_cb)(void* user_data);
 	void (*frame_cb)(void* user_data);
 	void (*cleanup_cb)(void* user_data);
@@ -186,7 +185,6 @@ struct ap_sdl_app_desc {
 	const char* window_title;
 	int wwidth; // window width
 	int wheight; // window height
-	uint32_t _end_canary;
 };
 
 /**
@@ -316,7 +314,6 @@ float ap_sdl_app_fps() {
 
 int ap_sdl_app_run(struct ap_sdl_app_desc* desc, void* user_data) {
 	assert(desc);
-	assert((desc->_start_canary == 0) && (desc->_end_canary == 0));
 
 	if (desc->renderer_mode == 0) {
 		if (ap_sdl_create_window(desc->window_title, desc->wwidth, desc->wheight, &g_window, &g_renderer) == EXIT_FAILURE) {
@@ -329,11 +326,14 @@ int ap_sdl_app_run(struct ap_sdl_app_desc* desc, void* user_data) {
 		gladLoadGL();
 	}
 
-	if (desc->init_cb) desc->init_cb(user_data);
+	if (desc->init_cb) {
+		desc->init_cb(user_data);
+	}
+
 	int app_ended = 0;
 
 	// Time related initialization
-	Uint64 tm_ts_last = SDL_GetPerformanceCounter();
+	uint64_t tm_ts_last = SDL_GetPerformanceCounter();
 	g_tm_dtacc_s = 0.0f;
 	g_tm_fps = 0.0f;
 	const float MAX_FPS = 200.0f;
@@ -380,7 +380,9 @@ int ap_sdl_app_run(struct ap_sdl_app_desc* desc, void* user_data) {
 
 		//printf("DT: %f   FPS: %f\n", g_tm_dtacc_s, 1.0f/ g_tm_dtacc_s);
 		// 2 Handle the frame update
-		if (desc->frame_cb) desc->frame_cb(user_data);
+		if (desc->frame_cb) {
+			desc->frame_cb(user_data);
+		}
 
 		// Blit the screen
 		if (desc->renderer_mode == 0) {
@@ -394,7 +396,9 @@ int ap_sdl_app_run(struct ap_sdl_app_desc* desc, void* user_data) {
 	}
 
 	// user cleanup callback
-	if (desc->cleanup_cb) desc->cleanup_cb(user_data);
+	if (desc->cleanup_cb) {
+		desc->cleanup_cb(user_data);
+	}
 
 	// sdl cleanup
 	if (desc->renderer_mode == 0) {
@@ -402,6 +406,7 @@ int ap_sdl_app_run(struct ap_sdl_app_desc* desc, void* user_data) {
 	} else {
 		SDL_GL_DeleteContext(g_glctx);
 	}
+
 	SDL_DestroyWindow(g_window);
 	SDL_Quit();
 	return EXIT_SUCCESS;

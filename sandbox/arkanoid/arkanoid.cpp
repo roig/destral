@@ -7,7 +7,7 @@
 #include <destral/archtypes.h>
 #include <destral/render.h>
 #include <destral/ecs.h>
-#include <destral/math_funs.h>
+#include <destral/math2d.h>
 using namespace ds;
 
 struct player {
@@ -79,9 +79,11 @@ void update_ball(entt::registry& r) {
 
 void ak_tick(entt::registry& r) {
 
-	update_player(r);
-	update_ball(r);
-	
+	//update_player(r);
+	//update_ball(r);
+	if (ap_sdl_app_fps() < 150.f) {
+		AP_TRACE("FPS: %f", ap_sdl_app_fps());
+	}
 	
 }
 
@@ -105,7 +107,7 @@ entt::entity create_block(entt::registry& r, glm::vec2 position) {
 	spr_block_id = as::create<sprite>();
 	auto block_spr = as::get<sprite>(spr_block_id);
 	block_spr->init_from_texture(tex_player_id);
-	block_spr->src_rect = rect::from_size({ 0, 0 }, block_size_pixels); // select the sprite of block
+	block_spr->src_rect = rect_from_size({ 0, 0 }, block_size_pixels); // select the sprite of block
 	block_spr->ppu = block_ppu;
 	auto block_spr_e = ds::create_sprite(r, spr_block_id);
 	tr::set_parent(r, block_spr_e, block_e);
@@ -121,7 +123,7 @@ void create_ball(entt::registry& r, glm::vec2 position) {
 	spr_ball_id = as::create<sprite>();
 	auto block_spr = as::get<sprite>(spr_ball_id);
 	block_spr->init_from_texture(tex_player_id);
-	block_spr->src_rect = rect::from_size({ 1403, 651 }, { ball_radius, ball_radius }); // select the sprite of block
+	block_spr->src_rect = rect_from_size({ 1403, 651 }, { ball_radius, ball_radius }); // select the sprite of block
 	block_spr->ppu = ball_ppu;
 	auto ball_spr_e = ds::create_sprite(r, spr_ball_id);
 	tr::set_parent(r, ball_spr_e, ball_e);
@@ -143,7 +145,7 @@ void ak_init(entt::registry& r) {
 		spr_player_id = as::create<sprite>();
 		auto spr = as::get<sprite>(spr_player_id);
 		spr->init_from_texture(tex_player_id);
-		spr->src_rect = rect::from_size({ 0, 910 }, sprite_size); // select the sprite of the player
+		spr->src_rect = rect_from_size({ 0, 910 }, sprite_size); // select the sprite of the player
 		spr->ppu = player_ppu;
 		// set it as a child
 		auto spr_pl_e = ds::create_sprite(r, spr_player_id);

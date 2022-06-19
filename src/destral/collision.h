@@ -1,4 +1,5 @@
 #pragma once
+#include "destral/platform.h"
 #include <glm/vec2.hpp>
 #include <entt/entity/fwd.hpp>
 #include <entt/entity/entity.hpp>
